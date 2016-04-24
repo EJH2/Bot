@@ -3,6 +3,7 @@
 
 # User-specific files
 credentials.json
+*.pyc
 *.suo
 *.user
 *.userosscache
