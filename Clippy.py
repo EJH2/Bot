@@ -42,6 +42,11 @@ modules = [
 
 @bot.event
 async def on_message(message):
+	if os.path.isfile("mods/utils/blacklist.txt"):
+		pass
+	else:
+		with open("mods/utils/blacklist.txt","a") as f:
+			f.write("")
 	if "<@" + message.author.id + ">" in open('mods/utils/blacklist.txt').read():
 		return
 	await bot.process_commands(message)
@@ -53,11 +58,6 @@ async def on_ready():
 			bot.load_extension(extension)
 		except Exception as e:
 			print('Failed to load extension {}\n{}: {}'.format(extension, type(e).__name__, e))
-	if os.path.isfile("mods/utils/blacklist.txt"):
-		pass
-	else:
-		with open("mods/utils/blacklist.txt","a") as f:
-			f.write("")
 	print('Logged in as')
 	print(bot.user.name + "#" + bot.user.discriminator)
 	print(bot.user.id)
