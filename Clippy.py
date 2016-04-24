@@ -148,10 +148,12 @@ async def reload(*,module:str):
 	try:
 		if module == "all":
 			for mod in modules:
+				await bot.say("Alright, reloading {}".format(mod))
 				bot.unload_extension(mod)
 				bot.load_extension(mod)
-				await bot.say("Alright, reloading {}".format(mod))
-		if mod in modules:
+				await bot.say("Done!")
+			await bot.say("Reloading finished!")
+		elif mod in modules:
 			await bot.say("Alright, reloading {}".format(mod))
 			bot.unload_extension(mod)
 			bot.load_extension(mod)
@@ -181,15 +183,16 @@ async def debug(ctx,*,code:str):
 async def settings(ctx,setting,*,change):
 	"""Changes bot variables."""
 	try:
-		with open('mods/utils/config.json', 'r+') as f:
-			config = json.load(f)
+		if setting in config:
 			ch = change.replace("<SPACE>", " ")
 			config[setting] = ch
 			f.seek(0)
 			f.write(json.dumps(config))
 			f.truncate()
 			bot.__dict__[setting] = config[setting]
-		await bot.say("Alright, I changed the setting `{}` to `{}`!".format(setting, ch))
+			await bot.say("Alright, I changed the setting `{}` to `{}`!".format(setting, ch))
+		else:
+			await bot.say("That isn't a valid setting!")
 	except Exception as e:
 		await bot.say(wrap.format(type(e).__name__ + ': ' + str(e)))
 
@@ -252,7 +255,7 @@ async def setgame(*,game:discord.Game):
 
 @bot.command(pass_contet=True)
 @checks.is_owner()
-async def cleargame(ctx):
+async def cleargame():
 	"""Sets the game that Clip.py is playing."""
 	try:
 		await bot.change_status(game=None)
@@ -277,7 +280,7 @@ async def revert(ctx):
 async def blacklist(ctx,user:str):
 	"""Blacklists a user from the bot."""
 	try:
-		if user == "<@125370065624236033>":
+		if user == "<{}>".format(config["ownerid"]):
 			await bot.say("You can't blacklist the owner!")
 		elif user in open('mods/utils/blacklist.txt').read():
 			await bot.say("That user is already blacklisted!")
@@ -294,7 +297,7 @@ async def unblacklist(ctx,user:str):
 	"""Unblacklists a user from the bot."""
 	try:
 		if len(set(ctx.message.mentions)) > 0:
-			if user == "<@125370065624236033>":
+			if user == "<{}>".format(config["ownerid"]):
 				await bot.say("You can't unblacklist the owner!")
 			elif user in open('mods/utils/blacklist.txt').read():
 				fin = open('mods/utils/blacklist.txt', 'r')
