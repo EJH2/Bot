@@ -8,6 +8,7 @@ import os
 import aiohttp
 import sys
 import logging
+import pip
 
 with open("mods/utils/config.json") as f:
 	config = json.load(f)
@@ -30,6 +31,22 @@ logger.setLevel(logging.INFO)
 handler = logging.FileHandler(filename='mods/utils/discord.log', encoding='utf-8', mode='w')
 handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
 logger.addHandler(handler)
+
+async def install(package):
+	if "--upgrade" in package:
+		await bot.say("You can't use --upgrade!")
+	else:
+		pip.main(['install', package])
+		return "Successfully installed {}".format(package)
+
+def uninstall(package):
+	pip.main(['uninstall', package])
+	return "Successfully uninstalled {}".format(package)
+
+installed_packages = pip.get_installed_distributions()
+installed_packages_list = sorted(["%s==%s" % (i.key, i.version)
+     for i in installed_packages])
+pip_list = "My currently installed pip packages are:\n" + "\n".join(map(str,installed_packages_list))
 
 #CHAN = discord.get_channel(ID_HERE)
 #await bot.send_message(CHAN, "something or other")
@@ -106,7 +123,7 @@ class Default():
 			h, m = divmod(m, 60)
 			d, h = divmod(h, 24)
 			w, d = divmod(d, 7)
-			await self.bot.say("I have been online for %d Weeks," % (w) + " %d Days," % (d) + " %d Hours," % (h) + " %d Minutes," % (m) + " and %d Seconds!" % (s))
+			await self.bot.say("I have been online for %dw :" % (w) + " %dd :" % (d) + " %dh :" % (h) + " %dm :" % (m) + " %ds" % (s))
 		except Exception as e:
 			await bot.say(wrap.format(type(e).__name__ + ': ' + str(e)))
 
