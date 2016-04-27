@@ -10,6 +10,18 @@ import sys
 import logging
 import pip
 
+if os.path.isfile("mods/utils/CarbonConfig.json"):
+	with open("mods/utils/CarbonConfig.json") as f:
+		carbonconfig = json.load(f)
+else:
+	with open("mods/utils/CarbonConfig.json","a") as f:
+		f.write("{'SendData': 'False'}")
+		carbonconfig = json.load(f)
+if os.path.isfile("mods/utils/blacklist.txt"):
+	pass
+else:
+	with open("mods/utils/blacklist.txt","a") as f:
+		f.write("")
 with open("mods/utils/config.json") as f:
 	config = json.load(f)
 with open("mods/utils/credentials.json") as f:
@@ -18,6 +30,7 @@ with open("mods/utils/hexnamestocode.json") as f:
 	name = json.load(f)
 with open("mods/utils/hexcodestoname.json") as f:
 	color = json.load(f)
+bot = commands.Bot(command_prefix=config["command_prefix"])
 description = "This is the help menu for Clip.py! Because of my extensive amount of commands (and my over-ambitious creator) I go on and offline a lot, so please bear with me! If you have any questions, just PM EJH2#0674..."
 bot = commands.Bot(command_prefix=config["command_prefix"], description=description)
 starttime = time.time()
@@ -26,22 +39,41 @@ bot.version = config["version"]
 wrap = "```py\n{}\n```"
 bot.pm_help = True
 
-logger = logging.getLogger('discord')
-logger.setLevel(logging.INFO)
-handler = logging.FileHandler(filename='mods/utils/discord.log', encoding='utf-8', mode='w')
-handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
-logger.addHandler(handler)
+logging.basicConfig(level=logging.INFO)
 
 async def install(package):
-	if "--upgrade" in package:
-		await bot.say("You can't use --upgrade!")
-	else:
-		pip.main(['install', package])
-		return "Successfully installed {}".format(package)
+	try:
+		if "--upgrade" in package:
+			await bot.say("You can't use --upgrade!")
+		else:
+			pip.main(['install', package])
+			return "Successfully installed {}".format(package)
+	except Exception as e:
+		await bot.say(wrap.format(type(e).__name__ + ': ' + str(e)))
 
-def uninstall(package):
-	pip.main(['uninstall', package])
-	return "Successfully uninstalled {}".format(package)
+async def uninstall(package):
+	try:
+		pip.main(['uninstall', package])
+		return "Successfully uninstalled {}".format(package)
+	except Exception as e:
+		await bot.say(wrap.format(type(e).__name__ + ': ' + str(e)))
+
+async def Carbon():
+	try:
+		if carbonconfig["SendData"] == "True":
+			await bot.wait_until_ready()
+			await asyncio.sleep(1)
+			counter = 0
+			while not bot.is_closed:
+				counter += 1
+				url = "https://www.carbonitex.net/discord/data/botdata.php"
+				payload = {"botname": bot.user.name, "botid": bot.user.id, "logoid": bot.user.avatar_url.strip("https://discordapp.com/api/users/133718676741292033/avatars/").replace(".jpg",""), "ownerid": carbonconfig["payload"]["ownerid"], "ownername": carbonconfig["payload"]["ownername"], "servercount": len(bot.servers)}
+				with aiohttp.ClientSession() as session:
+					await session.post(url, data=payload)
+				print("Payload #{} Sent".format(counter))
+				await asyncio.sleep(60)
+	except Exception as e:
+		await bot.say(wrap.format(type(e).__name__ + ': ' + str(e)))
 
 installed_packages = pip.get_installed_distributions()
 installed_packages_list = sorted(["%s==%s" % (i.key, i.version)
@@ -59,26 +91,27 @@ modules = [
 
 @bot.event
 async def on_message(message):
-	if os.path.isfile("mods/utils/blacklist.txt"):
-		pass
-	else:
-		with open("mods/utils/blacklist.txt","a") as f:
-			f.write("")
-	if "<@" + message.author.id + ">" in open('mods/utils/blacklist.txt').read():
-		return
-	await bot.process_commands(message)
+	try:
+		if "<@" + message.author.id + ">" in open('mods/utils/blacklist.txt').read():
+			return
+		await bot.process_commands(message)
+	except Exception as e:
+		await bot.say(wrap.format(type(e).__name__ + ': ' + str(e)))
 
 @bot.event
 async def on_ready():
-	for extension in modules:
-		try:
-			bot.load_extension(extension)
-		except Exception as e:
-			print('Failed to load extension {}\n{}: {}'.format(extension, type(e).__name__, e))
-	print('Logged in as')
-	print(bot.user.name + "#" + bot.user.discriminator)
-	print(bot.user.id)
-	print('------')
+	try:
+		for extension in modules:
+			try:
+				bot.load_extension(extension)
+			except Exception as e:
+				print('Failed to load extension {}\n{}: {}'.format(extension, type(e).__name__, e))
+		print('Logged in as')
+		print(bot.user.name + "#" + bot.user.discriminator)
+		print(bot.user.id)
+		print('------')
+	except Exception as e:
+		await bot.say(wrap.format(type(e).__name__ + ': ' + str(e)))
 
 @bot.event
 async def on_member_join(member):
@@ -252,7 +285,7 @@ async def setavatar(ctx,avatarlink:str):
 
 @bot.command(hidden=True,pass_context=True)
 @checks.is_owner()
-async def setname(*,name:str):
+async def setname(ctx,*,name:str):
 	"""Sets the bots name."""
 	try:
 		await bot.edit_profile(username=name)
@@ -260,9 +293,9 @@ async def setname(*,name:str):
 	except Exception as e:
 		await bot.say(wrap.format(type(e).__name__ + ': ' + str(e)))
 
-@bot.command(pass_contet=True)
+@bot.command(hidden=True,pass_contet=True)
 @checks.is_owner()
-async def setgame(*,game:discord.Game):
+async def setgame(ctx,*,game:discord.Game):
 	"""Sets the game that Clip.py is playing."""
 	try:
 		await bot.change_status(game=game)
@@ -270,10 +303,10 @@ async def setgame(*,game:discord.Game):
 	except Exception as e:
 		await bot.say(wrap.format(type(e).__name__ + ': ' + str(e)))
 
-@bot.command(pass_contet=True)
+@bot.command(hidden=True,pass_contet=True)
 @checks.is_owner()
 async def cleargame():
-	"""Sets the game that Clip.py is playing."""
+	"""Clears the game status."""
 	try:
 		await bot.change_status(game=None)
 		await bot.say("Alright, cleared Clip.py's game status.")
@@ -335,4 +368,14 @@ async def unblacklist(ctx,user:str):
 
 bot.add_cog(Default(bot))
 
-bot.run(credentials["token"])
+
+loop = asyncio.get_event_loop()
+
+try:
+    loop.create_task(Carbon())
+    loop.run_until_complete(bot.login(credentials["token"]))
+    loop.run_until_complete(bot.connect())
+except Exception:
+    loop.run_until_complete(bot.close())
+finally:
+    loop.close()

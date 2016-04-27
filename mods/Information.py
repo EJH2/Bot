@@ -35,11 +35,13 @@ class Information():
 		try:
 			if not users:
 				targetMember = ctx.message.author
+				server = ctx.message.server
 				seeinserver = str(len(set([member.server.name for member in self.bot.get_all_members() if member.name == targetMember.name])))
 				x = 'Your Player Information:\nUsername: "{0.name}"\nID #: "{0.id}"\nDiscriminator #: "{0.discriminator}"\nAvatar URL: "{0.avatar_url}"\nCurrent Status: "{2}"\nCurrent Game: "{3}"\nVoice channel they are in: "{4}"\nI have seen them in: "{1}" servers\nThey joined on: "{5}"\nRoles: "{6}"'.format(targetMember,seeinserver,str(targetMember.status),str(targetMember.game),str(targetMember.voice_channel),str(targetMember.joined_at),', '.join(map(str, server.roles)).replace("@", "@\u200b"))
 				await self.bot.say(xl.format(x))
 			else:
 				for user in users:
+					server = ctx.message.server
 					seeinserver = str(len(set([member.server.name for member in self.bot.get_all_members() if member.name == user.name])))
 					x = 'Player Information:\nUsername: "{}"\nID #: "{}"\nDiscriminator #: "{}"\nAvatar URL: "{}"\nCurrent Status: "{}"\nCurrent Game: "{}"\nVoice channel they are in: "{}"\nI have seen them in: "{} servers"\nThey joined on: "{}"\nRoles: "{}"'.format(user.name,user.id,user.discriminator,user.avatar_url,str(user.status),str(user.game),str(user.voice_channel),seeinserver,str(user.joined_at),', '.join(map(str, server.roles)).replace("@", "@\u200b"))
 					await self.bot.say(xl.format(x))
