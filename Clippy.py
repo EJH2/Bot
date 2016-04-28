@@ -9,14 +9,12 @@ import aiohttp
 import sys
 import logging
 import pip
+import requests
+from mods.utils.Carbon import Carbon
 
 if os.path.isfile("mods/utils/CarbonConfig.json"):
 	with open("mods/utils/CarbonConfig.json") as f:
-		carbonconfig = json.load(f)
-else:
-	with open("mods/utils/CarbonConfig.json","a") as f:
-		f.write("{'SendData': 'False'}")
-		carbonconfig = json.load(f)
+		carbon = json.load(f)
 if os.path.isfile("mods/utils/blacklist.txt"):
 	pass
 else:
@@ -58,23 +56,6 @@ async def uninstall(package):
 	except Exception as e:
 		await bot.say(wrap.format(type(e).__name__ + ': ' + str(e)))
 
-async def Carbon():
-	try:
-		if carbonconfig["SendData"] == "True":
-			await bot.wait_until_ready()
-			await asyncio.sleep(1)
-			counter = 0
-			while not bot.is_closed:
-				counter += 1
-				url = "https://www.carbonitex.net/discord/data/botdata.php"
-				payload = {"botname": bot.user.name, "botid": bot.user.id, "logoid": bot.user.avatar_url.strip("https://discordapp.com/api/users/133718676741292033/avatars/").replace(".jpg",""), "ownerid": carbonconfig["payload"]["ownerid"], "ownername": carbonconfig["payload"]["ownername"], "servercount": len(bot.servers)}
-				with aiohttp.ClientSession() as session:
-					await session.post(url, data=payload)
-				print("Payload #{} Sent".format(counter))
-				await asyncio.sleep(60)
-	except Exception as e:
-		await bot.say(wrap.format(type(e).__name__ + ': ' + str(e)))
-
 installed_packages = pip.get_installed_distributions()
 installed_packages_list = sorted(["%s==%s" % (i.key, i.version)
      for i in installed_packages])
@@ -110,8 +91,9 @@ async def on_ready():
 		print(bot.user.name + "#" + bot.user.discriminator)
 		print(bot.user.id)
 		print('------')
+		bot.statistics.start()
 	except Exception as e:
-		await bot.say(wrap.format(type(e).__name__ + ': ' + str(e)))
+		print(type(e).__name__ + ': ' + str(e))
 
 @bot.event
 async def on_member_join(member):
@@ -368,14 +350,5 @@ async def unblacklist(ctx,user:str):
 
 bot.add_cog(Default(bot))
 
-
-loop = asyncio.get_event_loop()
-
-try:
-    loop.create_task(Carbon())
-    loop.run_until_complete(bot.login(credentials["token"]))
-    loop.run_until_complete(bot.connect())
-except Exception:
-    loop.run_until_complete(bot.close())
-finally:
-    loop.close()
+bot.statistics = Carbon(key=carbon['key'], bot=bot)
+bot.run(credentials["token"])
