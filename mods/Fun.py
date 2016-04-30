@@ -64,18 +64,19 @@ class Fun():
 			await self.bot.say(wrap.format(type(e).__name__ + ': ' + str(e)))
 
 	@commands.command(pass_context=True)
-	async def shoot(self,ctx,user:discord.User):
+	async def shoot(self,ctx,*users:discord.User):
 		"""Allows the user to shoot a person of choice."""
 		try:
-			if user.id == self.bot.user.id:
-				await self.bot.say('You attempted to shoot me, {}, but I dodged it!\nhttp://45.media.tumblr.com/c1165e983042a9cd1f17028a1c78170b/tumblr_n9c38m14291s5f9ado1_500.gif'.format(ctx.message.author.mention))
-			elif user.id == ctx.message.author.id:
-				await self.bot.say('{} commited suicide!\nhttps://media.giphy.com/media/5xaOcLAo1Gg0oRgBz0Y/giphy.gif'.format(ctx.message.author.mention))
-			else:
-				if user:
-					await self.bot.say('{1} was shot dead by the mighty {0}!\nhttps://s-media-cache-ak0.pinimg.com/originals/2d/fa/a9/2dfaa995a09d81a07cad24d3ce18e011.gif'.format(ctx.message.author.mention, user.mention))
+			for user in users:
+				if user.id == self.bot.user.id:
+					await self.bot.say('You attempted to shoot me, {}, but I dodged it!\nhttp://45.media.tumblr.com/c1165e983042a9cd1f17028a1c78170b/tumblr_n9c38m14291s5f9ado1_500.gif'.format(ctx.message.author.mention))
+				elif user.id == ctx.message.author.id:
+					await self.bot.say('{} commited suicide!\nhttps://media.giphy.com/media/5xaOcLAo1Gg0oRgBz0Y/giphy.gif'.format(ctx.message.author.mention))
 				else:
-					await self.bot.say('You gotta give me someone to work with here!')
+					if user:
+						await self.bot.say('{1} was shot dead by the mighty {0}!\nhttps://s-media-cache-ak0.pinimg.com/originals/2d/fa/a9/2dfaa995a09d81a07cad24d3ce18e011.gif'.format(ctx.message.author.mention, user.mention))
+					else:
+						await self.bot.say('You gotta give me someone to work with here!')
 		except Exception as e:
 			await self.bot.say(wrap.format(type(e).__name__ + ': ' + str(e)))
 
