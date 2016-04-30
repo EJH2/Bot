@@ -3,6 +3,9 @@ import time
 import json
 import threading
 import os.path
+import logging
+
+log = logging.getLogger()
 
 if os.path.isfile("mods/utils/CarbonConfig.json"):
 	with open("mods/utils/CarbonConfig.json") as f:
@@ -35,8 +38,8 @@ class Carbon(threading.Thread):
 			try:
 				r = requests.post(url, json=data)
 				sent += 1
-				print('Carbon Payload #{1} returned {0.status_code} {0.reason} for {2}'.format(r, sent, data))
+				log.info('Carbon Payload #{1} returned {0.status_code} {0.reason} for {2}\n'.format(r, sent, data) + '-'*20)
 			except Exception as e:
-				print('An error occurred while fetching statistics: ' + str(e))
+				log.error('An error occurred while fetching statistics: ' + str(e))
 			finally:
 				time.sleep(300)

@@ -97,6 +97,7 @@ class ServerModeration():
 				async for x in self.bot.logs_from(message.channel, limit=n+1):
 					await self.bot.delete_message(x)
 					removed += 1
+					await asyncio.sleep(.21)
 				x = await self.bot.say("Removed {} messages".format(removed))
 				await asyncio.sleep(5)
 				await self.bot.delete_message(x)
@@ -153,6 +154,7 @@ class ServerModeration():
 				if message.author == self.bot.user:
 					asyncio.ensure_future(self.bot.delete_message(message))
 					removed += 1
+					await asyncio.sleep(.21)
 			x = await self.bot.say("Removed {} messages".format(removed))
 			await asyncio.sleep(5)
 			await self.bot.delete_message(x)

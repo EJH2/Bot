@@ -28,7 +28,6 @@ with open("mods/utils/hexnamestocode.json") as f:
 	name = json.load(f)
 with open("mods/utils/hexcodestoname.json") as f:
 	color = json.load(f)
-bot = commands.Bot(command_prefix=config["command_prefix"])
 description = "This is the help menu for Clip.py! Because of my extensive amount of commands (and my over-ambitious creator) I go on and offline a lot, so please bear with me! If you have any questions, just PM EJH2#0674..."
 bot = commands.Bot(command_prefix=config["command_prefix"], description=description)
 starttime = time.time()
@@ -40,7 +39,7 @@ discord_logger = logging.getLogger('discord')
 discord_logger.setLevel(logging.CRITICAL)
 log = logging.getLogger()
 log.setLevel(logging.INFO)
-handler = logging.FileHandler(filename='mods/utils/discord.log', encoding='utf-8', mode='w')
+handler = logging.FileHandler(filename='mods/utils/logs/discord.log', encoding='utf-8', mode='w')
 log.addHandler(handler)
 
 async def install(package):
@@ -224,13 +223,14 @@ async def settings(ctx,setting,*,change):
 	"""Changes bot variables."""
 	try:
 		if setting in config:
-			ch = change.replace("<SPACE>", " ")
-			config[setting] = ch
-			f.seek(0)
-			f.write(json.dumps(config))
-			f.truncate()
-			bot.__dict__[setting] = config[setting]
-			await bot.say("Alright, I changed the setting `{}` to `{}`!".format(setting, ch))
+			with open("mods/utils/config.json","r+") as f:
+				ch = change.replace("<SPACE>", " ")
+				config[setting] = ch
+				f.seek(0)
+				f.write(json.dumps(config))
+				f.truncate()
+				bot.__dict__[setting] = config[setting]
+				await bot.say("Alright, I changed the setting `{}` to `{}`!".format(setting, ch))
 		else:
 			await bot.say("That isn't a valid setting!")
 	except Exception as e:
