@@ -35,9 +35,13 @@ starttime = time.time()
 starttime2 = time.ctime(int(time.time()))
 bot.version = config["version"]
 wrap = "```py\n{}\n```"
-bot.pm_help = True
 
-logging.basicConfig(level=logging.INFO)
+discord_logger = logging.getLogger('discord')
+discord_logger.setLevel(logging.CRITICAL)
+log = logging.getLogger()
+log.setLevel(logging.INFO)
+handler = logging.FileHandler(filename='mods/utils/discord.log', encoding='utf-8', mode='w')
+log.addHandler(handler)
 
 async def install(package):
 	try:
@@ -72,12 +76,15 @@ modules = [
 
 @bot.event
 async def on_message(message):
-	try:
 		if "<@" + message.author.id + ">" in open('mods/utils/blacklist.txt').read():
 			return
+		destination = None
+		if message.channel.is_private:
+			destination = 'Private Message'
+		else:
+			destination = '#{0.channel.name} ({0.server.name})'.format(message)
+		log.info('{0.timestamp}: {0.author.name} in {1}: {0.content}'.format(message, destination))
 		await bot.process_commands(message)
-	except Exception as e:
-		await bot.say(wrap.format(type(e).__name__ + ': ' + str(e)))
 
 @bot.event
 async def on_ready():
