@@ -39,7 +39,7 @@ discord_logger = logging.getLogger('discord')
 discord_logger.setLevel(logging.CRITICAL)
 log = logging.getLogger()
 log.setLevel(logging.INFO)
-handler = logging.FileHandler(filename='mods/utils/logs/{}.log'.format(starttime2), encoding='utf-8', mode='w')
+handler = logging.FileHandler(filename='mods/utils/logs/discord.log', encoding='utf-8', mode='w')
 log.addHandler(handler)
 
 async def install(package):

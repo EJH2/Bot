@@ -272,11 +272,20 @@ class Fun():
 		except Exception as e:
 			await self.bot.say(wrap.format(type(e).__name__ + ': ' + str(e)))
 
-	@commands.command(pass_context=True)
+	@commands.group(pass_context=True,invoke_without_command=True)
 	async def meme(self,ctx,meme:str,line1:str,line2:str):
 		"""Generates a meme."""
 		try:
-			await self.bot.say("http://memegen.link/{0}/{1}/{2}.jpg".format(meme,line1.replace("-","--").replace("_","__").replace(" ","-").replace(" ","_").replace("?","~q").replace("%","~p").replace("\"","''"),line2.replace("-","--").replace("_","__").replace(" ","-").replace(" ","_").replace("?","~q").replace("%","~p").replace("\"","''")))
+			if ctx.invoked_subcommand is None:
+				await self.bot.say("http://memegen.link/{0}/{1}/{2}.jpg".format(meme,line1.replace("-","--").replace("_","__").replace(" ","-").replace(" ","_").replace("?","~q").replace("%","~p").replace("\"","''"),line2.replace("-","--").replace("_","__").replace(" ","-").replace(" ","_").replace("?","~q").replace("%","~p").replace("\"","''")))
+		except Exception as e:
+			await self.bot.say(wrap.format(type(e).__name__ + ': ' + str(e)))
+
+	@meme.command(name="custom",pass_context=True)
+	async def _custom(self,ctx,pic:str,line1:str,line2:str):
+		"""Generates a meme using a custom picture."""
+		try:
+			await self.bot.say("http://memegen.link/custom/{0}/{1}.jpg?alt={2}".format(line1.replace("-","--").replace("_","__").replace(" ","-").replace(" ","_").replace("?","~q").replace("%","~p").replace("\"","''"),line2.replace("-","--").replace("_","__").replace(" ","-").replace(" ","_").replace("?","~q").replace("%","~p").replace("\"","''"),pic))
 		except Exception as e:
 			await self.bot.say(wrap.format(type(e).__name__ + ': ' + str(e)))
 
