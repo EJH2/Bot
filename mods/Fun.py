@@ -5,9 +5,8 @@ import io
 import discord.utils
 import json
 from discord.errors import *
+import time
 
-with open("mods/utils/tags.json") as f:
-	tags = json.load(f)
 with open("mods/utils/config.json") as f:
 	config = json.load(f)
 
@@ -233,17 +232,6 @@ class Fun():
 		"""Makes the bot say anything the user wants it to."""
 		try:
 			await self.bot.say(message)
-		except Exception as e:
-			await self.bot.say(wrap.format(type(e).__name__ + ': ' + str(e)))
-
-	@commands.command(pass_context=True)
-	async def tags(self,ctx,*,tag):
-		"""Retrieves saved phrases."""
-		try:
-			if tag in open("mods/utils/tags.json").read():
-				await self.bot.say(tags[tag])
-			else:
-				await self.bot.say("That tag doesn't appear to exist! Use {0}addtag to create it!".format(config["command_prefix"]))
 		except Exception as e:
 			await self.bot.say(wrap.format(type(e).__name__ + ': ' + str(e)))
 
