@@ -231,5 +231,16 @@ class ServerModeration():
 		except Exception as e:
 			await self.bot.say(wrap.format(type(e).__name__ + ': ' + str(e)))
 
+	@commands.command(pass_context=True)
+	@checks.admin_or_perm(manage_server=True)
+	async def changenick(self,ctx,nickname,*users:discord.User):
+		"""Changes users nicknames."""
+		try:
+			for user in users:
+				await self.bot.change_nickname(user,nickname)
+				await self.bot.say("Alright, I changed the nickname of `{}` to `{}`".format(user,nickname))
+		except Exception as e:
+			await self.bot.say(wrap.format(type(e).__name__ + ': ' + str(e)))
+
 def setup(bot):
 	bot.add_cog(ServerModeration(bot))

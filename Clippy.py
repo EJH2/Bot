@@ -98,7 +98,8 @@ async def on_ready():
 		print(bot.user.name + "#" + bot.user.discriminator)
 		print(bot.user.id)
 		print('------')
-		bot.statistics.start()
+		if os.path.isfile("mods/utils/CarbonConfig.json"):
+			bot.statistics.start()
 	except Exception as e:
 		print(type(e).__name__ + ': ' + str(e))
 
@@ -357,5 +358,6 @@ async def unblacklist(ctx,user:str):
 
 bot.add_cog(Default(bot))
 
-bot.statistics = Carbon(key=carbon['key'], bot=bot)
+if os.path.isfile("mods/utils/CarbonConfig.json"):
+	bot.statistics = Carbon(key=carbon['key'], bot=bot)
 bot.run(credentials["token"])
