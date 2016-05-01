@@ -38,8 +38,8 @@ class Carbon(threading.Thread):
 			try:
 				r = requests.post(url, json=data)
 				sent += 1
-				log.info('Carbon Payload #{1} returned {0.status_code} {0.reason} for {2}\n'.format(r, sent, data) + '-'*20)
+				print('Carbon Payload #{1} returned {0.status_code} {0.reason} for {2}\n '.format(r, sent, data))
 			except Exception as e:
-				log.error('An error occurred while fetching statistics: ' + str(e))
+				print('/!\\=================/!\\==/!\\=================/!\\\nERROR: An error occurred while fetching statistics: ' + str(e) + "\n/!\\=================/!\\==/!\\=================/!\\")
 			finally:
 				time.sleep(300)

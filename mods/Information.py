@@ -86,85 +86,79 @@ class Information():
 	async def serverinfo(self,ctx):
 		"""Gives information about the current server."""
 		try:
-			try:
-				server = ctx.message.server
-				if len(str(server.icon_url)) > 0:
-					await self.bot.say('```xl\nServer Information:\nName: "' + server.name + '"\nID: "' + server.id + '"\nOwner: "' + str(server.owner) + '"\nRoles: "' + ', '.join(map(str, server.roles)).replace("@", "@\u200b") + '"\nReigon: "' + str(server.region) + '"\nChannels: "' + ', '.join(map(str, server.channels)) + '"\nDefault Channel: "' + str(server.default_channel) + '"\nMembers: "' + ', '.join(map(str, server.members)) + '"\nIcon: "' + str(server.icon_url) + '"\n```')
-				else:
-					await self.bot.say('```xl\nServer Information:\nName: "' + server.name + '"\nID: "' + server.id + '"\nOwner: "' + str(server.owner) + '"\nRoles: "' + ', '.join(map(str, server.roles)).replace("@", "@\u200b") + '"\nReigon: "' + str(server.region) + '"\nChannels: "' + ', '.join(map(str, server.channels)) + '"\nDefault Channel: "' + str(server.default_channel) + '"\nMembers: "' + ', '.join(map(str, server.members)) + '"\nIcon: "None"\n```')
-			except HTTPException:
-				if len(str(server.icon_url)) > 0:
-					await self.bot.say('```xl\nServer Information:\nName: "' + server.name + '"\nID: "' + server.id + '"\nOwner: "' + str(server.owner) + '"\nRoles: "' + ', '.join(map(str, server.roles)).replace("@", "@\u200b") + '"\nReigon: "' + str(server.region) + '"\nChannels: "' + ', '.join(map(str, server.channels)) + '"\nDefault Channel: "' + str(server.default_channel) + '"\nMembers: "Too Many to Count >.<"\nIcon: "' + str(server.icon_url) + '"\n```')
-				else:
-					await self.bot.say('```xl\nServer Information:\nName: "' + server.name + '"\nID: "' + server.id + '"\nOwner: "' + str(server.owner) + '"\nRoles: "' + ', '.join(map(str, server.roles)).replace("@", "@\u200b") + '"\nReigon: "' + str(server.region) + '"\nChannels: "' + ', '.join(map(str, server.channels)) + '"\nDefault Channel: "' + str(server.default_channel) + '"\nMembers: "Too Many to Count >.<"\nIcon: "None"\n```')
-		except Exception as e:
-			await self.bot.say(wrap.format(type(e).__name__ + ': ' + str(e)))
+			server = ctx.message.server
+			if len(str(server.icon_url)) > 0:
+				await self.bot.say('```xl\nServer Information:\nName: "' + server.name + '"\nID: "' + server.id + '"\nOwner: "' + str(server.owner) + '"\nRoles: "' + ', '.join(map(str, server.roles)).replace("@", "@\u200b") + '"\nReigon: "' + str(server.region) + '"\nChannels: "' + ', '.join(map(str, server.channels)) + '"\nDefault Channel: "' + str(server.default_channel) + '"\nMembers: "' + ', '.join(map(str, server.members)) + '"\nIcon: "' + str(server.icon_url) + '"\n```')
+			else:
+				await self.bot.say('```xl\nServer Information:\nName: "' + server.name + '"\nID: "' + server.id + '"\nOwner: "' + str(server.owner) + '"\nRoles: "' + ', '.join(map(str, server.roles)).replace("@", "@\u200b") + '"\nReigon: "' + str(server.region) + '"\nChannels: "' + ', '.join(map(str, server.channels)) + '"\nDefault Channel: "' + str(server.default_channel) + '"\nMembers: "' + ', '.join(map(str, server.members)) + '"\nIcon: "None"\n```')
+		except HTTPException:
+			if len(str(server.icon_url)) > 0:
+				await self.bot.say('```xl\nServer Information:\nName: "' + server.name + '"\nID: "' + server.id + '"\nOwner: "' + str(server.owner) + '"\nRoles: "' + ', '.join(map(str, server.roles)).replace("@", "@\u200b") + '"\nReigon: "' + str(server.region) + '"\nChannels: "' + ', '.join(map(str, server.channels)) + '"\nDefault Channel: "' + str(server.default_channel) + '"\nMembers: "Too Many to Count >.<"\nIcon: "' + str(server.icon_url) + '"\n```')
+			else:
+				await self.bot.say('```xl\nServer Information:\nName: "' + server.name + '"\nID: "' + server.id + '"\nOwner: "' + str(server.owner) + '"\nRoles: "' + ', '.join(map(str, server.roles)).replace("@", "@\u200b") + '"\nReigon: "' + str(server.region) + '"\nChannels: "' + ', '.join(map(str, server.channels)) + '"\nDefault Channel: "' + str(server.default_channel) + '"\nMembers: "Too Many to Count >.<"\nIcon: "None"\n```')
 
 	@commands.command(pass_context=True)
 	async def join(self,ctx):
 		"""Gives you my join information."""
-		try:
-			await self.bot.say("You can invite me to your server using: https://discordapp.com/oauth2/authorize?client_id=169558161047552002&scope=bot&permissions=261183" + "\n{0} needs all of these permissions to use commands like {1}prune or {1}ban! So if you don't want to use those types of features, feel free to uncheck them. But, if you do want to use them in the future, you will have to re-enable them.\n**Note: You have to be able to manage the server (edit the server settings) to invite me to your server, or else your desired server won't show up on the list!**".format(self.bot.user.name, config["command_prefix"]))
-		except Exception as e:
-			await self.bot.say(wrap.format(type(e).__name__ + ': ' + str(e)))
+		await self.bot.say("You can invite me to your server using: https://discordapp.com/oauth2/authorize?client_id=169558161047552002&scope=bot&permissions=261183" + "\n{0} needs all of these permissions to use commands like {1}prune or {1}ban! So if you don't want to use those types of features, feel free to uncheck them. But, if you do want to use them in the future, you will have to re-enable them.\n**Note: You have to be able to manage the server (edit the server settings) to invite me to your server, or else your desired server won't show up on the list!**".format(self.bot.user.name, config["command_prefix"]))
 
 	@commands.command(pass_context=True)
 	async def api(self,ctx,api=''):
-			"""Gives information on various APIs."""
-			if api == "steam":
-				url = "https://steamgaug.es/api/v2"
-				with aiohttp.ClientSession() as session:
-					async with session.get(url) as resp:
-						resp = await resp.json()
-				if resp["ISteamClient"]["online"] == 1:
-					SteamClient = "Online"
-				else:
-					SteamClient = "Offline"
-				if resp["SteamCommunity"]["online"] == 1:
-					SteamCommunity = "Online"
-				else:
-					SteamCommunity = "Offline"
-				if resp["SteamStore"]["online"] == 1:
-					SteamStore = "Online"
-				else:
-					SteamStore = "Offline"
-				if resp["ISteamUser"]["online"] == 1:
-					SteamUser = "Online"
-				else:
-					SteamUser = "Offline"
-				if resp["IEconItems"]["440"]["online"] == 1:
-					SteamTF2Items = "Online"
-				else:
-					SteamTF2Items = "Offline"
-				if resp["IEconItems"]["570"]["online"] == 1:
-					SteamDOTA2Items = "Online"
-				else:
-					SteamDOTA2Items = "Offline"
-				if resp["IEconItems"]["730"]["online"] == 1:
-					SteamCSGOItems = "Online"
-				else:
-					SteamCSGOItems = "Offline"
-				if resp["ISteamGameCoordinator"]["440"]["online"] == 1:
-					SteamTF2Games = "Online"
-				else:
-					SteamTF2Games = "Offline"
-				if resp["ISteamGameCoordinator"]["570"]["online"] == 1:
-					SteamDOTA2Games = "Online"
-				else:
-					SteamDOTA2Games = "Offline"
-				if resp["ISteamGameCoordinator"]["730"]["online"] == 1:
-					SteamCSGOGames = "Online"
-				else:
-					SteamCSGOGames = "Offline"
-				x = 'Steam Statuses:\n	Steam Client: "{0}"\n	Steam Community: "{1}"\n	Steam Store: "{2}"\n	Steam Users: "{3}"\n	Item Servers:\n        TF2: "{4}"\n        DOTA 2: "{5}"\n        CS:GO: "{6}"\n	Game Coordinator:\n        TF2: "{7}"\n        DOTA 2: "{8}"\n        CS:GO: "{9}"'.format(SteamClient,SteamCommunity,SteamStore,SteamUser,SteamTF2Items,SteamDOTA2Items,SteamCSGOItems,SteamTF2Games,SteamDOTA2Games,SteamCSGOGames)
-				await self.bot.say(xl.format(x))
-			if api == "discord":
-				url = "https://srhpyqt94yxb.statuspage.io/api/v2/summary.json"
-				with aiohttp.ClientSession() as session:
-					async with session.get(url) as resp:
-						resp = await resp.json()
-				x = 'Discord Statuses:\n	Overall Status: "{13}"\n    API: "{0}"\n	Gateway: "{1}"\n    CloudFlare: "{2}"\n    Voice: "{3}"\n        Amsterdam: "{4}"\n        Frankfurt: "{5}"\n        London: "{6}"\n        Singapore: "{7}"\n        Sydney: "{8}"\n        US Central: "{9}"\n        US East: "{10}"\n        US South: "{11}"\n        US West: "{12}"'.format(resp["components"][1]["status"],resp["components"][2]["status"],resp["components"][4]["status"],resp["components"][7]["status"],resp["components"][0]["status"],resp["components"][3]["status"],resp["components"][5]["status"],resp["components"][6]["status"],resp["components"][8]["status"],resp["components"][9]["status"],resp["components"][10]["status"],resp["components"][11]["status"],resp["components"][12]["status"],resp["status"]["description"])
-				await self.bot.say(xl.format(x))
+		"""Gives information on various APIs."""
+		if api == "steam":
+			url = "https://steamgaug.es/api/v2"
+			with aiohttp.ClientSession() as session:
+				async with session.get(url) as resp:
+					resp = await resp.json()
+			if resp["ISteamClient"]["online"] == 1:
+				SteamClient = "Online"
+			else:
+				SteamClient = "Offline"
+			if resp["SteamCommunity"]["online"] == 1:
+				SteamCommunity = "Online"
+			else:
+				SteamCommunity = "Offline"
+			if resp["SteamStore"]["online"] == 1:
+				SteamStore = "Online"
+			else:
+				SteamStore = "Offline"
+			if resp["ISteamUser"]["online"] == 1:
+				SteamUser = "Online"
+			else:
+				SteamUser = "Offline"
+			if resp["IEconItems"]["440"]["online"] == 1:
+				SteamTF2Items = "Online"
+			else:
+				SteamTF2Items = "Offline"
+			if resp["IEconItems"]["570"]["online"] == 1:
+				SteamDOTA2Items = "Online"
+			else:
+				SteamDOTA2Items = "Offline"
+			if resp["IEconItems"]["730"]["online"] == 1:
+				SteamCSGOItems = "Online"
+			else:
+				SteamCSGOItems = "Offline"
+			if resp["ISteamGameCoordinator"]["440"]["online"] == 1:
+				SteamTF2Games = "Online"
+			else:
+				SteamTF2Games = "Offline"
+			if resp["ISteamGameCoordinator"]["570"]["online"] == 1:
+				SteamDOTA2Games = "Online"
+			else:
+				SteamDOTA2Games = "Offline"
+			if resp["ISteamGameCoordinator"]["730"]["online"] == 1:
+				SteamCSGOGames = "Online"
+			else:
+				SteamCSGOGames = "Offline"
+			x = 'Steam Statuses:\n	Steam Client: "{0}"\n	Steam Community: "{1}"\n	Steam Store: "{2}"\n	Steam Users: "{3}"\n	Item Servers:\n        TF2: "{4}"\n        DOTA 2: "{5}"\n        CS:GO: "{6}"\n	Game Coordinator:\n        TF2: "{7}"\n        DOTA 2: "{8}"\n        CS:GO: "{9}"'.format(SteamClient,SteamCommunity,SteamStore,SteamUser,SteamTF2Items,SteamDOTA2Items,SteamCSGOItems,SteamTF2Games,SteamDOTA2Games,SteamCSGOGames)
+			await self.bot.say(xl.format(x))
+		if api == "discord":
+			url = "https://srhpyqt94yxb.statuspage.io/api/v2/summary.json"
+			with aiohttp.ClientSession() as session:
+				async with session.get(url) as resp:
+					resp = await resp.json()
+			x = 'Discord Statuses:\n	Overall Status: "{13}"\n    API: "{0}"\n	Gateway: "{1}"\n    CloudFlare: "{2}"\n    Voice: "{3}"\n        Amsterdam: "{4}"\n        Frankfurt: "{5}"\n        London: "{6}"\n        Singapore: "{7}"\n        Sydney: "{8}"\n        US Central: "{9}"\n        US East: "{10}"\n        US South: "{11}"\n        US West: "{12}"'.format(resp["components"][1]["status"],resp["components"][2]["status"],resp["components"][4]["status"],resp["components"][7]["status"],resp["components"][0]["status"],resp["components"][3]["status"],resp["components"][5]["status"],resp["components"][6]["status"],resp["components"][8]["status"],resp["components"][9]["status"],resp["components"][10]["status"],resp["components"][11]["status"],resp["components"][12]["status"],resp["status"]["description"])
+			await self.bot.say(xl.format(x))
 
 def setup(bot):
 	bot.add_cog(Information(bot))
