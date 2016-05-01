@@ -224,10 +224,13 @@ class Fun():
 			await endtimer
 
 	@commands.group(pass_context=True,invoke_without_command=True)
-	async def meme(self,ctx,meme:str,line1:str,line2:str):
+	async def meme(self,ctx,meme:str,line1:str,line2:str,style=""):
 		"""Generates a meme."""
 		if ctx.invoked_subcommand is None:
-			await self.bot.say("http://memegen.link/{0}/{1}/{2}.jpg".format(meme,line1.replace("-","--").replace("_","__").replace(" ","-").replace(" ","_").replace("?","~q").replace("%","~p").replace("\"","''"),line2.replace("-","--").replace("_","__").replace(" ","-").replace(" ","_").replace("?","~q").replace("%","~p").replace("\"","''")))
+			if not style:
+				await self.bot.say("http://memegen.link/{0}/{1}/{2}.jpg".format(meme,line1.replace("-","--").replace("_","__").replace(" ","-").replace(" ","_").replace("?","~q").replace("%","~p").replace("\"","''"),line2.replace("-","--").replace("_","__").replace(" ","-").replace(" ","_").replace("?","~q").replace("%","~p").replace("\"","''")))
+			else:
+				await self.bot.say("http://memegen.link/{0}/{1}/{2}.jpg?alt={3}".format(meme,line1.replace("-","--").replace("_","__").replace(" ","-").replace(" ","_").replace("?","~q").replace("%","~p").replace("\"","''"),line2.replace("-","--").replace("_","__").replace(" ","-").replace(" ","_").replace("?","~q").replace("%","~p").replace("\"","''"),style))
 
 	@meme.command(name="custom",pass_context=True)
 	async def _custom(self,ctx,pic:str,line1:str,line2:str):
@@ -268,7 +271,24 @@ class Fun():
 				await self.bot.say("That isn't a real meme!")
 		if searchtype == "example":
 			await self.bot.say("http://memegen.link/{0}/your-text/goes-here.jpg".format(query))
-				
+		if searchtype == "aliases":
+			url = "http://memegen.link/templates/{}".format(query)
+			with aiohttp.ClientSession() as session:
+				async with session.get(url) as resp:
+					resp = await resp.json()
+			if len(resp["aliases"]) > 1:
+				await self.bot.say("Aliases for {0} are `".format(query) + ", ".join(map(str,resp["aliases"] + "`")))
+			else:
+				await self.bot.say("There are no aliases for this meme.")
+		if searchtype == "styles":
+			url = "http://memegen.link/templates/{}".format(query)
+			with aiohttp.ClientSession() as session:
+				async with session.get(url) as resp:
+					resp = await resp.json()
+			if len(resp["styles"]) > 0:
+				await self.bot.say("Alternative styles for {0} are `".format(query) + ", ".join(map(str,resp["styles"] + "`")))
+			else:
+				await self.bot.say("There are no alternative styles for this meme.")
 
 def setup(bot):
 	bot.add_cog(Fun(bot))
