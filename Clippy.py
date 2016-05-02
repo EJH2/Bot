@@ -55,7 +55,7 @@ async def uninstall(package):
 
 installed_packages = pip.get_installed_distributions()
 installed_packages_list = sorted(["%s==%s" % (i.key, i.version)
-     for i in installed_packages])
+	 for i in installed_packages])
 pip_list = "My currently installed pip packages are:\n" + "\n".join(map(str,installed_packages_list))
 
 #CHAN = discord.get_channel(ID_HERE)
@@ -71,12 +71,25 @@ modules = [
 async def on_message(message):
 		if "<@" + message.author.id + ">" in open('mods/utils/blacklist.txt').read():
 			return
-		destination = None
-		if message.channel.is_private:
-			destination = 'Private Message'
+		if message.server.id == "105010597954871296":
+			destination = None
+			if message.channel.is_private:
+				destination = 'Private Message'
+			else:
+				destination = '#{0.channel.name} ({0.server.name})'.format(message)
+			if os.path.isfile("mods/utils/logs/BooBot.txt"):
+				with open("mods/utils/logs/BooBot.txt","a") as f:
+					f.write('{0.timestamp}: {0.author.name} in {1}: {0.content}'.format(message, destination))
+			else:
+				with open("mods/utils/logs/BooBot.txt","a") as f:
+					f.write('{0.timestamp}: {0.author.name} in {1}: {0.content}'.format(message, destination))
 		else:
-			destination = '#{0.channel.name} ({0.server.name})'.format(message)
-		log.info('{0.timestamp}: {0.author.name} in {1}: {0.content}'.format(message, destination))
+			destination = None
+			if message.channel.is_private:
+				destination = 'Private Message'
+			else:
+				destination = '#{0.channel.name} ({0.server.name})'.format(message)
+			log.info('{0.timestamp}: {0.author.name} in {1}: {0.content}'.format(message, destination))
 		try:
 			await bot.process_commands(message)
 		except Exception as e:
