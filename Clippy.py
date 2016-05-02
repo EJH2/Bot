@@ -71,18 +71,6 @@ modules = [
 async def on_message(message):
 		if "<@" + message.author.id + ">" in open('mods/utils/blacklist.txt').read():
 			return
-		if message.server.id == "105010597954871296":
-			destination = None
-			if message.channel.is_private:
-				destination = 'Private Message'
-			else:
-				destination = '#{0.channel.name} ({0.server.name})'.format(message)
-			if os.path.isfile("mods/utils/logs/BooBot.txt"):
-				with open("mods/utils/logs/BooBot.txt","a") as f:
-					f.write('{0.timestamp}: {0.author.name} in {1}: {0.content}'.format(message, destination))
-			else:
-				with open("mods/utils/logs/BooBot.txt","a") as f:
-					f.write('{0.timestamp}: {0.author.name} in {1}: {0.content}'.format(message, destination))
 		else:
 			destination = None
 			if message.channel.is_private:
