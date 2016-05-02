@@ -8,6 +8,9 @@ from discord.errors import *
 import time
 import aiohttp
 import json
+import sys
+from PIL import Image, ImageDraw, ImageFont
+from pyfiglet import figlet_format
 
 with open("mods/utils/config.json") as f:
 	config = json.load(f)
@@ -289,6 +292,19 @@ class Fun():
 				await self.bot.say("Alternative styles for {0} are `".format(query) + ", ".join(map(str,resp["styles"] + "`")))
 			else:
 				await self.bot.say("There are no alternative styles for this meme.")
+
+	@commands.command(pass_context=True)
+	async def ascii(self,ctx,text:str):
+		img = Image.new('RGB', (2000, 1000))
+		d = ImageDraw.Draw(img)
+		d.text((20, 20), figlet_format(text, font='starwars'), fill=(255, 0, 0))
+		text_width, text_height = d.textsize(figlet_format(text, font='starwars'))
+		img1 = Image.new('RGB', (text_width + 30, text_height))
+		d = ImageDraw.Draw(img1)
+		d.text((20, 20), figlet_format(text, font='starwars'), fill=(255, 0, 0))
+		text_width, text_height = d.textsize(figlet_format(text, font='starwars'))
+		img1.save("mods/utils/ascii.png")
+		await self.bot.send_file(ctx.message.channel,"mods/utils/ascii.png")
 
 def setup(bot):
 	bot.add_cog(Fun(bot))
