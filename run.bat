@@ -1,3 +1,4 @@
+
 @ECHO off
 
 CHCP 65001 > NUL
@@ -14,7 +15,7 @@ IF %ERRORLEVEL% NEQ 0 GOTO nopython
 rem git --version > NUL 2>&1
 rem IF %ERRORLEVEL% NEQ 0 GOTO nogit
 
-CMD /k python run.py
+CMD /k python Clippy.py
 GOTO end
 
 :nogit
@@ -23,6 +24,7 @@ GOTO end
 
 :nopython
 ECHO ERROR: Python has either not been installed or not added to your PATH.
+GOTO end
 
 :end
 PAUSE

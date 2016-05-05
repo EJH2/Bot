@@ -11,6 +11,8 @@ import json
 import sys
 from PIL import Image, ImageDraw, ImageFont
 from pyfiglet import figlet_format
+import wikipedia
+import wikipedia.exceptions
 
 with open("mods/utils/config.json") as f:
 	config = json.load(f)
@@ -252,12 +254,14 @@ class Fun():
 	async def __search(self,ctx,searchtype,*,query):
 		"""Searches the current usable meme templates.
 
-			You also can look at examples of meme templates by passing 'example' in the searchtype field and put the abbreviated meme code in query."""
+			Don't put in searchtype and query for a list of search types."""
+		searchtype, query == None
+		if not searchtype and not query:
+			await self.bot.say("Search types include:\nName: Searches for the meme code of a meme.\nExample: Gives an example version of the given meme code.\nAliases: Lists the possible alias meme codes for a meme.\nStyles: Lists alternate styles for a meme.")
 		if searchtype == "name":
 			url = "http://memegen.link/templates/"
 			query = query.title()
 			query = query.replace("'A","'a").replace("'R","'r").replace("'S","'s").replace("'M","'m")
-			print(query)
 			with aiohttp.ClientSession() as session:
 				async with session.get(url) as resp:
 					resp = await resp.json()
@@ -294,17 +298,34 @@ class Fun():
 				await self.bot.say("There are no alternative styles for this meme.")
 
 	@commands.command(pass_context=True)
-	async def ascii(self,ctx,text:str):
+	async def ascii(self,ctx,text:str,font:str,textcolor:str,background:str):
+		"""Creates ASCII text."""
+		textcolor, background == None
+		if not textcolor:
+			textcolor = "white"
+		if not background:
+			background = "black"
+		if font == "barbwire":
+			text = text.replace(""," ")
 		img = Image.new('RGB', (2000, 1000))
 		d = ImageDraw.Draw(img)
-		d.text((20, 20), figlet_format(text, font='starwars'), fill=(255, 0, 0))
-		text_width, text_height = d.textsize(figlet_format(text, font='starwars'))
-		img1 = Image.new('RGB', (text_width + 30, text_height))
+		d.text((20, 20), figlet_format(text, font=font), fill=(255, 0, 0))
+		text_width, text_height = d.textsize(figlet_format(text, font=font))
+		img1 = Image.new('RGB', (text_width + 30, text_height + 30),background)
 		d = ImageDraw.Draw(img1)
-		d.text((20, 20), figlet_format(text, font='starwars'), fill=(255, 0, 0))
-		text_width, text_height = d.textsize(figlet_format(text, font='starwars'))
+		d.text((20, 20), figlet_format(text, font=font), fill=textcolor, anchor="center")
+		text_width, text_height = d.textsize(figlet_format(text, font=font))
 		img1.save("mods/utils/ascii.png")
 		await self.bot.send_file(ctx.message.channel,"mods/utils/ascii.png")
+		
+	@commands.command(pass_context=True)
+	async def wiki(self,ctx,query:str):
+		"""Searches wikipedia."""
+		try:
+			q = wikipedia.page(query)
+			await self.bot.say("{}:\n```\n{}\n```\nFor more information, visit <{}>".format(q.title,wikipedia.summary(query, sentences=5),q.url))
+		except wikipedia.exceptions.PageError:
+			await self.bot.say("Either the page doesn't exist, or you typed it in wrong. Either way, please try again.")
 
 def setup(bot):
 	bot.add_cog(Fun(bot))
