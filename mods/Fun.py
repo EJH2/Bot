@@ -14,7 +14,7 @@ from pyfiglet import figlet_format
 import wikipedia
 import wikipedia.exceptions
 
-with open("mods/utils/config.json") as f:
+with open("mods/utils/json/configs/config.json") as f:
 	config = json.load(f)
 
 wrap = "```py\n{}\n```"
@@ -27,7 +27,7 @@ class Fun():
 	async def scramble(self,ctx,*,num:int):
 		"""Allows the user to play a word scramble with the bot."""
 		if num == 5:
-			with open("mods/utils/5 letter words.txt", "r") as f:
+			with open("mods/utils/text/5 letter words.txt", "r") as f:
 				data = f.read()
 			data = data.split("\n")
 			i = randint(1, 5757)
@@ -79,7 +79,7 @@ class Fun():
 	async def roti(self,ctx,*,number=''):
 		"""Bestows the user with the 102 Rules of the Internet."""
 		if not number:                
-			with open("mods/utils/RulesOTI.txt", "r") as f:
+			with open("mods/utils/text/RulesOTI.txt", "r") as f:
 				data = f.read()
 			data = data.split("\n")
 			i = randint(1, 102)
@@ -88,7 +88,7 @@ class Fun():
 			try:
 				i = int(number)
 				if i > 0 and i <= 102:
-					with open("mods/utils/RulesOTI.txt", "r") as f:
+					with open("mods/utils/text/RulesOTI.txt", "r") as f:
 						data = f.read()
 					data = data.split("\n")
 					await self.bot.say(data[i-1])
@@ -107,13 +107,13 @@ class Fun():
 	@commands.command(pass_context=True)
 	async def pybelike(self,ctx):
 		"""Gives the user an accurate description of Python."""
-		await self.bot.send_file(ctx.message.channel, "mods/utils/python.png")
+		await self.bot.send_file(ctx.message.channel, "mods/utils/images/python.png")
 
 	@commands.command(pass_context=True)
 	async def lenny(self,ctx):
 		"""Gives the user a lenny face."""
 		i = randint(1, 98)
-		with io.open('mods/utils/lenny.txt','r',encoding='utf8') as f:
+		with io.open('mods/utils/text/lenny.txt','r',encoding='utf8') as f:
 			text = f.read()
 		text = text.split("\n")
 		await self.bot.say("`" + text[i-1] + "`")
@@ -122,7 +122,7 @@ class Fun():
 	async def meh(self,ctx):
 		"""Gives the user the famous shrug face."""
 		i = 7
-		with io.open('mods/utils/lenny.txt','r',encoding='utf8') as f:
+		with io.open('mods/utils/text/lenny.txt','r',encoding='utf8') as f:
 			text = f.read()
 		text = text.split("\n")
 		await self.bot.say("" + text[i-1] + "")
@@ -133,7 +133,7 @@ class Fun():
 
 			Do `^emoji url` to get the link to the cheat sheet page, or put a number from 1 to 874 to get a random emoji!"""
 		if not query:
-			with open("mods/utils/emoji.txt", "r") as f:
+			with open("mods/utils/text/emoji.txt", "r") as f:
 				data = f.read()
 			data = data.split("\n")
 			emoji1 = randint(1, 874)
@@ -145,7 +145,7 @@ class Fun():
 			if query == "url":
 				await self.bot.say("http://www.emoji-cheat-sheet.com/")
 			else:
-				with io.open('mods/utils/emoji.txt','r') as f:
+				with io.open('mods/utils/text/emoji.txt','r') as f:
 					text = f.read()
 				text = text.split("\n")
 				i = int(query)
@@ -158,13 +158,13 @@ class Fun():
 		Do `^copypasta <number from 1-19>` for a specific copypasta!
 		"""
 		if not query:
-			with io.open('mods/utils/copypasta.txt','r',encoding='utf8') as f:
+			with io.open('mods/utils/text/copypasta.txt','r',encoding='utf8') as f:
 				data = f.read()
 			data = data.split("\n")
 			i = randint(1,19)
 			await self.bot.say(data[i-1])
 		else:
-			with io.open('mods/utils/copypasta.txt','r',encoding='utf8') as f:
+			with io.open('mods/utils/text/copypasta.txt','r',encoding='utf8') as f:
 				data = f.read()
 			data = data.split("\n")
 			i = int(query)
@@ -173,7 +173,7 @@ class Fun():
 	@commands.command(pass_context=True)
 	async def nope(self,ctx):
 		"""Gives a user a 'nope' gif."""
-		with open("mods/utils/nope.txt","r") as f:
+		with open("mods/utils/text/nope.txt","r") as f:
 			data = f.read()
 		data = data.split("\n")
 		i = randint(1,3)
@@ -265,11 +265,11 @@ class Fun():
 			with aiohttp.ClientSession() as session:
 				async with session.get(url) as resp:
 					resp = await resp.json()
-			with open("mods/utils/memenames.json","w") as f:
+			with open("mods/utils/fun/memenames.json","w") as f:
 				f.seek(0)
 				f.write(json.dumps(resp))
 				f.truncate()
-			with open("mods/utils/memenames.json") as f:
+			with open("mods/utils/fun/memenames.json") as f:
 				names = json.load(f)
 			if query in names:
 				q = names[query]
@@ -315,8 +315,8 @@ class Fun():
 		d = ImageDraw.Draw(img1)
 		d.text((20, 20), figlet_format(text, font=font), fill=textcolor, anchor="center")
 		text_width, text_height = d.textsize(figlet_format(text, font=font))
-		img1.save("mods/utils/ascii.png")
-		await self.bot.send_file(ctx.message.channel,"mods/utils/ascii.png")
+		img1.save("mods/utils/images/ascii.png")
+		await self.bot.send_file(ctx.message.channel,"mods/utils/images/ascii.png")
 		
 	@commands.command(pass_context=True)
 	async def wiki(self,ctx,query:str):

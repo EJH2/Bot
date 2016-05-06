@@ -2,7 +2,7 @@ from discord.ext import commands
 import asyncio
 import discord
 import json
-from mods.utils import checks
+from mods.utils.py import checks
 import time
 import os
 import aiohttp
@@ -10,23 +10,23 @@ import sys
 import logging
 import pip
 import requests
-from mods.utils.Carbon import Carbon
+from mods.utils.py.Carbon import Carbon
 
-if os.path.isfile("mods/utils/CarbonConfig.json"):
-	with open("mods/utils/CarbonConfig.json") as f:
+if os.path.isfile("mods/utils/json/configs/CarbonConfig.json"):
+	with open("mods/utils/json/configs/CarbonConfig.json") as f:
 		carbon = json.load(f)
-if os.path.isfile("mods/utils/blacklist.txt"):
+if os.path.isfile("mods/utils/text/blacklist.txt"):
 	pass
 else:
-	with open("mods/utils/blacklist.txt","a") as f:
+	with open("mods/utils/text/blacklist.txt","a") as f:
 		f.write("")
-with open("mods/utils/config.json") as f:
+with open("mods/utils/json/configs/config.json") as f:
 	config = json.load(f)
-with open("mods/utils/credentials.json") as f:
+with open("mods/utils/json/configs/credentials.json") as f:
 	credentials = json.load(f)
-with open("mods/utils/hexnamestocode.json") as f:
+with open("mods/utils/json/fun/hexnamestocode.json") as f:
 	name = json.load(f)
-with open("mods/utils/hexcodestoname.json") as f:
+with open("mods/utils/json/fun/hexcodestoname.json") as f:
 	color = json.load(f)
 description = "This is the help menu for Clip.py! Because of my extensive amount of commands (and my over-ambitious creator) I go on and offline a lot, so please bear with me! If you have any questions, just PM EJH2#0674..."
 bot = commands.Bot(command_prefix=config["command_prefix"], description=description)
@@ -34,6 +34,7 @@ starttime = time.time()
 starttime2 = time.ctime(int(time.time()))
 bot.version = config["version"]
 wrap = "```py\n{}\n```"
+timestamp = time.strftime('%H:%M:%S')
 
 discord_logger = logging.getLogger('discord')
 discord_logger.setLevel(logging.CRITICAL)
@@ -43,15 +44,12 @@ handler = logging.FileHandler(filename='mods/utils/logs/discord.log', encoding='
 log.addHandler(handler)
 
 async def install(package):
-	if "--upgrade" in package:
-		await bot.say("You can't use --upgrade!")
-	else:
-		pip.main(['install', package])
-		return "Successfully installed {}".format(package)
+	os.system("start /wait cmd /c pip install {}".format(package))
+	await bot.say("Successfully installed `{}`".format(package))
 
 async def uninstall(package):
-	pip.main(['uninstall', package])
-	return "Successfully uninstalled {}".format(package)
+	os.system("start /wait cmd /c 'pip uninstall {}'".format(package))
+	await bot.say("Successfully uninstalled `{}`".format(package))
 
 installed_packages = pip.get_installed_distributions()
 installed_packages_list = sorted(["%s==%s" % (i.key, i.version)
@@ -69,7 +67,7 @@ modules = [
 
 @bot.event
 async def on_message(message):
-		if "<@" + message.author.id + ">" in open('mods/utils/blacklist.txt').read():
+		if "<@" + message.author.id + ">" in open('mods/utils/text/blacklist.txt').read():
 			return
 		else:
 			destination = None
@@ -101,7 +99,7 @@ async def on_ready():
 		print(bot.user.name + "#" + bot.user.discriminator)
 		print(bot.user.id)
 		print('------')
-		if os.path.isfile("mods/utils/CarbonConfig.json"):
+		if os.path.isfile("mods/utils/json/configs/CarbonConfig.json"):
 			bot.statistics.start()
 	except Exception as e:
 		print(type(e).__name__ + ': ' + str(e))
@@ -212,7 +210,7 @@ async def debug(ctx,*,code:str):
 async def settings(ctx,setting,*,change):
 	"""Changes bot variables."""
 	if setting in config:
-		with open("mods/utils/config.json","r+") as f:
+		with open("mods/utils/json/configs/config.json","r+") as f:
 			ch = change.replace("<SPACE>", " ")
 			config[setting] = ch
 			f.seek(0)
@@ -241,7 +239,7 @@ async def restart(ctx):
 @checks.is_owner()
 async def setavatar(ctx,avatarlink:str):
 	"""Sets the bots avatar."""
-	path = "mods/utils/image.jpg"
+	path = "mods/utils/images/image.jpg"
 	with aiohttp.ClientSession() as session:
 		async with session.get(avatarlink) as resp:
 			data = await resp.read()
@@ -277,7 +275,7 @@ async def cleargame():
 async def revert(ctx):
 	"""Reverts the bots name and avatar back to its original."""
 	await bot.edit_profile(username="Clip.py")
-	logo = open("mods/utils/original.jpg","rb")
+	logo = open("mods/utils/images/original.jpg","rb")
 	await bot.edit_profile(avatar=logo.read())
 	await bot.say("Clip.py has successfully been reverted to its original!")
 
@@ -287,10 +285,10 @@ async def blacklist(ctx,user:str):
 	"""Blacklists a user from the bot."""
 	if user == "<{}>".format(config["ownerid"]):
 		await bot.say("You can't blacklist the owner!")
-	elif user in open('mods/utils/blacklist.txt').read():
+	elif user in open('mods/utils/text/blacklist.txt').read():
 		await bot.say("That user is already blacklisted!")
 	else:
-		with open("mods/utils/blacklist.txt","a") as f:
+		with open("mods/utils/text/blacklist.txt","a") as f:
 			f.write(user + "\n")
 			await bot.say("Blacklisted that user!")
 
@@ -301,9 +299,9 @@ async def unblacklist(ctx,user:str):
 	if len(set(ctx.message.mentions)) > 0:
 		if user == "<{}>".format(config["ownerid"]):
 			await bot.say("You can't unblacklist the owner!")
-		elif user in open('mods/utils/blacklist.txt').read():
-			fin = open('mods/utils/blacklist.txt', 'r')
-			fout = open('mods/utils/blacklist.txt', 'w')
+		elif user in open('mods/utils/text/blacklist.txt').read():
+			fin = open('mods/utils/text/blacklist.txt', 'r')
+			fout = open('mods/utils/text/blacklist.txt', 'w')
 			for line in fin:
 				for word in delete_list:
 					line = line.replace(word, "")
@@ -318,6 +316,6 @@ async def unblacklist(ctx,user:str):
 
 bot.add_cog(Default(bot))
 
-if os.path.isfile("mods/utils/CarbonConfig.json"):
-	bot.statistics = Carbon(key=carbon['key'], bot=bot)
+if os.path.isfile("mods/utils/json/configs/CarbonConfig.json"):
+	bot.statistics = Carbon(key=carbon['key'], bot=bot, timestamp=timestamp)
 bot.run(credentials["token"])

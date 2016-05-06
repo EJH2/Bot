@@ -8,7 +8,7 @@ from discord.errors import *
 import requests
 import aiohttp
 
-with open("mods/utils/config.json") as f:
+with open("mods/utils/json/configs/config.json") as f:
 	config = json.load(f)
 
 wrap = "```py\n{0}\n```"
@@ -78,7 +78,7 @@ class Information():
 			elif obs == 'broken clouds':
 				await self.bot.say("The weather is forcasted to be broken clouds :cloud:")
 			else:
-				await self.bot.say("The weather is forcasted to be " + ", ".join(map(str,obs)) + ".")
+				await self.bot.say("The weather is forcasted to be " + "".join(map(str,obs)) + ".")
 		except Exception as e:
 			await self.bot.say(wrap.format(type(e).__name__ + ': ' + str(e)))
 

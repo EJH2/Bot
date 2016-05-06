@@ -2,7 +2,7 @@ from discord.ext import commands
 import discord.utils
 import json
 
-with open("mods/utils/config.json") as f:
+with open("mods/utils/json/configs/config.json") as f:
 	config = json.load(f)
 
 def is_owner_check(message):
