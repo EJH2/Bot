@@ -195,6 +195,26 @@ class ServerModeration():
 		for user in users:
 			await self.bot.change_nickname(user,nickname)
 			await self.bot.say("Alright, I changed the nickname of `{}` to `{}`".format(user,nickname))
+			await asyncio.sleep(.21)
+
+	@commands.command(pass_context=True)
+	@checks.admin_or_perm(manage_server=True)
+	async def massnick(self,ctx,*,nickname):
+		"""Mass renames everyone in the server."""
+		for member in ctx.message.server.members:
+			await self.bot.change_nickname(member,nickname)
+			await self.bot.say("Alright, I changed the nickname of `{}` to `{}`".format(member,nickname))
+			await asyncio.sleep(.21)
+
+	@commands.command(pass_context=True)
+	@checks.admin_or_perm(manage_server=True)
+	async def massunnick(self,ctx):
+		"""Mass renames everyone in the server."""
+		for member in ctx.message.server.members:
+			if member.nick:
+				await self.bot.change_nickname(member,member.name)
+				await self.bot.say("Alright, I reset the nickname of `{}` to `{}`".format(member,member.name))
+				await asyncio.sleep(.21)
 
 def setup(bot):
 	bot.add_cog(ServerModeration(bot))

@@ -293,7 +293,7 @@ class Fun():
 				async with session.get(url) as resp:
 					resp = await resp.json()
 			if len(resp["styles"]) > 0:
-				await self.bot.say("Alternative styles for {0} are `".format(query) + ", ".join(map(str,resp["styles"] + "`")))
+				await self.bot.say("Alternative styles for {0} are `".format(query) + ", ".join(map(str,resp["styles"])) + "`")
 			else:
 				await self.bot.say("There are no alternative styles for this meme.")
 
