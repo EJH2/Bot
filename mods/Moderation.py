@@ -2,7 +2,7 @@ from discord.ext import commands
 from .utils.py import checks
 import asyncio
 import discord.utils
-from discord.errors import *
+import discord.errors
 
 wrap = "```py\n{}\n```"
 
@@ -25,53 +25,51 @@ class ServerModeration():
 	@checks.admin_or_perm(manage_server=True)
 	async def kick(self,ctx,*users:discord.User):
 		"""Kicks the user of choice."""
-		server = ctx.message.server
-		for member in ctx.message.mentions:
-			member = discord.utils.find(lambda m: m.name == member.name, ctx.message.channel.server.members)
-			try:
+		try:
+			for member in users:
 				await self.bot.kick(member)
 				await self.bot.say(member.name + " was kicked from the server.")
-				break
-			except HTTPException:
-				await self.bot.say("Kicking failed. Sorry..")
-				return
-		else:
-			await self.bot.say('A username may help..')
+		except discord.HTTPException:
+			await self.bot.say("I don't seem to have permission to do that.")
 
 	@commands.command(pass_context=True)
 	@checks.admin_or_perm(manage_server=True)
 	async def prunekick(self,ctx,*users:discord.User):
 		"""Kicks a user and deletes 7 days of their messages."""
-		server = ctx.message.server
-		for member in ctx.message.mentions:
-			member = discord.utils.find(lambda m: m.name == member.name, ctx.message.channel.server.members)
-			try:
+		try:
+			for member in users:
 				await self.bot.ban(member, delete_message_days=7)
 				await self.bot.unban(member.server, member)
 				await self.bot.say(member.name + " was prune kicked from the server.")
-				break
-			except HTTPException:
-				await self.bot.say("Prune kick failed. Sorry...")
-				return
-		else:
-			await self.bot.say('A username may help..')
+		except discord.HTTPException:
+			await self.bot.say("I don't seem to have permission to do that.")
 
 	@commands.command(pass_context=True)
 	@checks.admin_or_perm(manage_server=True)
 	async def ban(self,ctx,*users:discord.User):
 		"""Bans a user and deletes their messages."""
-		server = ctx.message.server
-		for member in ctx.message.mentions:
-			member = discord.utils.find(lambda m: m.name == member.name, ctx.message.channel.server.members)
-			try:
+		try:
+			for member in users:
 				await self.bot.ban(member, delete_message_days=7)
 				await self.bot.say(member.name + " was banned from the server.")
-				break
-			except HTTPException:
-				await self.bot.say("Banning failed. Sorry...")
-				return
-		else:
-			await self.bot.say('A username may help..')
+		except discord.HTTPException:
+			await self.bot.say("Banning failed. Sorry...")
+
+	@commands.command(pass_context=True)
+	@checks.admin_or_perm(manage_server=True)
+	async def unban(self,ctx,*users:discord.User):
+		"""Unbans a user."""
+		try:
+			for member in users:
+				server = ctx.message.server
+				bans = await self.bot.get_bans(server)
+				if member in bans:
+					await self.bot.unban(member.server, member)
+					await self.bot.say(member.name + " was unbanned from the server.")
+				else:
+					await self.bot.say("You can't unban an unbanned person!")
+		except discord.HTTPException:
+			await self.bot.say("Unbanning failed. Sorry...")
 
 	@commands.command(pass_context=True)
 	@checks.admin_or_perm(manage_messages=True)
@@ -122,8 +120,6 @@ class ServerModeration():
 	@checks.mod_or_perm(manage_messages=True)
 	async def clean(self,ctx, max_messages:int):
 		"""Removes any messages from the bot in x amount of messages."""
-		if max_messages > 1000:
-			await self.bot.say("I can't go searching through more than 1000 messages!")
 		removed = 0
 		async for message in self.bot.logs_from(ctx.message.channel, limit=max_messages):
 			if message.author == self.bot.user:

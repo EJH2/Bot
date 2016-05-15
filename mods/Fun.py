@@ -7,12 +7,12 @@ import json
 from discord.errors import *
 import time
 import aiohttp
-import json
 import sys
 from PIL import Image, ImageDraw, ImageFont
 from pyfiglet import figlet_format
 import wikipedia
 import wikipedia.exceptions
+import base64
 
 with open("mods/utils/json/configs/config.json") as f:
 	config = json.load(f)
@@ -24,20 +24,19 @@ class Fun():
 		self.bot = bot
 
 	@commands.command(pass_context=True)
-	async def scramble(self,ctx,*,num:int):
+	async def scramble(self,ctx):
 		"""Allows the user to play a word scramble with the bot."""
-		if num == 5:
-			with open("mods/utils/text/5 letter words.txt", "r") as f:
-				data = f.read()
-			data = data.split("\n")
-			i = randint(1, 5757)
-			word = data[i-1]
-			print(word)
-			scrambled = sample(word, len(word))
-			scrambled = ''.join(scrambled)
-			await self.bot.say("The word scramble is: {}!".format(scrambled))
-			await self.bot.wait_for_message(content=word)
-			await self.bot.say("Nice job! You solved the scramble!")
+		with open("mods/utils/text/5 letter words.txt", "r") as f:
+			data = f.read()
+		data = data.split("\n")
+		i = randint(1, 5757)
+		word = data[i-1]
+		print(word)
+		scrambled = sample(word, len(word))
+		scrambled = ''.join(scrambled)
+		await self.bot.say("The word scramble is: {}!".format(scrambled))
+		await self.bot.wait_for_message(content=word)
+		await self.bot.say("Nice job! You solved the scramble!")
 
 	@commands.command(name="8ball",pass_context=True)
 	async def cmd_8ball(self,ctx,*,msg:str):
@@ -107,7 +106,7 @@ class Fun():
 	@commands.command(pass_context=True)
 	async def pybelike(self,ctx):
 		"""Gives the user an accurate description of Python."""
-		await self.bot.send_file(ctx.message.channel, "mods/utils/images/python.png")
+		await self.bot.send_file(ctx.message.channel, "mods/utils/images/other/python.png")
 
 	@commands.command(pass_context=True)
 	async def lenny(self,ctx):
@@ -297,26 +296,31 @@ class Fun():
 			else:
 				await self.bot.say("There are no alternative styles for this meme.")
 
-	@commands.command(pass_context=True)
-	async def ascii(self,ctx,text:str,font:str,textcolor:str,background:str):
+	@commands.group(pass_context=True,invoke_without_command=True)
+	async def ascii(self,ctx,text:str,font:str,textcolor='',background=''):
 		"""Creates ASCII text."""
-		textcolor, background == None
-		if not textcolor:
-			textcolor = "white"
-		if not background:
-			background = "black"
-		if font == "barbwire":
-			text = text.replace(""," ")
-		img = Image.new('RGB', (2000, 1000))
-		d = ImageDraw.Draw(img)
-		d.text((20, 20), figlet_format(text, font=font), fill=(255, 0, 0))
-		text_width, text_height = d.textsize(figlet_format(text, font=font))
-		img1 = Image.new('RGB', (text_width + 30, text_height + 30),background)
-		d = ImageDraw.Draw(img1)
-		d.text((20, 20), figlet_format(text, font=font), fill=textcolor, anchor="center")
-		text_width, text_height = d.textsize(figlet_format(text, font=font))
-		img1.save("mods/utils/images/ascii.png")
-		await self.bot.send_file(ctx.message.channel,"mods/utils/images/ascii.png")
+		if ctx.invoked_subcommand is None:
+			if not textcolor:
+				textcolor = "white"
+			if not background:
+				background = "black"
+			if font == "barbwire":
+				text = text.replace(""," ")
+			img = Image.new('RGB', (2000, 1000))
+			d = ImageDraw.Draw(img)
+			d.text((20, 20), figlet_format(text, font=font), fill=(255, 0, 0))
+			text_width, text_height = d.textsize(figlet_format(text, font=font))
+			img1 = Image.new('RGB', (text_width + 30, text_height + 30),background)
+			d = ImageDraw.Draw(img1)
+			d.text((20, 20), figlet_format(text, font=font), fill=textcolor, anchor="center")
+			text_width, text_height = d.textsize(figlet_format(text, font=font))
+			img1.save("mods/utils/images/other/ascii.png")
+			await self.bot.send_file(ctx.message.channel,"mods/utils/images/other/ascii.png")
+
+	@ascii.command(name="fonts",pass_context=True)
+	async def _fonts(self,ctx):
+		"""Lists available ASCII fonts."""
+		await self.bot.say("All available fonts for the command can be found here: http://www.figlet.org/examples.html")
 		
 	@commands.command(pass_context=True)
 	async def wiki(self,ctx,query:str):
@@ -326,6 +330,49 @@ class Fun():
 			await self.bot.say("{}:\n```\n{}\n```\nFor more information, visit <{}>".format(q.title,wikipedia.summary(query, sentences=5),q.url))
 		except wikipedia.exceptions.PageError:
 			await self.bot.say("Either the page doesn't exist, or you typed it in wrong. Either way, please try again.")
+
+	@commands.command(pass_context=True)
+	async def whoosh(self,ctx):
+		"""Whoosh!"""
+		await self.bot.say("http://i2.kym-cdn.com/photos/images/newsfeed/000/992/402/c35.gif")
+
+	@commands.command(pass_context=True)
+	async def encode(self,ctx,encoder:int,*,message:str):
+		"""Encodes messages."""
+		if encoder not in {16,32,64}:
+			await self.bot.say("You can only encode in 16, 32, and 64!")
+		else:
+			if encoder == 16:
+				encode = base64.b16encode(message.encode())
+			if encoder == 32:
+				encode = base64.b32encode(message.encode())
+			if encoder == 64:
+				encode = base64.b64encode(message.encode())
+			await self.bot.say(encode.decode())
+
+	@commands.command(pass_context=True)
+	async def decode(self,ctx,decoder:int,*,message:str):
+		"""Decodes messages."""
+		if decoder not in {16,32,64}:
+			await self.bot.say("You can only decode in 16, 32, and 64!")
+		else:
+			if decoder == 16:
+				decode = base64.b16decode(message.encode())
+			if decoder == 32:
+				decode = base64.b32decode(message.encode())
+			if decoder == 64:
+				decode = base64.b64decode(message.encode())
+			await self.bot.say(decode.decode())
+
+	@commands.command(pass_context=True)
+	async def tried(self,ctx):
+		"""At least you tried."""
+		await self.bot.send_file(ctx.message.channel, "mods/utils/images/other/At least you tried.png")
+
+	@commands.command(pass_context=True)
+	async def goldstar(self,ctx):
+		"""You get a gold star!"""
+		await self.bot.send_file(ctx.message.channel, "mods/utils/images/other/goldstar.png", content="You get a gold star!")
 
 def setup(bot):
 	bot.add_cog(Fun(bot))

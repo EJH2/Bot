@@ -7,6 +7,7 @@ import json
 from discord.errors import *
 import requests
 import aiohttp
+from PIL import Image, ImageDraw, ImageFont
 
 with open("mods/utils/json/configs/config.json") as f:
 	config = json.load(f)
@@ -69,7 +70,7 @@ class Information():
 	async def weather(self,ctx,*,location:str):
 		"""Gives the current weather in a city."""
 		try:
-			owm = pyowm.OWM('0a452fe77a83c5c2a6dd65d08f49bb18')
+			owm = pyowm.OWM(config["OWMKey"])
 			observation = owm.weather_at_place(location)
 			w = observation.get_weather()
 			obs = w.get_detailed_status()
@@ -83,6 +84,27 @@ class Information():
 			await self.bot.say(wrap.format(type(e).__name__ + ': ' + str(e)))
 
 	@commands.command(pass_context=True)
+	async def weather1(self,ctx,*,location):
+		with aiohttp.ClientSession() as session:
+			url = "http://openweathermap.org/data/2.1/find/name?q={}".format(location)
+			print(url)
+			async with session.get(url) as resp:
+				resp = await resp.json()
+		print(resp)
+		with aiohttp.ClientSession() as session:
+			url = "http://openweathermap.org/img/w/{}.png".format(resp["list"][0]["weather"][0]["icon"])
+			async with session.get(url) as resp:
+				data = await resp.read()
+				path = "mods/utils/images/weather/{}.png".format(resp["list"][0]["weather"][0]["icon"])
+				with open(path,"wb") as f:
+					f.write(data)
+		wimg = Image.open("mods/utils/images/weather/{}.png".format(resp["list"][0]["weather"][0]["icon"]))
+		img = Image.new('RGB', (1000, 500))
+		d = ImageDraw.Draw(img)
+		d.text(())
+		
+
+	@commands.command(pass_context=True)
 	async def serverinfo(self,ctx):
 		"""Gives information about the current server."""
 		try:
@@ -90,7 +112,7 @@ class Information():
 			if len(str(server.icon_url)) > 0:
 				await self.bot.say('```xl\nServer Information:\nName: "' + server.name + '"\nID: "' + server.id + '"\nOwner: "' + str(server.owner) + '"\nRoles: "' + ', '.join(map(str, server.roles)).replace("@", "@\u200b") + '"\nReigon: "' + str(server.region) + '"\nChannels: "' + ', '.join(map(str, server.channels)) + '"\nDefault Channel: "' + str(server.default_channel) + '"\nMembers: "' + ', '.join(map(str, server.members)) + '"\nIcon: "' + str(server.icon_url) + '"\n```')
 			else:
-				await self.bot.say('```xl\nServer Information:\nName: "' + server.name + '"\nID: "' + server.id + '"\nOwner: "' + str(server.owner) + '"\nRoles: "' + ', '.join(map(str, server.roles)).replace("@", "@\u200b") + '"\nReigon: "' + str(server.region) + '"\nChannels: "' + ', '.join(map(str, server.channels)) + '"\nDefault Channel: "' + str(server.default_channel) + '"\nMembers: "' + ', '.join(map(str, server.members)) + '"\nIcon: "None"\n```')
+				await self.bot.say('```xl\nServer Information:\nName: "' + server.name + '"\nID: "' + server.id + '"\nOwner: "' + str(server.owner) + '"\nRoles: "' + ', '.join(map(str, server.roles)).replace("@", "@\u200b") + '"\nReigon: "' + str(server.region) + '"\nChannels: "' + ', '.join(map(str, server.channels)) + '"\nDefault Channel: "' + str(server.default_channel) + '"\nMembers: "' + len(set(server.members)) + '"\nIcon: "None"\n```')
 		except HTTPException:
 			if len(str(server.icon_url)) > 0:
 				await self.bot.say('```xl\nServer Information:\nName: "' + server.name + '"\nID: "' + server.id + '"\nOwner: "' + str(server.owner) + '"\nRoles: "' + ', '.join(map(str, server.roles)).replace("@", "@\u200b") + '"\nReigon: "' + str(server.region) + '"\nChannels: "' + ', '.join(map(str, server.channels)) + '"\nDefault Channel: "' + str(server.default_channel) + '"\nMembers: "Too Many to Count >.<"\nIcon: "' + str(server.icon_url) + '"\n```')

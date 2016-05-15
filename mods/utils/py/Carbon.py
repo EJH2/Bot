@@ -37,6 +37,7 @@ class Carbon(threading.Thread):
 			}
 
 			try:
+				self.timestamp = time.strftime('%H:%M:%S')
 				r = requests.post(url, json=data)
 				sent += 1
 				print('{3}: Carbon Payload #{1} returned {0.status_code} {0.reason} for {2}\n '.format(r, sent, data, self.timestamp))

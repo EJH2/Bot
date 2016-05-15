@@ -11,6 +11,8 @@ import logging
 import pip
 import requests
 from mods.utils.py.Carbon import Carbon
+import io
+import subprocess
 
 if os.path.isfile("mods/utils/json/configs/CarbonConfig.json"):
 	with open("mods/utils/json/configs/CarbonConfig.json") as f:
@@ -19,6 +21,11 @@ if os.path.isfile("mods/utils/text/blacklist.txt"):
 	pass
 else:
 	with open("mods/utils/text/blacklist.txt","a") as f:
+		f.write("")
+if os.path.isfile("mods/utils/logs/errors.txt"):
+	pass
+else:
+	with open("mods/utils/logs/errors.txt","a") as f:
 		f.write("")
 with open("mods/utils/json/configs/config.json") as f:
 	config = json.load(f)
@@ -35,6 +42,7 @@ starttime2 = time.ctime(int(time.time()))
 bot.version = config["version"]
 wrap = "```py\n{}\n```"
 timestamp = time.strftime('%H:%M:%S')
+bot.nicelogging = config["nicelogging"]
 
 discord_logger = logging.getLogger('discord')
 discord_logger.setLevel(logging.CRITICAL)
@@ -76,16 +84,19 @@ async def on_message(message):
 			else:
 				destination = '#{0.channel.name} ({0.server.name})'.format(message)
 			log.info('{0.timestamp}: {0.author.name} in {1}: {0.content}'.format(message, destination))
-		try:
-			await bot.process_commands(message)
-		except Exception as e:
+		if bot.nicelogging == "True":
 			try:
-				await bot.send_message(message.channel, wrap.format(type(e).__name__ + ': ' + str(e)))
-			except Exception:
+				await bot.process_commands(message)
+			except Exception as e:
 				try:
-					await bot.send_message(message.author, "Hey! Around this time, you tried to activate a command. I couldn't complete it, so here's the error: {} When you get the chance, would you mind DMing EJH2#0674 so he can fix it? He can be reached here: https://discord.gg/0xyhWAU4n2k6STQt. Thanks!".format(wrap.format(type(e).__name__ + ': ' + str(e))))
+					await bot.send_message(message.channel, wrap.format(type(e).__name__ + ': ' + str(e)))
 				except Exception:
-					print(type(e).__name__ + ': ' + str(e))
+					try:
+						await bot.send_message(message.author, "Hey! Around this time, you tried to activate a command. I couldn't complete it, so here's the error: {} When you get the chance, would you mind DMing EJH2#0674 so he can fix it? He can be reached here: https://discord.gg/0xyhWAU4n2k6STQt. Thanks!".format(wrap.format(type(e).__name__ + ': ' + str(e))))
+					except Exception:
+						print(type(e).__name__ + ': ' + str(e))
+		else:
+			await bot.process_commands(message)
 
 @bot.event
 async def on_ready():
@@ -117,7 +128,7 @@ async def on_member_join(member):
 
 @bot.event
 async def on_member_remove(member):
-	try:   
+	try:
 		if config["dojoinleave"] == "True":
 			print("bye")
 			server = member.server
@@ -134,7 +145,7 @@ class Default():
 	async def info(self,ctx):
 		"""Gives information about the bot."""
 		try:
-			await self.bot.say(bot.user.name + " was coded by EJH2 and Maxie!\nThe bot's version is `" + bot.version + "` and is running on Discord.py commands extension version `" + discord.__version__ + "`! It has seen `{}` users sending `{}` messages (since `{}` EST) in `{}` channels (including `{}` Private Channels) on a total of `{}` servers.".format(len(set(bot.get_all_members())), len(set(bot.messages)), starttime2, len(set(bot.get_all_channels())), len(set(bot.private_channels)), len(bot.servers)))
+			await self.bot.say(bot.user.name + " was coded by EJH2 and Maxie!\nThe bot's version is `" + bot.version + "` and is running on Discord.py commands extension version `" + discord.__version__ + "`! It has seen `{}` users sending `{}` messages (since `{}` EST) in `{}` channels (including `{}` Private Channels) on a total of `{}` servers.".format(len(set(bot.get_all_members())), len(set(bot.messages)), starttime2.replace("  "," "), len(set(bot.get_all_channels())), len(set(bot.private_channels)), len(bot.servers)))
 		except Exception as e:
 			await bot.say(wrap.format(type(e).__name__ + ': ' + str(e)))
 
@@ -152,10 +163,15 @@ class Default():
 @checks.is_owner()
 async def load(*,module:str):
 	"""Loads a part of the bot."""
-	module = "mods." + module
-	if module in modules:
-		await bot.say("Alright, loading {}".format(module))
-		bot.load_extension(module)
+	mod = "mods." + module
+	if module == "all":
+		for mod in modules:
+			await bot.say("Alright, loading {}".format(mod))
+			bot.load_extension(mod)
+		await bot.say("Loading finished!")
+	elif module in modules:
+		await bot.say("Alright, loading {}".format(mod))
+		bot.load_extension(mod)
 		await bot.say("Loading finished!")
 	else:
 		await bot.say("You can't load a module that doesn't exist!")
@@ -164,10 +180,16 @@ async def load(*,module:str):
 @checks.is_owner()
 async def unload(*,module:str):
 	"""Unloads a part of the bot."""
-	module = "mods." + module
-	if module in modules:
-		await bot.say("Alright, unloading {}".format(module))
-		bot.unload_extension(module)
+	mod = "mods." + module
+	if module == "all":
+		for mod in modules:
+			await bot.say("Alright, unloading {}".format(mod))
+			bot.unload_extension(mod)
+			await bot.say("Done!")
+		await bot.say("Unloading finished!")
+	elif module in modules:
+		await bot.say("Alright, unloading {}".format(mod))
+		bot.unload_extension(mod)
 		await bot.say("Unloading finished!")
 	else:
 		await bot.say("You can't unload a module that doesn't exist!")
@@ -205,7 +227,7 @@ async def debug(ctx,*,code:str):
 	else:
 		await bot.say(wrap.format(result))
 
-@bot.command(hidden=True,pass_context=True)
+@bot.group(hidden=True,pass_context=True,invoke_without_command=True)
 @checks.is_owner()
 async def settings(ctx,setting,*,change):
 	"""Changes bot variables."""
@@ -221,6 +243,22 @@ async def settings(ctx,setting,*,change):
 	else:
 		await bot.say("That isn't a valid setting!")
 
+@settings.command(name="add",hidden=True,pass_context=True)
+@checks.is_owner()
+async def _add(ctx,setting,value):
+	"""Adds bot variables."""
+	if not setting in config:
+		with open("mods/utils/json/configs/config.json","r+") as f:
+			ch = value.replace("<SPACE>", " ")
+			config[setting] = ch
+			f.seek(0)
+			f.write(json.dumps(config))
+			f.truncate()
+			bot.__dict__[setting] = config[setting]
+			await bot.say("Alright, I added the setting `{}` with the value of `{}`!".format(setting, ch))
+	else:
+		await bot.say("There's already an existing setting named that!")
+
 @bot.command(hidden=True,pass_context=True)
 @checks.is_owner()
 async def endbot(ctx):
@@ -233,13 +271,14 @@ async def endbot(ctx):
 async def restart(ctx):
 	"""Restarts the bot."""
 	await bot.say("Restarting...")
-	os.system("Clippy.py")
+	await bot.logout()
+	subprocess.call(["C:\\Python35\\python.exe","Clippy.py"])
 
 @bot.command(hidden=True,pass_context=True)
 @checks.is_owner()
 async def setavatar(ctx,avatarlink:str):
 	"""Sets the bots avatar."""
-	path = "mods/utils/images/image.jpg"
+	path = "mods/utils/images/other/image.jpg"
 	with aiohttp.ClientSession() as session:
 		async with session.get(avatarlink) as resp:
 			data = await resp.read()
@@ -263,6 +302,11 @@ async def setgame(ctx,*,game:discord.Game):
 	await bot.change_status(game=game)
 	await bot.say("Alright, changed Clip.py's current game to `{}`".format(game))
 
+@bot.command(hidden=True,pass_context=True)
+async def stream(ctx,game,url):
+	await bot.change_status(game=discord.Game(url=url,type=1,name=game))
+	await bot.say("I'm on the air!")
+
 @bot.command(hidden=True,pass_contet=True)
 @checks.is_owner()
 async def cleargame():
@@ -275,13 +319,14 @@ async def cleargame():
 async def revert(ctx):
 	"""Reverts the bots name and avatar back to its original."""
 	await bot.edit_profile(username="Clip.py")
-	logo = open("mods/utils/images/original.jpg","rb")
+	logo = open("mods/utils/images/other/original.jpg","rb")
+	asyncio.sleep(1)
 	await bot.edit_profile(avatar=logo.read())
 	await bot.say("Clip.py has successfully been reverted to its original!")
 
 @bot.command(hidden=True,pass_context=True)
 @checks.is_owner()
-async def blacklist(ctx,user:str):
+async def blacklist(ctx,user:discord.User):
 	"""Blacklists a user from the bot."""
 	if user == "<{}>".format(config["ownerid"]):
 		await bot.say("You can't blacklist the owner!")
@@ -294,25 +339,22 @@ async def blacklist(ctx,user:str):
 
 @bot.command(hidden=True,pass_context=True)
 @checks.is_owner()
-async def unblacklist(ctx,user:str):
+async def unblacklist(ctx,user:discord.User):
 	"""Unblacklists a user from the bot."""
-	if len(set(ctx.message.mentions)) > 0:
-		if user == "<{}>".format(config["ownerid"]):
-			await bot.say("You can't unblacklist the owner!")
-		elif user in open('mods/utils/text/blacklist.txt').read():
-			fin = open('mods/utils/text/blacklist.txt', 'r')
-			fout = open('mods/utils/text/blacklist.txt', 'w')
-			for line in fin:
-				for word in delete_list:
-					line = line.replace(word, "")
-				fout.write(line)
-			fin.close()
-			fout.close()
-			await bot.say("Unblacklisted that user!")
-		else:
-			await bot.say("That user isn't blacklisted!")
+	if user == "<{}>".format(config["ownerid"]):
+		await bot.say("You can't unblacklist the owner!")
+	elif user in open('mods/utils/text/blacklist.txt').read():
+		fin = open('mods/utils/text/blacklist.txt', 'r')
+		fout = open('mods/utils/text/blacklist.txt', 'w')
+		for line in fin:
+			for word in delete_list:
+				line = line.replace(word, "")
+			fout.write(line)
+		fin.close()
+		fout.close()
+		await bot.say("Unblacklisted that user!")
 	else:
-		await bot.say("You have to mention someone!")
+		await bot.say("That user isn't blacklisted!")
 
 bot.add_cog(Default(bot))
 
