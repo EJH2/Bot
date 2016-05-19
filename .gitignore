@@ -10,6 +10,8 @@ image.jpg
 blacklist.txt
 credentials.json
 CarbonConfig.json
+channelblacklist.txt
+serverblacklist.txt
 *.2973050173208
 errors.txt
 *.pyc

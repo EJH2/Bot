@@ -73,21 +73,14 @@ class ServerModeration():
 
 	@commands.command(pass_context=True)
 	@checks.admin_or_perm(manage_messages=True)
-	async def prune(self,ctx,messages):
+	async def prune(self,ctx,messages:int = 100):
 		"""Deletes x amount of messages in a channel."""
 		message = ctx.message
-		if messages.isdigit():
-			n = int(messages)
-			removed = 0
-			async for x in self.bot.logs_from(message.channel, limit=n+1):
-				await self.bot.delete_message(x)
-				removed += 1
-				await asyncio.sleep(.21)
-			x = await self.bot.say("Removed {} messages".format(removed))
-			await asyncio.sleep(5)
-			await self.bot.delete_message(x)
-		else:
-			await self.bot.say("You have to put in a digit!")
+		await self.bot.purge_from(ctx.message.channel, limit=messages+1)
+		removed = messages + 1
+		x = await self.bot.say("Removed {} messages".format(removed))
+		await asyncio.sleep(5)
+		await self.bot.delete_message(x)
 
 	@commands.command(pass_context=True)
 	@checks.mod_or_perm()
@@ -118,15 +111,12 @@ class ServerModeration():
 
 	@commands.command(pass_context=True)
 	@checks.mod_or_perm(manage_messages=True)
-	async def clean(self,ctx, max_messages:int):
-		"""Removes any messages from the bot in x amount of messages."""
-		removed = 0
-		async for message in self.bot.logs_from(ctx.message.channel, limit=max_messages):
-			if message.author == self.bot.user:
-				asyncio.ensure_future(self.bot.delete_message(message))
-				removed += 1
-				await asyncio.sleep(.21)
-		x = await self.bot.say("Removed {} messages".format(removed))
+	async def clean(self,ctx, messages:int = 100):
+		"""Deletes x amount of messages from the bot in a channel."""
+		def is_bot(message):
+			return message.author == self.bot.user
+		removed = await self.bot.purge_from(ctx.message.channel, limit=messages, check=is_bot)
+		x = await self.bot.say("Removed {} messages".format(len(removed)))
 		await asyncio.sleep(5)
 		await self.bot.delete_message(x)
 
@@ -211,6 +201,67 @@ class ServerModeration():
 				await self.bot.change_nickname(member,member.name)
 				await self.bot.say("Alright, I reset the nickname of `{}` to `{}`".format(member,member.name))
 				await asyncio.sleep(.21)
+
+	@commands.command(pass_context=True)
+	@checks.admin_or_perm(manage_server=True)
+	async def ignoreserv(self,ctx):
+		"""Blacklists a server from the bot."""
+		server = ctx.message.server.id
+		if server in open('mods/utils/text/serverblacklist.txt').read():
+			await self.bot.say('This server is already ignored!')
+		else:
+			with open("mods/utils/text/serverblacklist.txt","a") as f:
+				f.write(server + "\n")
+				await self.bot.say("Blacklisted that server!")
+
+	@commands.command(pass_context=True)
+	@checks.admin_or_perm(manage_server=True)
+	async def unignoreserv(self,ctx):
+		"""Unblacklists a server from the bot."""
+		server = ctx.message.server.id
+		if server in open('mods/utils/text/serverblacklist.txt').read():
+			fin = open('mods/utils/text/serverblacklist.txt', 'r')
+			fout = open('mods/utils/text/serverblacklist.txt', 'w')
+			for line in fin:
+				for word in delete_list:
+					line = line.replace(word, "")
+				fout.write(line)
+			fin.close()
+			fout.close()
+			await self.bot.say("Unblacklisted that server!")
+		else:
+			await self.bot.say("That server isn't blacklisted!")
+
+	@commands.command(pass_context=True)
+	@checks.admin_or_perm(manage_server=True)
+	async def ignorechan(self,ctx):
+		"""Blacklists a channel from the bot."""
+		server = ctx.message.channel.id
+		if server in open('mods/utils/text/channelblacklist.txt').read():
+			await self.bot.say('This channel is already ignored!')
+		else:
+			with open("mods/utils/text/channelblacklist.txt","a") as f:
+				f.write(server + "\n")
+				await self.bot.say("Blacklisted that channel!")
+
+	@commands.command(pass_context=True)
+	@checks.admin_or_perm(manage_server=True)
+	async def unignorechan(self,ctx):
+		"""Unblacklists a channel from the bot."""
+		server = ctx.message.channel.id
+		if server in open('mods/utils/text/channelblacklist.txt').read():
+			fin = open('mods/utils/text/channelblacklist.txt', 'r')
+			fout = open('mods/utils/text/channelblacklist.txt', 'w')
+			for line in fin:
+				for word in delete_list:
+					line = line.replace(word, "")
+				fout.write(line)
+			fin.close()
+			fout.close()
+			await self.bot.say("Unblacklisted that channel!")
+		else:
+			await self.bot.say("That channel isn't blacklisted!")
+
 
 def setup(bot):
 	bot.add_cog(ServerModeration(bot))

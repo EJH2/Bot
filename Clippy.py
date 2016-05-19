@@ -22,6 +22,16 @@ if os.path.isfile("mods/utils/text/blacklist.txt"):
 else:
 	with open("mods/utils/text/blacklist.txt","a") as f:
 		f.write("")
+if os.path.isfile("mods/utils/text/channelblacklist.txt"):
+	pass
+else:
+	with open("mods/utils/text/channelblacklist.txt","a") as f:
+		f.write("")
+if os.path.isfile("mods/utils/text/serverblacklist.txt"):
+	pass
+else:
+	with open("mods/utils/text/serverblacklist.txt","a") as f:
+		f.write("")
 if os.path.isfile("mods/utils/logs/errors.txt"):
 	pass
 else:
@@ -73,30 +83,37 @@ modules = [
 	'mods.Fun'
 ]
 
+async def dologging(message):
+	destination = None
+	if message.channel.is_private:
+		destination = 'Private Message'
+	else:
+		destination = '#{0.channel.name} ({0.server.name})'.format(message)
+	log.info('{0.timestamp}: {0.author.name} in {1}: {0.content}'.format(message, destination))
+	if bot.nicelogging == "True":
+		try:
+			await bot.process_commands(message)
+		except Exception as e:
+			try:
+				await bot.send_message(message.channel, wrap.format(type(e).__name__ + ': ' + str(e)))
+			except Exception:
+				try:
+					await bot.send_message(message.author, "Hey! Around this time, you tried to activate a command. I couldn't complete it, so here's the error: {} When you get the chance, would you mind DMing EJH2#0674 so he can fix it? He can be reached here: https://discord.gg/0xyhWAU4n2k6STQt. Thanks!".format(wrap.format(type(e).__name__ + ': ' + str(e))))
+				except Exception:
+					print(type(e).__name__ + ': ' + str(e))
+	else:
+		await bot.process_commands(message)
+
 @bot.event
 async def on_message(message):
-		if "<@" + message.author.id + ">" in open('mods/utils/text/blacklist.txt').read():
-			return
-		else:
-			destination = None
-			if message.channel.is_private:
-				destination = 'Private Message'
-			else:
-				destination = '#{0.channel.name} ({0.server.name})'.format(message)
-			log.info('{0.timestamp}: {0.author.name} in {1}: {0.content}'.format(message, destination))
-		if bot.nicelogging == "True":
-			try:
-				await bot.process_commands(message)
-			except Exception as e:
-				try:
-					await bot.send_message(message.channel, wrap.format(type(e).__name__ + ': ' + str(e)))
-				except Exception:
-					try:
-						await bot.send_message(message.author, "Hey! Around this time, you tried to activate a command. I couldn't complete it, so here's the error: {} When you get the chance, would you mind DMing EJH2#0674 so he can fix it? He can be reached here: https://discord.gg/0xyhWAU4n2k6STQt. Thanks!".format(wrap.format(type(e).__name__ + ': ' + str(e))))
-					except Exception:
-						print(type(e).__name__ + ': ' + str(e))
-		else:
-			await bot.process_commands(message)
+	if "<@" + message.author.id + ">" in open('mods/utils/text/blacklist.txt').read():
+		return
+	elif message.server.id in open('mods/utils/text/serverblacklist.txt').read() or message.channel.id in open('mods/utils/text/channelblacklist.txt').read():
+		if message.content.startswith(bot.command_prefix + "unignoreserv") or message.content.startswith(bot.command_prefix + "ignoreserv") or message.content.startswith(bot.command_prefix + "unignorechan") or message.content.startswith(bot.command_prefix + "ignorechan"):
+			await dologging(message)
+	
+	else:		
+		await dologging(message)
 
 @bot.event
 async def on_ready():
@@ -326,24 +343,24 @@ async def revert(ctx):
 
 @bot.command(hidden=True,pass_context=True)
 @checks.is_owner()
-async def blacklist(ctx,user:discord.User):
+async def ignore(ctx,user:discord.User):
 	"""Blacklists a user from the bot."""
 	if user == "<{}>".format(config["ownerid"]):
 		await bot.say("You can't blacklist the owner!")
-	elif user in open('mods/utils/text/blacklist.txt').read():
+	elif str(user) in open('mods/utils/text/blacklist.txt').read():
 		await bot.say("That user is already blacklisted!")
 	else:
 		with open("mods/utils/text/blacklist.txt","a") as f:
-			f.write(user + "\n")
+			f.write(str(user) + "\n")
 			await bot.say("Blacklisted that user!")
 
 @bot.command(hidden=True,pass_context=True)
 @checks.is_owner()
-async def unblacklist(ctx,user:discord.User):
+async def unignore(ctx,user:discord.User):
 	"""Unblacklists a user from the bot."""
 	if user == "<{}>".format(config["ownerid"]):
 		await bot.say("You can't unblacklist the owner!")
-	elif user in open('mods/utils/text/blacklist.txt').read():
+	elif str(user) in open('mods/utils/text/blacklist.txt').read():
 		fin = open('mods/utils/text/blacklist.txt', 'r')
 		fout = open('mods/utils/text/blacklist.txt', 'w')
 		for line in fin:

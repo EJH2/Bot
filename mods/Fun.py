@@ -374,5 +374,10 @@ class Fun():
 		"""You get a gold star!"""
 		await self.bot.send_file(ctx.message.channel, "mods/utils/images/other/goldstar.png", content="You get a gold star!")
 
+	@commands.command(pass_context=True)
+	async def out(self,ctx):
+		"""Fuck this shit I'm out."""
+		await self.bot.say("https://www.youtube.com/watch?v=5FjWe31S_0g")
+
 def setup(bot):
 	bot.add_cog(Fun(bot))
