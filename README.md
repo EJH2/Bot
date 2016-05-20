@@ -1,2 +1,2 @@
-# Clip.py-Discord
+# IQ-Discord
 A Python bot for Discord
