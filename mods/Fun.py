@@ -379,5 +379,14 @@ class Fun():
 		"""Fuck this shit I'm out."""
 		await self.bot.say("https://www.youtube.com/watch?v=5FjWe31S_0g")
 
+	@commands.command(pass_context=True)
+	async def rip(self,ctx,user:discord.User):
+		"""RIP."""
+		if not user.nick == None:
+			user = user.nick
+		else:
+			user = user.name
+		await self.bot.say("<http://ripme.xyz/{}>".format(user.replace(" ","%20")))
+
 def setup(bot):
 	bot.add_cog(Fun(bot))

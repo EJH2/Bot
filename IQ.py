@@ -45,7 +45,7 @@ with open("mods/utils/json/fun/hexnamestocode.json") as f:
 	name = json.load(f)
 with open("mods/utils/json/fun/hexcodestoname.json") as f:
 	color = json.load(f)
-description = "This is the help menu for Clip.py! Because of my extensive amount of commands (and my over-ambitious creator) I go on and offline a lot, so please bear with me! If you have any questions, just PM EJH2#0674..."
+description = "This is the help menu for IQ! Because of my extensive amount of commands (and my over-ambitious creator) I go on and offline a lot, so please bear with me! If you have any questions, just PM EJH2#0674..."
 bot = commands.Bot(command_prefix=config["command_prefix"], description=description)
 starttime = time.time()
 starttime2 = time.ctime(int(time.time()))
@@ -314,10 +314,10 @@ async def setname(ctx,*,name:str):
 
 @bot.command(hidden=True,pass_contet=True)
 @checks.is_owner()
-async def setgame(ctx,*,game:discord.Game):
-	"""Sets the game that Clip.py is playing."""
+async def setgame(*,game:discord.Game):
+	"""Sets the game that IQ is playing."""
 	await bot.change_status(game=game)
-	await bot.say("Alright, changed Clip.py's current game to `{}`".format(game))
+	await bot.say("Alright, changed IQ's current game to `{}`".format(game))
 
 @bot.command(hidden=True,pass_context=True)
 async def stream(ctx,game,url):
@@ -329,49 +329,51 @@ async def stream(ctx,game,url):
 async def cleargame():
 	"""Clears the game status."""
 	await bot.change_status(game=None)
-	await bot.say("Alright, cleared Clip.py's game status.")
+	await bot.say("Alright, cleared IQ's game status.")
 
 @bot.command(hidden=True,pass_context=True)
 @checks.is_owner()
 async def revert(ctx):
 	"""Reverts the bots name and avatar back to its original."""
-	await bot.edit_profile(username="Clip.py")
+	await bot.edit_profile(username="IQ")
 	logo = open("mods/utils/images/other/original.jpg","rb")
 	asyncio.sleep(1)
 	await bot.edit_profile(avatar=logo.read())
-	await bot.say("Clip.py has successfully been reverted to its original!")
+	await bot.say("IQ has successfully been reverted to its original!")
 
 @bot.command(hidden=True,pass_context=True)
 @checks.is_owner()
-async def ignore(ctx,user:discord.User):
+async def ignore(ctx,*users:discord.User):
 	"""Blacklists a user from the bot."""
-	if user == "<{}>".format(config["ownerid"]):
-		await bot.say("You can't blacklist the owner!")
-	elif str(user) in open('mods/utils/text/blacklist.txt').read():
-		await bot.say("That user is already blacklisted!")
-	else:
-		with open("mods/utils/text/blacklist.txt","a") as f:
-			f.write(str(user) + "\n")
-			await bot.say("Blacklisted that user!")
+	for user in users:
+		if user.id == "{}".format(config["ownerid"]):
+			await bot.say("You can't blacklist the owner!")
+		elif str(user.id) in open('mods/utils/text/blacklist.txt').read():
+			await bot.say("{}#{} is already blacklisted!".format(user.name,user.discriminator))
+		else:
+			with open("mods/utils/text/blacklist.txt","a") as f:
+				f.write(str(user.id) + "\n")
+				await bot.say("Blacklisted {}#{}!".format(user.name,user.discriminator))
 
 @bot.command(hidden=True,pass_context=True)
 @checks.is_owner()
-async def unignore(ctx,user:discord.User):
+async def unignore(ctx,*users:discord.User):
 	"""Unblacklists a user from the bot."""
-	if user == "<{}>".format(config["ownerid"]):
-		await bot.say("You can't unblacklist the owner!")
-	elif str(user) in open('mods/utils/text/blacklist.txt').read():
-		fin = open('mods/utils/text/blacklist.txt', 'r')
-		fout = open('mods/utils/text/blacklist.txt', 'w')
-		for line in fin:
-			for word in delete_list:
-				line = line.replace(word, "")
-			fout.write(line)
-		fin.close()
-		fout.close()
-		await bot.say("Unblacklisted that user!")
-	else:
-		await bot.say("That user isn't blacklisted!")
+	for user in users:
+		if user.id == "{}".format(config["ownerid"]):
+			await bot.say("You can't unblacklist the owner!")
+		elif str(user.id) in open('mods/utils/text/blacklist.txt').read():
+			fin = open('mods/utils/text/blacklist.txt', 'r')
+			fout = open('mods/utils/text/blacklist.txt', 'w')
+			for line in fin:
+				for word in delete_list:
+					line = line.replace(word, "")
+				fout.write(line)
+			fin.close()
+			fout.close()
+			await bot.say("Unblacklisted {}#!{}".format(user.name,user.discriminator))
+		else:
+			await bot.say("{}#{} isn't blacklisted!".format(user.name,user.discriminator))
 
 bot.add_cog(Default(bot))
 
