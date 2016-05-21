@@ -4,7 +4,7 @@ CHCP 65001 > NUL
 CD /d "%~dp0"
 
 IF EXIST %SYSTEMROOT%\py.exe (
-    CMD /k py.exe -3.5 Clippy.py
+    CMD /k py.exe -3.5 IQ.py
     EXIT
 )
 
@@ -14,7 +14,7 @@ IF %ERRORLEVEL% NEQ 0 GOTO nopython
 rem git --version > NUL 2>&1
 rem IF %ERRORLEVEL% NEQ 0 GOTO nogit
 
-CMD /k python run.py
+CMD /k python IQ.py
 GOTO end
 
 :nogit

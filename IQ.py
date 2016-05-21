@@ -13,6 +13,7 @@ import requests
 from mods.utils.py.Carbon import Carbon
 import io
 import subprocess
+import aiofiles
 
 if os.path.isfile("mods/utils/json/configs/CarbonConfig.json"):
 	with open("mods/utils/json/configs/CarbonConfig.json") as f:
@@ -69,9 +70,17 @@ async def uninstall(package):
 	os.system("start /wait cmd /c 'pip uninstall {}'".format(package))
 	await bot.say("Successfully uninstalled `{}`".format(package))
 
+async def readfile(path):
+	with open(path, mode="r") as f:
+		if path[-5:] == ".json":
+			resp = json.load(f)
+		else:
+			for i in f.readlines():
+				resp = i.split("\n")
+	await bot.say(resp)
+
 installed_packages = pip.get_installed_distributions()
-installed_packages_list = sorted(["%s==%s" % (i.key, i.version)
-	 for i in installed_packages])
+installed_packages_list = sorted(["%s==%s" % (i.key, i.version) for i in installed_packages])
 pip_list = "My currently installed pip packages are:\n" + "\n".join(map(str,installed_packages_list))
 
 #CHAN = discord.get_channel(ID_HERE)
@@ -363,14 +372,10 @@ async def unignore(ctx,*users:discord.User):
 		if user.id == "{}".format(config["ownerid"]):
 			await bot.say("You can't unblacklist the owner!")
 		elif str(user.id) in open('mods/utils/text/blacklist.txt').read():
-			fin = open('mods/utils/text/blacklist.txt', 'r')
-			fout = open('mods/utils/text/blacklist.txt', 'w')
-			for line in fin:
-				for word in delete_list:
-					line = line.replace(word, "")
-				fout.write(line)
-			fin.close()
-			fout.close()
+			with open('mods/utils/text/blacklist.txt') as f:
+				newText=f.read().replace(user.id + "\n", '')
+			with open('mods/utils/text/blacklist.txt', "w") as f:
+				f.write(newText)
 			await bot.say("Unblacklisted {}#!{}".format(user.name,user.discriminator))
 		else:
 			await bot.say("{}#{} isn't blacklisted!".format(user.name,user.discriminator))

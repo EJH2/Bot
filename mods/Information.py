@@ -62,7 +62,7 @@ class Information():
 		"""Gives the avatar of a user."""
 		try:
 			for user in users:
-				await self.bot.say("{}'s current avatar is: \n".format(user.mention) + user.avatar_url)
+				await self.bot.say("{}'s current avatar is: \n".format(user.name) + user.avatar_url)
 		except Exception as e:
 			await self.bot.say(wrap.format(type(e).__name__ + ': ' + str(e)))
 

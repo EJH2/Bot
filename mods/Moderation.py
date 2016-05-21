@@ -220,14 +220,10 @@ class ServerModeration():
 		"""Unblacklists a server from the bot."""
 		server = ctx.message.server.id
 		if server in open('mods/utils/text/serverblacklist.txt').read():
-			fin = open('mods/utils/text/serverblacklist.txt', 'r')
-			fout = open('mods/utils/text/serverblacklist.txt', 'w')
-			for line in fin:
-				for word in delete_list:
-					line = line.replace(word, "")
-				fout.write(line)
-			fin.close()
-			fout.close()
+			with open('mods/utils/text/serverblacklist.txt') as f:
+				newText=f.read().replace(server + "\n", '')
+			with open('mods/utils/text/serverblacklist.txt', "w") as f:
+				f.write(newText)
 			await self.bot.say("Unblacklisted that server!")
 		else:
 			await self.bot.say("That server isn't blacklisted!")
@@ -250,18 +246,20 @@ class ServerModeration():
 		"""Unblacklists a channel from the bot."""
 		server = ctx.message.channel.id
 		if server in open('mods/utils/text/channelblacklist.txt').read():
-			fin = open('mods/utils/text/channelblacklist.txt', 'r')
-			fout = open('mods/utils/text/channelblacklist.txt', 'w')
-			for line in fin:
-				for word in delete_list:
-					line = line.replace(word, "")
-				fout.write(line)
-			fin.close()
-			fout.close()
+			with open('mods/utils/text/channelblacklist.txt') as f:
+				newText=f.read().replace(server + "\n", '')
+			with open('mods/utils/text/channelblacklist.txt', "w") as f:
+				f.write(newText)
 			await self.bot.say("Unblacklisted that channel!")
 		else:
 			await self.bot.say("That channel isn't blacklisted!")
 
+	@commands.command(pass_context=True)
+	@checks.mod_or_perm(read_messages=True)
+	async def userlogs(self,ctx,user:discord.User):
+		fin = open("mods/utils/logs/discord.log")
+		fout = open("mods/utils/logs/{}logtemp.log".format(user.name),"a")
+		
 
 def setup(bot):
 	bot.add_cog(ServerModeration(bot))

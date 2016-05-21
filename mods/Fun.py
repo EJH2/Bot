@@ -19,6 +19,11 @@ with open("mods/utils/json/configs/config.json") as f:
 
 wrap = "```py\n{}\n```"
 
+async def tempsay(self,message:str,time:int):
+	x = await self.bot.say(message)
+	await asyncio.sleep(time)
+	await self.bot.delete_message(x)
+
 class Fun():
 	def __init__(self,bot):
 		self.bot = bot
@@ -41,7 +46,7 @@ class Fun():
 	@commands.command(name="8ball",pass_context=True)
 	async def cmd_8ball(self,ctx,*,msg:str):
 		"""Allows the user to be bestowed the wisdom of the almighy Magic 8-Ball."""
-		await self.bot.say('{} asked '.format(ctx.message.author.mention) + '`' + msg.replace("```","'''") + '`' + ': ' + config["eight_ball_replies"][randint(0, 19)])
+		await self.bot.say('{} asked '.format(ctx.message.author.name) + '`' + msg.replace("```","'''") + '`' + ': ' + config["eight_ball_replies"][randint(0, 19)])
 
 	@commands.command(pass_context=True)
 	async def rr(self,ctx):
@@ -65,12 +70,12 @@ class Fun():
 		"""Allows the user to shoot a person of choice."""
 		for user in users:
 			if user.id == self.bot.user.id:
-				await self.bot.say('You attempted to shoot me, {}, but I dodged it!\nhttp://45.media.tumblr.com/c1165e983042a9cd1f17028a1c78170b/tumblr_n9c38m14291s5f9ado1_500.gif'.format(ctx.message.author.mention))
+				await self.bot.say('You attempted to shoot me, {}, but I dodged it!\nhttp://45.media.tumblr.com/c1165e983042a9cd1f17028a1c78170b/tumblr_n9c38m14291s5f9ado1_500.gif'.format(ctx.message.author.name))
 			elif user.id == ctx.message.author.id:
-				await self.bot.say('{} commited suicide!\nhttps://media.giphy.com/media/5xaOcLAo1Gg0oRgBz0Y/giphy.gif'.format(ctx.message.author.mention))
+				await self.bot.say('{} commited suicide!\nhttps://media.giphy.com/media/5xaOcLAo1Gg0oRgBz0Y/giphy.gif'.format(ctx.message.author.name))
 			else:
 				if user:
-					await self.bot.say('{1} was shot dead by the mighty {0}!\nhttps://s-media-cache-ak0.pinimg.com/originals/2d/fa/a9/2dfaa995a09d81a07cad24d3ce18e011.gif'.format(ctx.message.author.mention, user.mention))
+					await self.bot.say('{1} was shot dead by the mighty {0}!\nhttps://s-media-cache-ak0.pinimg.com/originals/2d/fa/a9/2dfaa995a09d81a07cad24d3ce18e011.gif'.format(ctx.message.author.name, user.name))
 				else:
 					await self.bot.say('You gotta give me someone to work with here!')
 
@@ -217,13 +222,13 @@ class Fun():
 	async def timer(self,ctx,seconds,*,remember=''):
 		"""Sets a timer for a user with the option of setting a reminder text."""
 		if not remember:
-			endtimer = self.bot.say(ctx.message.author.mention + ', your timer for ' + seconds + ' seconds has expired!')
-			await self.bot.say(ctx.message.author.mention + ', you have set a timer for ' + seconds + ' seconds!')
+			endtimer = self.bot.say(ctx.message.author.name + ', your timer for ' + seconds + ' seconds has expired!')
+			await self.bot.say(ctx.message.author.name + ', you have set a timer for ' + seconds + ' seconds!')
 			await asyncio.sleep(float(seconds))
 			await endtimer
 		else:
-			endtimer = self.bot.say(ctx.message.author.mention + ", your timer for " + seconds + " seconds has expired! I was instructed to remind you about `" + remember + "`!")
-			await self.bot.say(ctx.message.author.mention + ", I will remind you about `" + remember + "` in " + seconds + " seconds!")
+			endtimer = self.bot.say(ctx.message.author.name + ", your timer for " + seconds + " seconds has expired! I was instructed to remind you about `" + remember + "`!")
+			await self.bot.say(ctx.message.author.name + ", I will remind you about `" + remember + "` in " + seconds + " seconds!")
 			await asyncio.sleep(float(seconds))
 			await endtimer
 
