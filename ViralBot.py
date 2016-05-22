@@ -13,7 +13,6 @@ import requests
 from mods.utils.py.Carbon import Carbon
 import io
 import subprocess
-import aiofiles
 
 if os.path.isfile("mods/utils/json/configs/CarbonConfig.json"):
 	with open("mods/utils/json/configs/CarbonConfig.json") as f:
@@ -46,7 +45,7 @@ with open("mods/utils/json/fun/hexnamestocode.json") as f:
 	name = json.load(f)
 with open("mods/utils/json/fun/hexcodestoname.json") as f:
 	color = json.load(f)
-description = "This is the help menu for IQ! Because of my extensive amount of commands (and my over-ambitious creator) I go on and offline a lot, so please bear with me! If you have any questions, just PM EJH2#0674..."
+description = "This is the help menu for IQ! Because of my extensive amount of commands (and my over-ambitious creator) I go on and offline a lot, so please bear with me! If you have any questions, just PM EJH2#1767..."
 bot = commands.Bot(command_prefix=config["command_prefix"], description=description)
 starttime = time.time()
 starttime2 = time.ctime(int(time.time()))
@@ -75,8 +74,9 @@ async def readfile(path):
 		if path[-5:] == ".json":
 			resp = json.load(f)
 		else:
+			resp = []
 			for i in f.readlines():
-				resp = i.split("\n")
+				resp.append(i[:18])
 	await bot.say(resp)
 
 installed_packages = pip.get_installed_distributions()
@@ -107,7 +107,7 @@ async def dologging(message):
 				await bot.send_message(message.channel, wrap.format(type(e).__name__ + ': ' + str(e)))
 			except Exception:
 				try:
-					await bot.send_message(message.author, "Hey! Around this time, you tried to activate a command. I couldn't complete it, so here's the error: {} When you get the chance, would you mind DMing EJH2#0674 so he can fix it? He can be reached here: https://discord.gg/0xyhWAU4n2k6STQt. Thanks!".format(wrap.format(type(e).__name__ + ': ' + str(e))))
+					await bot.send_message(message.author, "Hey! Around this time, you tried to activate a command. I couldn't complete it, so here's the error: {} When you get the chance, would you mind DMing EJH2#1767 so he can fix it? He can be reached here: https://discord.gg/0xyhWAU4n2k6STQt. Thanks!".format(wrap.format(type(e).__name__ + ': ' + str(e))))
 				except Exception:
 					print(type(e).__name__ + ': ' + str(e))
 	else:

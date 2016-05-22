@@ -62,7 +62,7 @@ class Information():
 		"""Gives the avatar of a user."""
 		try:
 			for user in users:
-				await self.bot.say("{}'s current avatar is: \n".format(user.name) + user.avatar_url)
+				await self.bot.say("{}'s current avatar is: \n".format(user.mention) + user.avatar_url)
 		except Exception as e:
 			await self.bot.say(wrap.format(type(e).__name__ + ': ' + str(e)))
 
@@ -107,17 +107,12 @@ class Information():
 	@commands.command(pass_context=True)
 	async def serverinfo(self,ctx):
 		"""Gives information about the current server."""
-		try:
-			server = ctx.message.server
-			if len(str(server.icon_url)) > 0:
-				await self.bot.say('```xl\nServer Information:\nName: "' + server.name + '"\nID: "' + server.id + '"\nOwner: "' + str(server.owner) + '"\nRoles: "' + ', '.join(map(str, server.roles)).replace("@", "@\u200b") + '"\nReigon: "' + str(server.region) + '"\nChannels: "' + ', '.join(map(str, server.channels)) + '"\nDefault Channel: "' + str(server.default_channel) + '"\nMembers: "' + ', '.join(map(str, server.members)) + '"\nIcon: "' + str(server.icon_url) + '"\n```')
-			else:
-				await self.bot.say('```xl\nServer Information:\nName: "' + server.name + '"\nID: "' + server.id + '"\nOwner: "' + str(server.owner) + '"\nRoles: "' + ', '.join(map(str, server.roles)).replace("@", "@\u200b") + '"\nReigon: "' + str(server.region) + '"\nChannels: "' + ', '.join(map(str, server.channels)) + '"\nDefault Channel: "' + str(server.default_channel) + '"\nMembers: "' + len(set(server.members)) + '"\nIcon: "None"\n```')
-		except HTTPException:
-			if len(str(server.icon_url)) > 0:
-				await self.bot.say('```xl\nServer Information:\nName: "' + server.name + '"\nID: "' + server.id + '"\nOwner: "' + str(server.owner) + '"\nRoles: "' + ', '.join(map(str, server.roles)).replace("@", "@\u200b") + '"\nReigon: "' + str(server.region) + '"\nChannels: "' + ', '.join(map(str, server.channels)) + '"\nDefault Channel: "' + str(server.default_channel) + '"\nMembers: "Too Many to Count >.<"\nIcon: "' + str(server.icon_url) + '"\n```')
-			else:
-				await self.bot.say('```xl\nServer Information:\nName: "' + server.name + '"\nID: "' + server.id + '"\nOwner: "' + str(server.owner) + '"\nRoles: "' + ', '.join(map(str, server.roles)).replace("@", "@\u200b") + '"\nReigon: "' + str(server.region) + '"\nChannels: "' + ', '.join(map(str, server.channels)) + '"\nDefault Channel: "' + str(server.default_channel) + '"\nMembers: "Too Many to Count >.<"\nIcon: "None"\n```')
+		server = ctx.message.server
+		if len(server.icon_url) < 1:
+			url = "None"
+		else:
+			url = server.icon_url
+		await self.bot.say(xl.format('Server Information:\nName: "{0.name}"\nID: "{0.id}"\nOwner: "{0.owner}"\nRegion: "{0.region}"\nDefault Channel: "{0.default_channel}"\nChannels: "{1}"\nMembers: "{2}"\nRoles: "{3}"\nIcon: "{4}"').format(server,len(server.channels),len(server.members),', '.join(map(str, server.roles)).replace("@", "@\u200b"),url))
 
 	@commands.command(pass_context=True)
 	async def join(self,ctx):

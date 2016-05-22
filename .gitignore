@@ -12,7 +12,7 @@ credentials.json
 CarbonConfig.json
 channelblacklist.txt
 serverblacklist.txt
-*.2973050173208
+__pycache__/
 errors.txt
 *.pyc
 *.suo
