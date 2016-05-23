@@ -3,6 +3,10 @@ from .utils.py import checks
 import asyncio
 import discord.utils
 import discord.errors
+import io
+import datetime
+import random
+import os
 
 wrap = "```py\n{}\n```"
 
@@ -113,10 +117,14 @@ class ServerModeration():
 	@checks.mod_or_perm(manage_messages=True)
 	async def clean(self,ctx, messages:int = 100):
 		"""Deletes x amount of messages from the bot in a channel."""
-		def is_bot(message):
-			return message.author == self.bot.user
-		removed = await self.bot.purge_from(ctx.message.channel, limit=messages, check=is_bot)
-		x = await self.bot.say("Removed {} messages".format(len(removed)))
+		removed = 0
+		async for message in self.bot.logs_from(ctx.message.channel):
+			if message.author == self.bot.user and removed <= messages-1:
+				print(message.content)
+				await self.bot.delete_message(message)
+				await asyncio.sleep(.21) 
+				removed += 1
+		x = await self.bot.say("Removed {} messages".format(removed))
 		await asyncio.sleep(5)
 		await self.bot.delete_message(x)
 
@@ -256,10 +264,19 @@ class ServerModeration():
 
 	@commands.command(pass_context=True)
 	@checks.mod_or_perm(read_messages=True)
-	async def userlogs(self,ctx,user:discord.User):
-		fin = open("mods/utils/logs/discord.log")
-		fout = open("mods/utils/logs/{}logtemp.log".format(user.name),"a")
-		
+	async def userlogs(self,ctx,user:discord.User,logs:int=100):
+		server = ctx.message.server
+		counter = 0
+		i = random.randint(0,9999)
+		path = "mods/utils/logs/templog{}.txt".format(i)
+		for line in reversed(io.open("mods/utils/logs/discord.log","r",encoding='utf8').readlines()):
+			if line.startswith('{0.server.name} > #{0.channel.name} > {1.name}'.format(ctx.message,user)):
+				with io.open(path,"a",encoding='utf8') as f:
+					if counter != logs:
+						f.write(line)
+						counter += 1
+		await self.bot.send_file(ctx.message.channel,path,filename="Userlogs.txt",content="Here is a copy of the last {1} logs for {0.name}#{0.discriminator}".format(user,counter))
+		os.remove(path)
 
 def setup(bot):
 	bot.add_cog(ServerModeration(bot))

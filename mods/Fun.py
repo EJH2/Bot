@@ -249,6 +249,11 @@ class Fun():
 		else:
 			await self.bot.say("You can't use gifs for memes!")
 
+	@meme.command(name="user",pass_context=True)
+	async def _user(self,ctx,user:discord.User,line1:str,line2:str):
+		"""Generates a meme on a users avatar."""
+		await self.bot.say("http://memegen.link/custom/{0}/{1}.jpg?alt={2}".format(line1.replace("-","--").replace("_","__").replace(" ","-").replace(" ","_").replace("?","~q").replace("%","~p").replace("\"","''"),line2.replace("-","--").replace("_","__").replace(" ","-").replace(" ","_").replace("?","~q").replace("%","~p").replace("\"","''"),user.avatar_url))
+
 	@meme.group(name="templates",pass_context=True,invoke_without_command=True)
 	async def _templates(self,ctx):
 		"""Gives users a list of meme templates."""
@@ -269,11 +274,11 @@ class Fun():
 			with aiohttp.ClientSession() as session:
 				async with session.get(url) as resp:
 					resp = await resp.json()
-			with open("mods/utils/fun/memenames.json","w") as f:
+			with open("mods/utils/json/fun/memenames.json","w") as f:
 				f.seek(0)
 				f.write(json.dumps(resp))
 				f.truncate()
-			with open("mods/utils/fun/memenames.json") as f:
+			with open("mods/utils/json/fun/memenames.json") as f:
 				names = json.load(f)
 			if query in names:
 				q = names[query]

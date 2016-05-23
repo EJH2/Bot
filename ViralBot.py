@@ -13,6 +13,7 @@ import requests
 from mods.utils.py.Carbon import Carbon
 import io
 import subprocess
+import datetime
 
 if os.path.isfile("mods/utils/json/configs/CarbonConfig.json"):
 	with open("mods/utils/json/configs/CarbonConfig.json") as f:
@@ -58,7 +59,7 @@ discord_logger = logging.getLogger('discord')
 discord_logger.setLevel(logging.CRITICAL)
 log = logging.getLogger()
 log.setLevel(logging.INFO)
-handler = logging.FileHandler(filename='mods/utils/logs/discord.log', encoding='utf-8', mode='w')
+handler = logging.FileHandler(filename='mods/utils/logs/discord.log', encoding='utf-8', mode='a')
 log.addHandler(handler)
 
 async def install(package):
@@ -97,8 +98,8 @@ async def dologging(message):
 	if message.channel.is_private:
 		destination = 'Private Message'
 	else:
-		destination = '#{0.channel.name} ({0.server.name})'.format(message)
-	log.info('{0.timestamp}: {0.author.name} in {1}: {0.content}'.format(message, destination))
+		destination = '{0.server.name} > #{0.channel.name}'.format(message)
+	log.info('{1} > {0.author.name}#{0.author.discriminator} on {2}: {0.content}'.format(message,destination,datetime.datetime.utcnow().strftime("%a %B %d %H:%M:%S %Y")))
 	if bot.nicelogging == "True":
 		try:
 			await bot.process_commands(message)
