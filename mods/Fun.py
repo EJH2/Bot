@@ -13,16 +13,36 @@ from pyfiglet import figlet_format
 import wikipedia
 import wikipedia.exceptions
 import base64
+import random
+import os
 
 with open("mods/utils/json/configs/config.json") as f:
 	config = json.load(f)
+with open("mods/utils/json/fun/hexnamestocode.json") as f:
+	name = json.load(f)
+with open("mods/utils/json/fun/hexcodestoname.json") as f:
+	color = json.load(f)
+with open("mods/utils/json/configs/credentials.json") as f:
+	credentials = json.load(f)
 
 wrap = "```py\n{}\n```"
+
+async def download(link:str,path:str):
+	with aiohttp.ClientSession() as session:
+		async with session.get(link) as resp:
+			data = await resp.read()
+			with open(path,"wb") as f:
+				f.write(data)
 
 async def tempsay(self,message:str,time:int):
 	x = await self.bot.say(message)
 	await asyncio.sleep(time)
 	await self.bot.delete_message(x)
+
+def replace_all(text, dic):
+    for i, j in dic.iteritems():
+        text = text.replace(i, j)
+    return text
 
 class Fun():
 	def __init__(self,bot):
@@ -184,31 +204,24 @@ class Fun():
 		await self.bot.say(data[i-1])
 
 	@commands.command(pass_context=True)
-	async def xkcd(self,ctx,query=""):
-		"""Queries a random XKCD comic.
-
-		Do `^xkcd <number from 1-1662>` to pick a specific comic."""
-		if not query:
-			i = randint(1, 1662)
-			await self.bot.say("https://xkcd.com/{}/".format(i))
-		elif query.isdigit() and int(query) >= 1 and int(query) <= 1662:
-			await self.bot.say("https://xkcd.com/{}/".format(query))
-		elif int(query) <= 0 or int(query) >= 1663:
-			await self.bot.say("It has to be between 1 and 1662!")
-		elif not query.isdigit():
-			await self.bot.say("You have to put a number!")
-		else:
-			await self.bot.say("I don't know how you managed to do it, but you borked it.")
-
-	@commands.command(pass_context=True)
 	async def say(self,ctx,*,message):
 		"""Makes the bot say anything the user wants it to."""
 		await self.bot.say(message)
 
-	@commands.command(pass_context=True)
+	@commands.group(pass_context=True,invoke_without_command=True)
 	async def hexcolors(self,ctx):
 		"""Gives a giant list of all hex colors and their values."""
-		await self.bot.say("A *whole* list of hexidecimal color codes can be found here: http://xkcd.com/color/rgb.txt")
+		if ctx.invoked_subcommand is None:
+			await self.bot.say("A *whole* list of hexidecimal color codes can be found here: http://xkcd.com/color/rgb.txt")
+
+	@hexcolors.command(pass_context=True)
+	async def lookup(self,ctx,type,query):
+		"""Allows users to look up colors."""
+		if type == "name":
+			file = color
+		if type == "value":
+			file = name
+		await self.bot.say(file[query])
 
 	@commands.command(pass_context=True)
 	async def codeblock(self,ctx,language:str,*,code:str):
@@ -222,12 +235,12 @@ class Fun():
 	async def timer(self,ctx,seconds,*,remember=''):
 		"""Sets a timer for a user with the option of setting a reminder text."""
 		if not remember:
-			endtimer = self.bot.say(ctx.message.author.name + ', your timer for ' + seconds + ' seconds has expired!')
+			endtimer = self.bot.say(ctx.message.author.mention + ', your timer for ' + seconds + ' seconds has expired!')
 			await self.bot.say(ctx.message.author.name + ', you have set a timer for ' + seconds + ' seconds!')
 			await asyncio.sleep(float(seconds))
 			await endtimer
 		else:
-			endtimer = self.bot.say(ctx.message.author.name + ", your timer for " + seconds + " seconds has expired! I was instructed to remind you about `" + remember + "`!")
+			endtimer = self.bot.say(ctx.message.author.mention + ", your timer for " + seconds + " seconds has expired! I was instructed to remind you about `" + remember + "`!")
 			await self.bot.say(ctx.message.author.name + ", I will remind you about `" + remember + "` in " + seconds + " seconds!")
 			await asyncio.sleep(float(seconds))
 			await endtimer
@@ -236,23 +249,45 @@ class Fun():
 	async def meme(self,ctx,meme:str,line1:str,line2:str,style=""):
 		"""Generates a meme."""
 		if ctx.invoked_subcommand is None:
+			i = random.randint(0,9999)
+			path = "mods/utils/images/other/tempimg{}.jpg".format(i)
+			rep = [["-","--"],["_","__"],["?","~q"],["%","~p"],[" ","%20"],["''","\""]]
+			for i in rep:
+				line1 = line1.replace(i[0],i[1])
+				line2 = line2.replace(i[0],i[1])
 			if not style:
-				await self.bot.say("http://memegen.link/{0}/{1}/{2}.jpg".format(meme,line1.replace("-","--").replace("_","__").replace(" ","-").replace(" ","_").replace("?","~q").replace("%","~p").replace("\"","''"),line2.replace("-","--").replace("_","__").replace(" ","-").replace(" ","_").replace("?","~q").replace("%","~p").replace("\"","''")))
+				link = "http://memegen.link/{0}/{1}/{2}.jpg".format(meme,line1,line2)
 			else:
-				await self.bot.say("http://memegen.link/{0}/{1}/{2}.jpg?alt={3}".format(meme,line1.replace("-","--").replace("_","__").replace(" ","-").replace(" ","_").replace("?","~q").replace("%","~p").replace("\"","''"),line2.replace("-","--").replace("_","__").replace(" ","-").replace(" ","_").replace("?","~q").replace("%","~p").replace("\"","''"),style))
+				link = "http://memegen.link/{0}/{1}/{2}.jpg?alt={3}".format(meme,line1,line2,style)
+			await download(link,path)
+			await self.bot.send_file(ctx.message.channel,path)
+			os.remove(path)
 
 	@meme.command(name="custom",pass_context=True)
 	async def _custom(self,ctx,pic:str,line1:str,line2:str):
 		"""Generates a meme using a custom picture."""
 		if not ".gif" in pic[-5:]:
-			await self.bot.say("http://memegen.link/custom/{0}/{1}.jpg?alt={2}".format(line1.replace("-","--").replace("_","__").replace(" ","-").replace(" ","_").replace("?","~q").replace("%","~p").replace("\"","''"),line2.replace("-","--").replace("_","__").replace(" ","-").replace(" ","_").replace("?","~q").replace("%","~p").replace("\"","''"),pic))
+			i = random.randint(0,9999)
+			path = "mods/utils/images/other/tempimg{}.jpg".format(i)
+			rep = [["-","--"],["_","__"],["?","~q"],["%","~p"],[" ","%20"],["''","\""]]
+			for i in rep:
+				line1 = line1.replace(i[0],i[1])
+				line2 = line2.replace(i[0],i[1])
+			link = "http://memegen.link/custom/{0}/{1}.jpg?alt={2}".format(line1,line2,pic)
+			await download(link,path)
+			await self.bot.send_file(ctx.message.channel,path)
+			os.remove(path)
 		else:
 			await self.bot.say("You can't use gifs for memes!")
 
 	@meme.command(name="user",pass_context=True)
 	async def _user(self,ctx,user:discord.User,line1:str,line2:str):
 		"""Generates a meme on a users avatar."""
-		await self.bot.say("http://memegen.link/custom/{0}/{1}.jpg?alt={2}".format(line1.replace("-","--").replace("_","__").replace(" ","-").replace(" ","_").replace("?","~q").replace("%","~p").replace("\"","''"),line2.replace("-","--").replace("_","__").replace(" ","-").replace(" ","_").replace("?","~q").replace("%","~p").replace("\"","''"),user.avatar_url))
+		rep = [["-","--"],["_","__"],["?","~q"],["%","~p"],[" ","%20"],["''","\""]]
+		for i in rep:
+			line1 = line1.replace(i[0],i[1])
+			line2 = line2.replace(i[0],i[1])
+		await self.bot.say("http://memegen.link/custom/{0}/{1}.jpg?alt={2}".format(line1,line2,user.avatar_url))
 
 	@meme.group(name="templates",pass_context=True,invoke_without_command=True)
 	async def _templates(self,ctx):
@@ -286,7 +321,12 @@ class Fun():
 			else:
 				await self.bot.say("That isn't a real meme!")
 		if searchtype == "example":
-			await self.bot.say("http://memegen.link/{0}/your-text/goes-here.jpg".format(query))
+			i = random.randint(0,9999)
+			path = "mods/utils/images/other/tempimg{}.jpg".format(i)
+			link = "http://memegen.link/{0}/your-text/goes-here.jpg".format(query)
+			await download(link,path)
+			await self.bot.send_file(ctx.message.channel,path)
+			os.remove(path)
 		if searchtype == "aliases":
 			url = "http://memegen.link/templates/{}".format(query)
 			with aiohttp.ClientSession() as session:
@@ -385,18 +425,30 @@ class Fun():
 		await self.bot.send_file(ctx.message.channel, "mods/utils/images/other/goldstar.png", content="You get a gold star!")
 
 	@commands.command(pass_context=True)
-	async def out(self,ctx):
+	async def out(self,ctx,num:int=randint(1,2)):
 		"""Fuck this shit I'm out."""
-		await self.bot.say("https://www.youtube.com/watch?v=5FjWe31S_0g")
+		outlist = {1:"https://www.youtube.com/watch?v=5FjWe31S_0g",2:"https://cdn.discordapp.com/attachments/81402706320699392/184995277332152321/tumblr_inline_o52a1n6vy21s4jhgf_5001.gif"}
+		await self.bot.say(outlist[num])
 
 	@commands.command(pass_context=True)
-	async def rip(self,ctx,user:discord.User):
-		"""RIP."""
-		if not user.nick == None:
-			user = user.nick
+	async def shame(self,ctx):
+		"""Let the shame bells ring!"""
+		await self.bot.say('🔔🔔🔔 ​ ​ ​ ​ ​ ​ ​🔔 ​ ​ ​ ​ ​ ​ ​🔔 ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​🔔 ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​🔔 ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​🔔 ​ ​ ​ ​ ​ ​🔔🔔🔔\n🔔 ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​🔔 ​ ​ ​ ​ ​ ​ ​🔔 ​ ​ ​ ​ ​ ​ ​🔔 ​ ​ ​ ​ ​ ​ ​🔔 ​ ​ ​ ​ ​ ​ ​🔔🔔🔔🔔 ​ ​ ​ ​ ​ ​🔔\n🔔🔔🔔 ​ ​ ​ ​ ​ ​ ​🔔🔔🔔 ​ ​ ​ ​ ​ ​ ​🔔🔔🔔 ​ ​ ​ ​ ​ ​ ​🔔 ​ ​🔔 ​ ​ ​ ​🔔 ​ ​ ​ ​ ​ ​ ​🔔🔔🔔\n ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​🔔 ​ ​ ​ ​ ​ ​ ​🔔 ​ ​ ​ ​ ​ ​ ​🔔 ​ ​ ​ ​ ​ ​ ​🔔 ​ ​ ​ ​ ​ ​ ​🔔 ​ ​ ​ ​ ​ ​ ​🔔 ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​🔔 ​ ​ ​ ​ ​ ​ ​🔔\n🔔🔔🔔 ​ ​ ​ ​ ​ ​ ​🔔 ​ ​ ​ ​ ​ ​ ​🔔 ​ ​ ​ ​ ​ ​ ​🔔 ​ ​ ​ ​ ​ ​ ​🔔 ​ ​ ​ ​ ​ ​ ​🔔 ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​🔔 ​ ​ ​ ​ ​ ​ ​🔔🔔​🔔')
+
+	@commands.command(pass_context=True)
+	async def discrim(self,ctx,discrim:int=None):
+		if discrim is not None:
+			discrim = discrim
 		else:
-			user = user.name
-		await self.bot.say("<http://ripme.xyz/{}>".format(user.replace(" ","%20")))
+			discrim = int(ctx.message.author.discriminator)
+		await self.bot.say(discrim)
+		disc = []
+		for server in self.bot.servers:
+			for member in server.members:
+				if int(member.discriminator) == discrim:
+					if not member.name in disc:
+						disc.append(member.name)
+		await self.bot.say(wrap.format(", ".join(disc)))
 
 def setup(bot):
 	bot.add_cog(Fun(bot))

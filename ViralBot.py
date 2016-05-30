@@ -14,6 +14,8 @@ from mods.utils.py.Carbon import Carbon
 import io
 import subprocess
 import datetime
+import re
+from bs4 import BeautifulSoup as bs
 
 if os.path.isfile("mods/utils/json/configs/CarbonConfig.json"):
 	with open("mods/utils/json/configs/CarbonConfig.json") as f:
@@ -46,7 +48,7 @@ with open("mods/utils/json/fun/hexnamestocode.json") as f:
 	name = json.load(f)
 with open("mods/utils/json/fun/hexcodestoname.json") as f:
 	color = json.load(f)
-description = "This is the help menu for IQ! Because of my extensive amount of commands (and my over-ambitious creator) I go on and offline a lot, so please bear with me! If you have any questions, just PM EJH2#1767..."
+description = ""
 bot = commands.Bot(command_prefix=config["command_prefix"], description=description)
 starttime = time.time()
 starttime2 = time.ctime(int(time.time()))
@@ -90,7 +92,8 @@ pip_list = "My currently installed pip packages are:\n" + "\n".join(map(str,inst
 modules = [
 	'mods.Moderation',
 	'mods.Information',
-	'mods.Fun'
+	'mods.Fun',
+	'mods.Internet'
 ]
 
 async def dologging(message):
@@ -116,12 +119,11 @@ async def dologging(message):
 
 @bot.event
 async def on_message(message):
-	if "<@" + message.author.id + ">" in open('mods/utils/text/blacklist.txt').read():
+	if "<@" + message.author.id + ">" in open('mods/utils/text/blacklist.txt').read() or message.author.bot == True:
 		return
 	elif message.server.id in open('mods/utils/text/serverblacklist.txt').read() or message.channel.id in open('mods/utils/text/channelblacklist.txt').read():
 		if message.content.startswith(bot.command_prefix + "unignoreserv") or message.content.startswith(bot.command_prefix + "ignoreserv") or message.content.startswith(bot.command_prefix + "unignorechan") or message.content.startswith(bot.command_prefix + "ignorechan"):
 			await dologging(message)
-	
 	else:		
 		await dologging(message)
 
@@ -133,6 +135,7 @@ async def on_ready():
 				bot.load_extension(extension)
 			except Exception as e:
 				print('Failed to load extension {}\n{}: {}'.format(extension, type(e).__name__, e))
+		bot.description = "This is the help menu for {}! Because of my extensive amount of commands (and my over-ambitious creator) I go on and offline a lot, so please bear with me! If you have any questions, just PM {}...".format(bot.user.name,carbon["ownername"])
 		print('Logged in as')
 		print(bot.user.name + "#" + bot.user.discriminator)
 		print(bot.user.id)
@@ -325,9 +328,9 @@ async def setname(ctx,*,name:str):
 @bot.command(hidden=True,pass_contet=True)
 @checks.is_owner()
 async def setgame(*,game:discord.Game):
-	"""Sets the game that IQ is playing."""
+	"""Sets the game that ViralBot is playing."""
 	await bot.change_status(game=game)
-	await bot.say("Alright, changed IQ's current game to `{}`".format(game))
+	await bot.say("Alright, changed ViralBot's current game to `{}`".format(game))
 
 @bot.command(hidden=True,pass_context=True)
 async def stream(ctx,game,url):
@@ -339,17 +342,17 @@ async def stream(ctx,game,url):
 async def cleargame():
 	"""Clears the game status."""
 	await bot.change_status(game=None)
-	await bot.say("Alright, cleared IQ's game status.")
+	await bot.say("Alright, cleared ViralBot's game status.")
 
 @bot.command(hidden=True,pass_context=True)
 @checks.is_owner()
 async def revert(ctx):
 	"""Reverts the bots name and avatar back to its original."""
-	await bot.edit_profile(username="IQ")
+	await bot.edit_profile(username="ViralBot")
 	logo = open("mods/utils/images/other/original.jpg","rb")
 	asyncio.sleep(1)
 	await bot.edit_profile(avatar=logo.read())
-	await bot.say("IQ has successfully been reverted to its original!")
+	await bot.say("ViralBot has successfully been reverted to its original!")
 
 @bot.command(hidden=True,pass_context=True)
 @checks.is_owner()
@@ -377,7 +380,7 @@ async def unignore(ctx,*users:discord.User):
 				newText=f.read().replace(user.id + "\n", '')
 			with open('mods/utils/text/blacklist.txt', "w") as f:
 				f.write(newText)
-			await bot.say("Unblacklisted {}#!{}".format(user.name,user.discriminator))
+			await bot.say("Unblacklisted {}#{}".format(user.name,user.discriminator))
 		else:
 			await bot.say("{}#{} isn't blacklisted!".format(user.name,user.discriminator))
 
@@ -385,4 +388,14 @@ bot.add_cog(Default(bot))
 
 if os.path.isfile("mods/utils/json/configs/CarbonConfig.json"):
 	bot.statistics = Carbon(key=carbon['key'], bot=bot, timestamp=timestamp)
-bot.run(credentials["token"])
+loop = asyncio.get_event_loop()
+try:
+	loop.run_until_complete(bot.login(credentials["token"]))
+	loop.run_until_complete(bot.connect())
+except discord.errors.GatewayNotFound or discord.errors.ConnectionClosed or RuntimeError:
+	loop.run_until_complete(bot.login(credentials["token"]))
+	loop.run_until_complete(bot.connect())
+except KeyboardInterrupt:
+	loop.run_until_complete(bot.logout())
+finally:
+	loop.close()

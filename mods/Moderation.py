@@ -120,7 +120,6 @@ class ServerModeration():
 		removed = 0
 		async for message in self.bot.logs_from(ctx.message.channel):
 			if message.author == self.bot.user and removed <= messages-1:
-				print(message.content)
 				await self.bot.delete_message(message)
 				await asyncio.sleep(.21) 
 				removed += 1
@@ -277,6 +276,24 @@ class ServerModeration():
 						counter += 1
 		await self.bot.send_file(ctx.message.channel,path,filename="Userlogs.txt",content="Here is a copy of the last {1} logs for {0.name}#{0.discriminator}".format(user,counter))
 		os.remove(path)
+
+	@commands.command(pass_context=True)
+	@checks.mod_or_perm(manage_messages=True)
+	async def mute(self,ctx,*users:discord.User):
+		"""Mutes a non-ranked user in a channel."""
+		for user in users:
+			allow, deny = ctx.message.channel.overwrites_for(user)
+			deny.send_messages = True
+			await self.bot.edit_channel_permissions(ctx.message.channel,user,allow=allow,deny=deny)
+			await self.bot.say("{} is muted.. Sorry hear about that!".format(user))
+
+	@commands.command(pass_context=True)
+	@checks.mod_or_perm(manage_messages=True)
+	async def unmute(self, ctx, user:discord.User):
+		allow, deny = ctx.message.channel.overwrites_for(user)
+		allow.send_messages = True
+		await self.bot.edit_channel_permissions(ctx.message.channel,user,allow=allow)
+		await self.bot.say("{} is no longer Muted! He/she can speak now.. Yay!".format(user.mention))
 
 def setup(bot):
 	bot.add_cog(ServerModeration(bot))
