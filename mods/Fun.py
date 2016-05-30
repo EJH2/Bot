@@ -283,11 +283,16 @@ class Fun():
 	@meme.command(name="user",pass_context=True)
 	async def _user(self,ctx,user:discord.User,line1:str,line2:str):
 		"""Generates a meme on a users avatar."""
+		i = random.randint(0,9999)
+		path = "mods/utils/images/other/tempimg{}.jpg".format(i)
 		rep = [["-","--"],["_","__"],["?","~q"],["%","~p"],[" ","%20"],["''","\""]]
 		for i in rep:
 			line1 = line1.replace(i[0],i[1])
 			line2 = line2.replace(i[0],i[1])
-		await self.bot.say("http://memegen.link/custom/{0}/{1}.jpg?alt={2}".format(line1,line2,user.avatar_url))
+		link = "http://memegen.link/custom/{0}/{1}.jpg?alt={2}".format(line1,line2,user.avatar_url)
+		await download(link,path)
+		await self.bot.send_file(ctx.message.channel,path)
+		os.remove(path)
 
 	@meme.group(name="templates",pass_context=True,invoke_without_command=True)
 	async def _templates(self,ctx):

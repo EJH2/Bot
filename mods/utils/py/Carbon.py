@@ -31,7 +31,7 @@ class Carbon(threading.Thread):
 				'servercount': len(self.bot.servers),
 				"botname": self.bot.user.name,
 				"botid": self.bot.user.id,
-				"logoid": self.bot.user.avatar_url.lstrip("https://discordapp.com/api/users/133718676741292033/avatars/").replace(".jpg",""),
+				"logoid": self.bot.user.avatar_url[60:].replace(".jpg",""),
 				"ownerid": carbonconfig["ownerid"],
 				"ownername": carbonconfig["ownername"]
 			}

@@ -6,6 +6,7 @@ import discord
 import aiohttp
 from bs4 import BeautifulSoup as bs
 from googleapiclient.discovery import build
+from random import randint
 
 with open("mods/utils/json/configs/config.json") as f:
 	config = json.load(f)
@@ -91,15 +92,20 @@ class Internet():
 		Do `^xkcd <number from 1-1662>` to pick a specific comic."""
 		if not query:
 			i = randint(1, 1662)
-			await self.bot.say("https://xkcd.com/{}/".format(i))
+			url = "https://xkcd.com/{}/".format(i)
 		elif query.isdigit() and int(query) >= 1 and int(query) <= 1662:
-			await self.bot.say("https://xkcd.com/{}/".format(query))
+			url = "https://xkcd.com/{}/".format(query)
 		elif int(query) <= 0 or int(query) >= 1663:
 			await self.bot.say("It has to be between 1 and 1662!")
 		elif not query.isdigit():
 			await self.bot.say("You have to put a number!")
 		else:
 			await self.bot.say("I don't know how you managed to do it, but you borked it.")
+		with aiohttp.ClientSession() as session:
+			async with session.get(url) as resp:
+				r = await resp.read()
+		resp = bs(r,'html.parser')
+		await self.bot.say(bs('div', {'id':'comic'}))
 
 	@commands.command(pass_context=True)
 	async def api(self,ctx,api=''):
