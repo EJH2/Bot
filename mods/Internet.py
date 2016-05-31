@@ -105,7 +105,7 @@ class Internet():
 			async with session.get(url) as resp:
 				r = await resp.read()
 		resp = bs(r,'html.parser')
-		await self.bot.say(bs('div', {'id':'comic'}))
+		await self.bot.say(":mag:**" + resp('img')[1]['alt'] + "**\nhttp:" + resp('img')[1]['src'] + "\n" + resp('img')[1]['title'])
 
 	@commands.command(pass_context=True)
 	async def api(self,ctx,api=''):

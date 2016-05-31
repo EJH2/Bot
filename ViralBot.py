@@ -111,7 +111,7 @@ async def dologging(message):
 				await bot.send_message(message.channel, wrap.format(type(e).__name__ + ': ' + str(e)))
 			except Exception:
 				try:
-					await bot.send_message(message.author, "Hey! Around this time, you tried to activate a command. I couldn't complete it, so here's the error: {} When you get the chance, would you mind DMing EJH2#1767 so he can fix it? He can be reached here: https://discord.gg/0xyhWAU4n2k6STQt. Thanks!".format(wrap.format(type(e).__name__ + ': ' + str(e))))
+					await bot.send_message(message.author, "Hey! Around this time, you tried to activate a command. I couldn't complete it, so here's the error: {} When you get the chance, would you mind DMing EJH2 so he can fix it? He can be reached here: https://discord.gg/0xyhWAU4n2k6STQt. Thanks!".format(wrap.format(type(e).__name__ + ': ' + str(e))))
 				except Exception:
 					print(type(e).__name__ + ': ' + str(e))
 	else:
