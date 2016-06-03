@@ -15,6 +15,7 @@ import wikipedia.exceptions
 import base64
 import random
 import os
+from bs4 import BeautifulSoup as bs
 
 with open("mods/utils/json/configs/config.json") as f:
 	config = json.load(f)
@@ -38,11 +39,6 @@ async def tempsay(self,message:str,time:int):
 	x = await self.bot.say(message)
 	await asyncio.sleep(time)
 	await self.bot.delete_message(x)
-
-def replace_all(text, dic):
-    for i, j in dic.iteritems():
-        text = text.replace(i, j)
-    return text
 
 class Fun():
 	def __init__(self,bot):
@@ -209,19 +205,49 @@ class Fun():
 		await self.bot.say(message)
 
 	@commands.group(pass_context=True,invoke_without_command=True)
-	async def hexcolors(self,ctx):
+	async def colors(self,ctx):
 		"""Gives a giant list of all hex colors and their values."""
 		if ctx.invoked_subcommand is None:
 			await self.bot.say("A *whole* list of hexidecimal color codes can be found here: http://xkcd.com/color/rgb.txt")
 
-	@hexcolors.command(pass_context=True)
-	async def lookup(self,ctx,type,query):
+	@colors.command(name='lookup',pass_context=True)
+	async def _lookup(self,ctx,type,query):
 		"""Allows users to look up colors."""
 		if type == "name":
 			file = color
 		if type == "value":
 			file = name
-		await self.bot.say(file[query])
+		await self.bot.say(file[query.lower()].title())
+
+	@colors.command(name='convert',pass_context=True)
+	async def _convert(self,ctx,convert_to:str,*,input):
+		if convert_to == "hex":
+			input = str(input)
+			rgb = []
+			input = input.strip("()").split(",")
+			for i in input:
+				rgb.append(int(i.strip(" ")))
+			r,g,b = rgb[0],rgb[1],rgb[2]
+			if r > 255 or g > 255 or b > 255:
+				await self.bot.say("Only numbers from 0 to 255, please!")
+			else:
+				await self.bot.say("HEX = " + "#%02X%02X%02X".lower() % (r,g,b))
+		if convert_to == "rgb":
+			input = input.lstrip("#")
+			await self.bot.say('RGB = ' + str(tuple(int(input[i:i+2], 16) for i in (0, 2 ,4))))
+
+	@colors.command(name='preview',pass_context=True)
+	async def _preview(self,ctx,rgbcolor:str):
+		rgb = []
+		input = rgbcolor.strip("()").split(",")
+		for i in input:
+			rgb.append(int(i.strip(" ")))
+		r,g,b = rgb[0],rgb[1],rgb[2]
+		if r > 255 or g > 255 or b > 255:
+			await self.bot.say("Only numbers from 0 to 255, please!")
+		else:
+			url = "http://dev.gatt.space/color_image_maker/100/{0}/{1}/{2}/image.png".format(r,g,b)
+			await self.bot.say(url)
 
 	@commands.command(pass_context=True)
 	async def codeblock(self,ctx,language:str,*,code:str):

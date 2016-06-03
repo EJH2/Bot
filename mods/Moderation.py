@@ -165,7 +165,7 @@ class ServerModeration():
 
 	@commands.command(pass_context=True)
 	@checks.admin_or_perm(manage_server=True)
-	async def color(self,ctx,role:discord.Role,color:discord.Color):
+	async def rolecolor(self,ctx,role:discord.Role,color:discord.Color):
 		"""Changes the color of a role.
 
 			For example, to change the color of Dank Rank to white, I would do ^color 'Dank Rank' 0xFFFFFF"""
