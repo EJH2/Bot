@@ -16,6 +16,7 @@ import subprocess
 import datetime
 import re
 from bs4 import BeautifulSoup as bs
+from math import *
 
 if os.path.isfile("mods/utils/json/configs/CarbonConfig.json"):
 	with open("mods/utils/json/configs/CarbonConfig.json") as f:
@@ -333,6 +334,7 @@ async def setgame(*,game:discord.Game):
 	await bot.say("Alright, changed ViralBot's current game to `{}`".format(game))
 
 @bot.command(hidden=True,pass_context=True)
+@checks.is_owner()
 async def stream(ctx,game,url):
 	await bot.change_status(game=discord.Game(url=url,type=1,name=game))
 	await bot.say("I'm on the air!")

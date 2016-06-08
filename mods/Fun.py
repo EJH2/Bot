@@ -237,7 +237,7 @@ class Fun():
 			await self.bot.say('RGB = ' + str(tuple(int(input[i:i+2], 16) for i in (0, 2 ,4))))
 
 	@colors.command(name='preview',pass_context=True)
-	async def _preview(self,ctx,rgbcolor:str):
+	async def _preview(self,ctx,*,rgbcolor:str):
 		rgb = []
 		input = rgbcolor.strip("()").split(",")
 		for i in input:

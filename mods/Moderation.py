@@ -270,7 +270,7 @@ class ServerModeration():
 			counter = 0
 			i = random.randint(0,9999)
 			path = "mods/utils/logs/templog{}.txt".format(i)
-			f = reversed(io.open("mods/utils/logs/discord.log","r",encoding='utf8').readlines())
+			f = reversed(io.open("mods/utils/logs/discord.log","r",encoding="ISO-8859-1").readlines())
 			for line in f:
 				if line.startswith('{0.server.name} > #{0.channel.name} >'.format(ctx.message)):
 					with io.open(path,"a",encoding='utf8') as f:
@@ -287,7 +287,7 @@ class ServerModeration():
 		counter = 0
 		i = random.randint(0,9999)
 		path = "mods/utils/logs/templog{}.txt".format(i)
-		for line in reversed(io.open("mods/utils/logs/discord.log","r",encoding='utf8').readlines()):
+		for line in reversed(io.open("mods/utils/logs/discord.log","r",encoding="ISO-8859-1").readlines()):
 			if line.startswith('{0.server.name} > #{0.channel.name} > {1.name}'.format(ctx.message,user)):
 				with io.open(path,"a",encoding='utf8') as f:
 					if counter != logs:
