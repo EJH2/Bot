@@ -10,13 +10,13 @@ import sys
 import logging
 import pip
 import requests
-from mods.utils.py.Carbon import Carbon
 import io
 import subprocess
 import datetime
 import re
 from bs4 import BeautifulSoup as bs
 from math import *
+import traceback
 
 if os.path.isfile("mods/utils/json/configs/CarbonConfig.json"):
 	with open("mods/utils/json/configs/CarbonConfig.json") as f:
@@ -103,20 +103,8 @@ async def dologging(message):
 		destination = 'Private Message'
 	else:
 		destination = '{0.server.name} > #{0.channel.name}'.format(message)
-	log.info('{1} > {0.author.name}#{0.author.discriminator} on {2}: {0.content}'.format(message,destination,datetime.datetime.utcnow().strftime("%a %B %d %H:%M:%S %Y")))
-	if bot.nicelogging == "True":
-		try:
-			await bot.process_commands(message)
-		except Exception as e:
-			try:
-				await bot.send_message(message.channel, wrap.format(type(e).__name__ + ': ' + str(e)))
-			except Exception:
-				try:
-					await bot.send_message(message.author, "Hey! Around this time, you tried to activate a command. I couldn't complete it, so here's the error: {} When you get the chance, would you mind DMing EJH2 so he can fix it? He can be reached here: https://discord.gg/0xyhWAU4n2gQgYSF. Thanks!".format(wrap.format(type(e).__name__ + ': ' + str(e))))
-				except Exception:
-					print(type(e).__name__ + ': ' + str(e))
-	else:
-		await bot.process_commands(message)
+	log.info('{1} > {0.author.name}#{0.author.discriminator} on {2}: {0.content}\u2063'.format(message,destination,datetime.datetime.utcnow().strftime("%a %B %d %H:%M:%S %Y")))
+	await bot.process_commands(message)
 
 @bot.event
 async def on_message(message):
@@ -127,6 +115,30 @@ async def on_message(message):
 			await dologging(message)
 	else:		
 		await dologging(message)
+
+@bot.event
+async def on_command_error(error,ctx):
+	if isinstance(error,commands.NoPrivateMessage):
+		await bot.send_message(ctx.message.author, "You can't use this command in private messages!")
+	elif isinstance(error,commands.DisabledCommand):
+		await bot.send_message(ctx.message.author, "Sorry, but that command you tried to use in #{} is disabled...".format(ctx.message.channel.name))
+	elif isinstance(error,commands.CommandInvokeError):
+		if bot.nicelogging == "True":
+			with open("mods/utils/logs/errors.txt","a") as f:
+				print('At {1}, {0.command.qualified_name} raised:'.format(ctx,datetime.datetime.utcnow().strftime("%a %B %d %H:%M:%S %Y")), file=f)
+				traceback.print_tb(error.original.__traceback__,file=f)
+				print('{0.__class__.__name__}: {0}'.format(error.original), file=f)
+				print("\n\n==============\n\n",file=f)
+			try:
+				await bot.send_message(ctx.message.channel, wrap.format('{0.__class__.__name__}: {0}'.format(error.original)))
+			except:
+				try:
+					await bot.send_message(ctx.message.author, "Hey! Around this time, you tried to activate a command. I couldn't complete it, so here's the error: {} When you get the chance, would you mind DMing EJH2 so he can fix it? He can be reached here: https://discord.gg/0xyhWAU4n2gQgYSF. Thanks!".format(wrap.format('{0.__class__.__name__}: {0}'.format(error.original))))
+				except:
+					print('In {0.command.qualified_name}:'.format(ctx), file=sys.stderr)
+					traceback.print_tb(error.original.__traceback__)
+					print('{0.__class__.__name__}: {0}'.format(error.original), file=sys.stderr)
+
 
 @bot.event
 async def on_ready():
@@ -141,8 +153,6 @@ async def on_ready():
 		print(bot.user.name + "#" + bot.user.discriminator)
 		print(bot.user.id)
 		print('------')
-		if os.path.isfile("mods/utils/json/configs/CarbonConfig.json"):
-			bot.statistics.start()
 	except Exception as e:
 		print(type(e).__name__ + ': ' + str(e))
 
@@ -386,18 +396,20 @@ async def unignore(ctx,*users:discord.User):
 		else:
 			await bot.say("{}#{} isn't blacklisted!".format(user.name,user.discriminator))
 
+@bot.command(hidden=True,pass_context=True)
+@checks.is_owner()
+async def togglecmd(ctx,cmd:str):
+	if cmd in bot.commands:
+		cmd = bot.commands[cmd]
+		if cmd.enabled == True:
+			cmd.enabled = False
+			await bot.say("The command `{}` is now disabled!".format(cmd))
+		else:
+			cmd.enabled = True
+			await bot.say("The command `{}` is now enabled!".format(cmd))
+	else:
+		await bot.say("That isn't a valid command!")
+
 bot.add_cog(Default(bot))
 
-if os.path.isfile("mods/utils/json/configs/CarbonConfig.json"):
-	bot.statistics = Carbon(key=carbon['key'], bot=bot, timestamp=timestamp)
-loop = asyncio.get_event_loop()
-try:
-	loop.run_until_complete(bot.login(credentials["token"]))
-	loop.run_until_complete(bot.connect())
-except discord.errors.GatewayNotFound or discord.errors.ConnectionClosed or RuntimeError:
-	loop.run_until_complete(bot.login(credentials["token"]))
-	loop.run_until_complete(bot.connect())
-except KeyboardInterrupt:
-	loop.run_until_complete(bot.logout())
-finally:
-	loop.close()
+bot.run(credentials["token"])
