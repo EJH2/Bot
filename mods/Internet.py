@@ -43,7 +43,7 @@ class Internet():
 		with aiohttp.ClientSession() as session:
 			async with session.get(url) as resp:
 				r = await resp.read()
-		resp = bs(r)
+		resp = bs(r,'html.parser')
 		if user is not None:
 			pre = user.name + ": "
 		else:
@@ -53,7 +53,7 @@ class Internet():
 	@commands.command(pass_context=True)
 	async def urband(self,ctx,*,query:str):
 		"""Finds a phrase in the Urban Dictionary."""
-		url = "http://www.urbandictionary.com/define.php?term={}".format(query)
+		url = "http://www.urbandictionary.com/define.php?term={}".format(query.replace(" ","%20"))
 		with aiohttp.ClientSession() as session:
 			async with session.get(url) as resp:
 				r = await resp.read()

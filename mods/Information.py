@@ -11,6 +11,8 @@ from PIL import Image, ImageDraw, ImageFont
 
 with open("mods/utils/json/configs/config.json") as f:
 	config = json.load(f)
+with open("mods/utils/json/configs/credentials.json") as f:
+	credentials = json.load(f)
 
 wrap = "```py\n{0}\n```"
 xl = "```xl\n{0}\n```"
@@ -70,7 +72,7 @@ class Information():
 	async def weather(self,ctx,*,location:str):
 		"""Gives the current weather in a city."""
 		try:
-			owm = pyowm.OWM(config["OWMKey"])
+			owm = pyowm.OWM(credentials["OWMKey"])
 			observation = owm.weather_at_place(location)
 			w = observation.get_weather()
 			obs = w.get_detailed_status()
@@ -117,6 +119,11 @@ class Information():
 	async def join(self,ctx):
 		"""Gives you my join information."""
 		await self.bot.say("You can invite me to your server using: https://discordapp.com/oauth2/authorize?client_id=169558161047552002&scope=bot&permissions=261183" + "\n{0} needs all of these permissions to use commands like {1}prune or {1}ban! So if you don't want to use those types of features, feel free to uncheck them. But, if you do want to use them in the future, you will have to re-enable them.\n**Note: You have to be able to manage the server (edit the server settings) to invite me to your server, or else your desired server won't show up on the list!**".format(self.bot.user.name, config["command_prefix"]))
+
+	@commands.command(pass_context=True)
+	async def github(self,ctx):
+		"""Gives my GitHub link."""
+		await self.bot.say("https://github.com/EJH2/ViralBot-Discord")
 
 def setup(bot):
 	bot.add_cog(Information(bot))

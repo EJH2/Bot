@@ -481,5 +481,35 @@ class Fun():
 						disc.append(member.name)
 		await self.bot.say(wrap.format(", ".join(disc)))
 
+	@commands.command(pass_context=True)
+	async def fancify(self,ctx,*,text:str):
+		"""Fancify text"""
+		output = ""
+		for letter in text:
+			if 65 <= ord(letter) <= 90:
+				output += chr(ord(letter) + 119951)
+			elif 97 <= ord(letter) <= 122:
+				output += chr(ord(letter) + 119919)
+			elif letter == ' ':
+				output += ' '
+		await self.bot.say(output)
+
+	@commands.command(pass_context=True)
+	async def bigtext(self,ctx,*,text):
+		await self.bot.say("```\n" + figlet_format(text, font="big") + "```")
+
+	@commands.command(pass_context=True)
+	async def repeat(self,ctx,times:int,*,content:str):
+		for x in range(0,times):
+			await self.bot.say(content)
+			await asyncio.sleep(1)
+		await self.bot.say("Done!")
+
+	@commands.command(pass_context=True)
+	async def works(self,ctx):
+		"""It works for me"""
+		await self.bot.send_file(ctx.message.channel, "mods/utils/images/other/works.png")
+
+
 def setup(bot):
 	bot.add_cog(Fun(bot))
