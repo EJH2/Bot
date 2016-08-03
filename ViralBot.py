@@ -13,7 +13,6 @@ import io
 import subprocess
 import datetime
 import re
-from bs4 import BeautifulSoup as bs
 from math import *
 import traceback
 
