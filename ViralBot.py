@@ -103,7 +103,8 @@ async def dologging(message):
 		destination = 'Private Message'
 	else:
 		destination = '{0.server.name} > #{0.channel.name}'.format(message)
-	log.info('{1} > {0.author.name}#{0.author.discriminator} on {2}: {0.content}\u2063'.format(message,destination,datetime.datetime.utcnow().strftime("%a %B %d %H:%M:%S %Y")))
+	content = message.clean_content.replace("\n",u"2063")
+	log.info('{1} > {0.author.name}#{0.author.discriminator} on {2}: {3}'.format(message,destination,datetime.datetime.utcnow().strftime("%a %B %d %H:%M:%S %Y"),content))
 	await bot.process_commands(message)
 
 @bot.event

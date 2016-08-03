@@ -261,38 +261,6 @@ class ServerModeration():
 		else:
 			await self.bot.say("That channel isn't blacklisted!")
 
-	#@commands.group(pass_context=True,invoke_without_command=True)
-	#@checks.mod_or_perm(read_messages=True)
-	#async def logs(self,ctx,logs:int=100):
-	#	"""Grabs logs from the current channel."""
-	#	if ctx.invoked_subcommand is None:
-	#		server = ctx.message.server
-	#		counter = 0
-	#		i = random.randint(0,9999)
-	#		path = "mods/utils/logs/templog{}.txt".format(i)
-	#		f = reversed(io.open("mods/utils/logs/discord.log","r",encoding="ISO-8859-1").readlines())
-	#		printing = False
-	#		for line in f:
-	#			if line.startswith('{0.server.name} > #{0.channel.name} >'.format(ctx.message)) and line.endswith("\u2063"):
-	#				with io.open(path,"a",encoding='utf8') as f:
-	#					if counter != logs:
-	#						f.write(line)
-	#						counter += 1
-	#			if line.startswith('{0.server.name} > #{0.channel.name} >'.format(ctx.message)) and not line.endswith("\u2063"):
-	#				printing = True
-	#				with io.open(path,"a",encoding='utf8') as f:
-	#					f.write(line)
-	#					counter += 1
-	#			if printing == True:
-	#				with io.open(path,"a",encoding='utf8') as f:
-	#					f.write(line)
-	#			if not line.startswith('{0.server.name} > #{0.channel.name} >'.format(ctx.message)) and line.endswith("\u2063"):
-	#				printing = False
-	#				with io.open(path,"a",encoding='utf8') as f:
-	#					f.write(line)
-	#		await self.bot.send_file(ctx.message.channel,path,filename="Chatlogs.txt",content="Here is a copy of the last {} logs for this channel.".format(counter))
-	#		os.remove(path)
-
 	@commands.group(pass_context=True,invoke_without_command=True)
 	@checks.mod_or_perm(read_messages=True)
 	async def logs(self,ctx,logs:int=100):
@@ -307,7 +275,7 @@ class ServerModeration():
 				if line.startswith('{0.server.name} > #{0.channel.name} >'.format(ctx.message)):
 					with io.open(path,"a",encoding='utf8') as f:
 						if counter != logs:
-							f.write(line)
+							f.write(line.replace("â£","\n"))
 							counter += 1
 			await self.bot.send_file(ctx.message.channel,path,filename="Chatlogs.txt",content="Here is a copy of the last {} logs for this channel.".format(counter))
 			os.remove(path)
@@ -323,7 +291,7 @@ class ServerModeration():
 			if line.startswith('{0.server.name} > #{0.channel.name} > {1.name}'.format(ctx.message,user)):
 				with io.open(path,"a",encoding='utf8') as f:
 					if counter != logs:
-						f.write(line)
+						f.write(line.replace("â£","\n"))
 						counter += 1
 		await self.bot.send_file(ctx.message.channel,path,filename="Userlogs.txt",content="Here is a copy of the last {1} logs for {0.name}#{0.discriminator}".format(user,counter))
 		os.remove(path)
