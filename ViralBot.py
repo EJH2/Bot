@@ -9,7 +9,6 @@ import aiohttp
 import sys
 import logging
 import pip
-import requests
 import io
 import subprocess
 import datetime
