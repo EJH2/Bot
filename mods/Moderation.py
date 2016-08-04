@@ -7,6 +7,7 @@ import io
 import datetime
 import random
 import os
+import sqlite3
 
 wrap = "```py\n{}\n```"
 
@@ -270,13 +271,15 @@ class ServerModeration():
 			counter = 0
 			i = random.randint(0,9999)
 			path = "mods/utils/logs/templog{}.txt".format(i)
-			f = reversed(io.open("mods/utils/logs/discord.log","r",encoding="ISO-8859-1").readlines())
-			for line in f:
-				if line.startswith('{0.server.name} > #{0.channel.name} >'.format(ctx.message)):
-					with io.open(path,"a",encoding='utf8') as f:
-						if counter != logs:
-							f.write(line.replace("â£","\n"))
-							counter += 1
+			with io.open(path,"a",encoding='utf8') as f:
+				conn = sqlite3.connect('ViralLog.db')
+				cur = conn.cursor()
+				dest = ('{0.server.name} > #{0.channel.name}'.format(ctx.message),)
+				cur.execute("SELECT * FROM LogTable WHERE destination=?", dest)
+				for row in cur.fetchall():
+					if counter != logs:
+						f.write(row[0] + " > " + row[1] + " on " + row[2] + ": " + row[3].replace(u"\x2063","\n") + "\n")
+						counter += 1
 			await self.bot.send_file(ctx.message.channel,path,filename="Chatlogs.txt",content="Here is a copy of the last {} logs for this channel.".format(counter))
 			os.remove(path)
 
@@ -287,12 +290,16 @@ class ServerModeration():
 		counter = 0
 		i = random.randint(0,9999)
 		path = "mods/utils/logs/templog{}.txt".format(i)
-		for line in reversed(io.open("mods/utils/logs/discord.log","r",encoding="ISO-8859-1").readlines()):
-			if line.startswith('{0.server.name} > #{0.channel.name} > {1.name}'.format(ctx.message,user)):
-				with io.open(path,"a",encoding='utf8') as f:
-					if counter != logs:
-						f.write(line.replace("â£","\n"))
-						counter += 1
+		with io.open(path,"a",encoding='utf8') as f:
+			conn = sqlite3.connect('ViralLog.db')
+			cur = conn.cursor()
+			dest = '{0.server.name} > #{0.channel.name}'.format(ctx.message)
+			auth = '{0.name}#{0.discriminator}'.format(user)
+			cur.execute("SELECT * FROM LogTable WHERE destination=:dest AND author=:auth", {"dest": dest, "auth": auth})
+			for row in cur.fetchall():
+				if counter != logs:
+					f.write(row[0] + " > " + row[1] + " on " + row[2] + ": " + row[3].replace(u"\x2063","\n") + "\n")
+					counter += 1
 		await self.bot.send_file(ctx.message.channel,path,filename="Userlogs.txt",content="Here is a copy of the last {1} logs for {0.name}#{0.discriminator}".format(user,counter))
 		os.remove(path)
 

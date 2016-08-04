@@ -104,8 +104,8 @@ async def dologging(message):
 	if message.channel.is_private:
 		destination = 'Private Message'
 	else:
-		destination = '{0.server.name} > #{0.channel.name}'.format(message)
-	content = message.clean_content.replace("\n",u"2063")
+		destination = '{0.server.name} \> #{0.channel.name}'.format(message)
+	content = message.clean_content.replace("\n",u"\x2063")
 	cur.execute("INSERT INTO LogTable VALUES(?, ?, ?, ?)",(destination, message.author.name + "#" + message.author.discriminator, datetime.datetime.utcnow().strftime("%a %B %d %H:%M:%S %Y"),content))
 	conn.commit()
 	cur.close()
