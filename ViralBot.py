@@ -15,6 +15,7 @@ import datetime
 import re
 from math import *
 import traceback
+import sqlite3
 
 if os.path.isfile("mods/utils/json/configs/CarbonConfig.json"):
 	with open("mods/utils/json/configs/CarbonConfig.json") as f:
@@ -96,13 +97,19 @@ modules = [
 ]
 
 async def dologging(message):
+	conn = sqlite3.connect('ViralLog.db')
+	cur = conn.cursor()
+	cur.execute("CREATE TABLE IF NOT EXISTS LogTable(destination TEXT, author TEXT, time TEXT, content TEXT)")
 	destination = None
 	if message.channel.is_private:
 		destination = 'Private Message'
 	else:
 		destination = '{0.server.name} > #{0.channel.name}'.format(message)
 	content = message.clean_content.replace("\n",u"2063")
-	log.info('{1} > {0.author.name}#{0.author.discriminator} on {2}: {3}'.format(message,destination,datetime.datetime.utcnow().strftime("%a %B %d %H:%M:%S %Y"),content))
+	cur.execute("INSERT INTO LogTable VALUES(?, ?, ?, ?)",(destination, message.author.name + "#" + message.author.discriminator, datetime.datetime.utcnow().strftime("%a %B %d %H:%M:%S %Y"),content))
+	conn.commit()
+	cur.close()
+	conn.close()
 	await bot.process_commands(message)
 
 @bot.event
