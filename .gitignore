@@ -10,6 +10,7 @@ image.jpg
 *.db
 *.pyproj
 *.sln
+mods/utils/logs/
 blacklist.txt
 credentials.json
 CarbonConfig.json
