@@ -6,6 +6,7 @@
 memenames.json
 ascii.png
 image.jpg
+*.db
 *.pyproj
 *.sln
 blacklist.txt
