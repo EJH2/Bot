@@ -416,6 +416,18 @@ async def togglecmd(ctx,cmd:str):
 	else:
 		await bot.say("That isn't a valid command!")
 
+@bot.command(hidden=True,pass_context=True)
+@checks.is_owner()
+async def dm(ctx,id:int,*,reason:str):
+	await bot.send_message(discord.User(id=id), reason)
+	await bot.say("The message has been sent!")
+
+@bot.command(pass_context=True)	
+async def alert(ctx,*,message):
+	"""Sends a message to my developer! (Use only to report bugs.)"""
+	await bot.send_message(ctx.message.channel, "Alright, I passed the message.")
+	await bot.send_message(discord.User(id='140886965359738880'), "New message from " + ctx.message.author.name + "#" + ctx.message.author.discriminator + " (" + ctx.message.author.id + ") in " + ctx.message.author.server.name + ": " + message)
+
 bot.add_cog(Default(bot))
 
 bot.run(credentials["token"])
