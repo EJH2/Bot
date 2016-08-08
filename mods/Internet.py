@@ -22,6 +22,7 @@ class Internet():
 
 	@commands.command(pass_context=True)
 	async def penguin(self,ctx):
+		"""Penguins!"""
 		url = "http://penguin.wtf/"
 		with aiohttp.ClientSession() as session:
 			async with session.get(url) as resp:
@@ -164,6 +165,7 @@ class Internet():
 					resp = await resp.json()
 			x = 'Discord Statuses:\n	Overall Status: "{13}"\n    API: "{0}"\n	Gateway: "{1}"\n    CloudFlare: "{2}"\n    Voice: "{3}"\n        Amsterdam: "{4}"\n        Frankfurt: "{5}"\n        London: "{6}"\n        Singapore: "{7}"\n        Sydney: "{8}"\n        US Central: "{9}"\n        US East: "{10}"\n        US South: "{11}"\n        US West: "{12}"'.format(resp["components"][1]["status"],resp["components"][2]["status"],resp["components"][4]["status"],resp["components"][7]["status"],resp["components"][0]["status"],resp["components"][3]["status"],resp["components"][5]["status"],resp["components"][6]["status"],resp["components"][8]["status"],resp["components"][9]["status"],resp["components"][10]["status"],resp["components"][11]["status"],resp["components"][12]["status"],resp["status"]["description"])
 			await self.bot.say(xl.format(x))
+
 
 def setup(bot):
 	bot.add_cog(Internet(bot))
