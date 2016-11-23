@@ -151,6 +151,7 @@ class DiscordBot(Bot):
 
     async def on_command_completion(self, command, ctx):
         self.commands_used[command.name] += 1
+        await asyncio.sleep(5)
         try:
             await self.delete_message(ctx.message)
         except Exception as e:
