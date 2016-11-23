@@ -27,7 +27,7 @@ class Moderation:
         """
         Command for ignoring the channel/server.
         """
-        await self.bot.say("Invalid subcommand passed: {0.subcommand_passed}".format(ctx))
+        await self.bot.say("Invalid subcommand passed: {0.subcommand_passed}".format(ctx), delete_after=5)
 
     @ignore.command(pass_context=True, name="list", no_pm=True)
     async def ignore_list(self, ctx):
@@ -42,9 +42,9 @@ class Moderation:
                 result.append("<#{}>".format(channel))
 
         if result:
-            await self.bot.say("The following channels are ignored:\n\n{}".format(", ".join(result)))
+            await self.bot.say("The following channels are ignored:\n\n{}".format(", ".join(result)), delete_after=5)
         else:
-            await self.bot.say("I am not ignoring any channels here.")
+            await self.bot.say("I am not ignoring any channels here.", delete_after=5)
 
     @ignore.command(name="channel", pass_context=True)
     @commands.check(permissions(manage_channels=True))
@@ -60,12 +60,12 @@ class Moderation:
 
         ignored = self.ignored.get("channels", [])
         if channel.id in ignored:
-            await self.bot.say("That channel is already ignored.")
+            await self.bot.say("That channel is already ignored.", delete_after=5)
             return
 
         ignored.append(channel.id)
         self.ignored.place("channels", ignored)
-        await self.bot.say("I am no longer reading from that channel.")
+        await self.bot.say("I am no longer reading from that channel.", delete_after=5)
 
     @ignore.command(name="server", pass_context=True)
     @commands.check(permissions(manage_server=True))
@@ -79,7 +79,7 @@ class Moderation:
         channels = ctx.message.server.channels
         ignored.extend(c.id for c in channels if c.type == discord.ChannelType.text)
         self.ignored.place("channels", list(set(ignored)))  # make unique
-        await self.bot.say("I am now ignoring this server.")
+        await self.bot.say("I am now ignoring this server.", delete_after=5)
 
     @commands.group(pass_context=True, no_pm=True)
     @commands.check(permissions(manage_channels=True))
@@ -88,7 +88,7 @@ class Moderation:
         Command for un-ignoring channels/the server.
         """
         if ctx.invoked_subcommand is None:
-            await self.bot.say("Invalid subcommand passed: {0.subcommand_passed}".format(ctx))
+            await self.bot.say("Invalid subcommand passed: {0.subcommand_passed}".format(ctx), delete_after=5)
 
     @unignore.command(name="channel", pass_context=True, no_pm=True)
     @commands.check(permissions(manage_channels=True))
@@ -106,13 +106,13 @@ class Moderation:
         # however, JSON only supports arrays and objects not sets.
         ignored = self.ignored.get("channels", [])
         if channel.id not in ignored:
-            await self.bot.say("I am not currently ignoring this channel.")
+            await self.bot.say("I am not currently ignoring that channel.", delete_after=5)
             return
 
         self.ignored.remove("channels", channel.id)
 
         self.ignored.place("channels", ignored)
-        await self.bot.say("I am now reading from this channel.")
+        await self.bot.say("I am now reading from that channel.", delete_after=5)
 
     @unignore.command(name="server", pass_context=True, no_pm=True)
     @commands.check(permissions(manage_server=True))
@@ -131,7 +131,7 @@ class Moderation:
                 pass
 
         self.ignored.place("channels", ignored)
-        await self.bot.say("I am now reading from this server.")
+        await self.bot.say("I am now reading from this server.", delete_after=5)
 
     # ============================
     #   Banning related commands
