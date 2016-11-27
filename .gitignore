@@ -134,5 +134,5 @@ ENV/
 # Rope project settings
 .ropeproject
 
-/ignored.yaml
-/restart.yaml
+/*.yaml
+!/*.example.yaml
