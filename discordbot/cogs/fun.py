@@ -39,7 +39,7 @@ class Fun:
                 await self.bot.say(
                     "{1} was shot dead by the mighty {0}!\n"
                     "https://s-media-cache-ak0.pinimg.com/originals/2d/fa/a9/2dfaa995a09d81a07cad24d3ce18e011.gif"
-                        .format(ctx.message.author.name, member.name))
+                    .format(ctx.message.author.name, member.name))
 
     @commands.command()
     async def lmgtfy(self, *, query: str):
@@ -57,7 +57,7 @@ class Fun:
         """
         await self.bot.say("¯\_(ツ)_/¯")
 
-    @commands.command(pass_context=True)
+    @commands.command()
     async def say(self, *, message: str):
         """
         Makes the bot say anything the user wants it to.
