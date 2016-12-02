@@ -56,9 +56,6 @@ class DiscordBot(Bot):
         if not self.http.session.closed:
             self.http.session.close()
 
-        if not self.session.closed:
-            self.session.close()
-
     async def send_message(self, destination, content=None, *, tts=False, embed=None, delete_after=None):
         """
         Override for send_message that replaces `@everyone` with `@everyone` with a ZWSP.
@@ -111,8 +108,16 @@ class DiscordBot(Bot):
         """
         Process commands and log.
         """
-        self.logger.info("Received message: {message.clean_content} from {message.author.display_name}{bot}"
-                         .format(message=message, bot=" [BOT]" if message.author.bot else ""))
+        if message.attachments:
+            if message.clean_content:
+                attachment = " " + message.attachments[0]["url"]
+            else:
+                attachment = message.attachments[0]["url"]
+        else:
+            attachment = ""
+
+        self.logger.info("Received message: {message.clean_content}{attachment} from {message.author.display_name}{bot}"
+                         .format(message=message, attachment=attachment, bot=" [BOT]" if message.author.bot else ""))
 
         if message.server is not None:
             self.logger.info(" On channel: #{message.channel.name}".format(message=message))
