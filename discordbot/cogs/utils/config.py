@@ -1,4 +1,6 @@
-import yaml
+from ruamel import yaml
+from ruamel.yaml.comments import CommentedMap
+from ruamel.yaml.util import load_yaml_guess_indent
 
 
 # noinspection PyAttributeOutsideInit
@@ -17,7 +19,8 @@ class Config:
         """
         try:
             with open(self.file, "r") as file:
-                self.db = yaml.safe_load(file)
+                self.db = yaml.round_trip_load(file)
+                self.conf, self.ind, self.bsi = load_yaml_guess_indent(file)
         except FileNotFoundError:
             self.db = {}
 
@@ -26,7 +29,7 @@ class Config:
         Saves a bot_config file.
         """
         with open(self.file, "w") as file:
-            yaml.dump(self.db, file)
+            yaml.round_trip_dump(self.db, file, indent=self.ind, block_seq_indent=self.bsi)
 
     def get(self, key, *args):
         """
@@ -42,6 +45,7 @@ class Config:
         """
         Edits an entry value.
         """
+        assert isinstance(self.db, CommentedMap)
         self.db[key] = value
         self.save()
 
