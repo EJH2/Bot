@@ -49,38 +49,58 @@ class Information:
     #   Bot related commands
     # ========================
 
-    @commands.command(aliases=["stats"])
-    async def info(self):
+    @commands.group(aliases=["stats"], pass_context=True)
+    async def info(self, ctx):
         """
         Gives information about the bot.
         """
-        app_info = await self.bot.application_info()
-        owner = str(app_info.owner)
-        seconds = time.time() - consts.start
-        m, s = divmod(seconds, 60)
-        h, m = divmod(m, 60)
-        d, h = divmod(h, 24)
-        w, d = divmod(d, 7)
-        unique_members = set(self.bot.get_all_members())
-        unique_online = sum(1 for m in unique_members if m.status != discord.Status.offline)
-        channel_types = Counter(c.type for c in self.bot.get_all_channels())
-        voice = channel_types[discord.ChannelType.voice]
-        text = channel_types[discord.ChannelType.text]
+        if ctx.invoked_subcommand is None:
+            app_info = await self.bot.application_info()
+            owner = str(app_info.owner)
+            seconds = time.time() - consts.start
+            m, s = divmod(seconds, 60)
+            h, m = divmod(m, 60)
+            d, h = divmod(h, 24)
+            w, d = divmod(d, 7)
+            unique_members = set(self.bot.get_all_members())
+            unique_online = sum(1 for m in unique_members if m.status != discord.Status.offline)
+            channel_types = Counter(c.type for c in self.bot.get_all_channels())
+            voice = channel_types[discord.ChannelType.voice]
+            text = channel_types[discord.ChannelType.text]
+            try:
+                c = self.bot.commands_used
+                max_value = max(c.values())
+                commands_used = [(key, c[key]) for key in c if c[key] == max_value]
+                most_used = ", ".join([str(x[0]) + " - " + str(x[1]) for x in commands_used])
+            except ValueError:
+                most_used = "None"
 
-        msg = ["```swift",
-               "Stats:",
-               "         Developer: {} (ID: 125370065624236033)".format(owner),
-               "           Library: Discord.py (Python {0.version_info[0]}.{0.version_info[1]}."
-               "{0.version_info[2]})".format(sys),
-               "       Bot Version: {}".format(consts.bot_config["bot"]["version"]),
-               "           Servers: {}".format(len(self.bot.servers)),
-               "            Uptime: {}w : {}d : {}h : {}m : {}s".format(int(w), int(d), int(h), int(m), int(s)),
-               "Total Unique Users: {} ({} online)".format(len(unique_members), unique_online),
-               "     Text Channels: {}".format(text),
-               "    Voice Channels: {}".format(voice),
-               "```"]
+            msg = ["```swift",
+                   "Stats:",
+                   "           Developer: {} (ID: 125370065624236033)".format(owner),
+                   "             Library: Discord.py (Python {0.version_info[0]}.{0.version_info[1]}."
+                   "{0.version_info[2]})".format(sys),
+                   "         Bot Version: {}".format(consts.bot_config["bot"]["version"]),
+                   "             Servers: {}".format(len(self.bot.servers)),
+                   "              Uptime: {}w : {}d : {}h : {}m : {}s".format(int(w), int(d), int(h), int(m), int(s)),
+                   "  Total Unique Users: {} ({} online)".format(len(unique_members), unique_online),
+                   "       Text Channels: {}".format(text),
+                   "      Voice Channels: {}".format(voice),
+                   "Most Used Command(s): {} (see {}info commands for more stats)".format(most_used,
+                                                                                          self.bot.command_prefix),
+                   "```"]
 
-        await self.bot.say("\n".join(msg))
+            await self.bot.say("\n".join(msg))
+
+    @info.command(aliases=["commands"])
+    async def commands_used(self):
+        """
+        Gives info on how many commands have been used.
+        """
+        msg = []
+        for k, v in dict(self.bot.commands_used).items():
+            msg.append((str(k), str(v) + " uses"))
+        await self.bot.say(util.neatly(entries=msg, colors="autohotkey"))
 
     @commands.command()
     async def ping(self):
