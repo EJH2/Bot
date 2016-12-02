@@ -2,7 +2,7 @@
 Internet commands.
 """
 
-import os
+import io
 from random import randint
 
 import aiohttp
@@ -21,20 +21,15 @@ class Internet:
     def __init__(self, bot: DiscordBot):
         self.bot = bot
 
-    @commands.command(pass_context=True)
-    async def penguin(self, ctx):
+    @commands.command()
+    async def penguin(self):
         """
         Penguins!
         """
         url = "http://penguin.wtf/"
-        i = randint(0, 100)
-        path = "discordbot/cogs/utils/files/penguin{}.png".format(i)
-        with aiohttp.ClientSession() as session:
-            async with session.get(url) as resp:
-                r = await resp.read()
-        await util.download(r.decode("utf-8"), path)
-        await self.bot.upload(path)
-        os.remove(path)
+        url1 = await util.get_file(url)
+        file = await util.get_file(url1.decode())
+        await self.bot.upload(io.BytesIO(file), filename="penguin.png")
 
     @commands.command()
     async def rip(self, user: discord.User):
