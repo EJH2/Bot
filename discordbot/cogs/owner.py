@@ -31,6 +31,10 @@ class Owner:
         self.restarting = config.Config("restart.yaml")
         self.sessions = set()
 
+    # ==============================
+    #   Debugging related commands
+    # ==============================
+
     def cleanup_code(self, content):
         """Automatically removes code blocks from the code."""
         # remove ```py\n```
@@ -42,169 +46,6 @@ class Owner:
 
     def get_syntax_error(self, e):
         return "```py\n{0.text}{1:>{0.offset}}\n{2}: {0}```".format(e, "^", type(e).__name__)
-
-    @commands.command()
-    @commands.check(is_owner)
-    async def game(self, game: str, *, url: str = None):
-        """
-        Change the bots game.
-        """
-        if not url:
-            game = discord.Game(name=game, type=0)
-        else:
-            game = discord.Game(name=game, url=url, type=1)
-
-        await self.bot.change_presence(game=game)
-
-    @commands.command()
-    @commands.check(is_owner)
-    async def status(self, *, status: str):
-        """
-        Change the bots online status.
-        """
-        await self.bot.change_presence(status=discord.Status(status))
-
-    @commands.command()
-    @commands.check(is_owner)
-    async def name(self, *, name: str):
-        """
-        Change the bot name.
-        """
-        await self.bot.edit_profile(username=name)
-        await self.bot.say("Changed name to {}.".format(name))
-
-    @commands.command()
-    @commands.check(is_owner)
-    async def setavatar(self, *, url: str):
-        """
-        Change the bot's avatar.
-        """
-        avatar = await util.get_file(url)
-        await self.bot.edit_profile(avatar=avatar)
-        await self.bot.say("Changed avatar.")
-
-    @commands.command(pass_context=True)
-    async def banmenigger(self, ctx):
-        try:
-            await self.bot.ban(ctx.message.author)
-            await self.bot.say(":ok_hand:")
-        except:
-            await self.bot.say(":not_ok_hand:")
-
-    @commands.command()
-    @commands.check(is_owner)
-    async def load(self, *, extension: str):
-        """
-        Load an extension.
-        """
-        extension = extension.lower()
-        try:
-            self.bot.load_extension("discordbot.cogs.{}".format(extension))
-        except Exception as e:
-            traceback.print_exc()
-            await self.bot.say("Could not load `{}` -> `{}`".format(extension, e))
-        else:
-            await self.bot.say("Loaded cog `discordbot.cogs.{}`.".format(extension))
-
-    @commands.command()
-    @commands.check(is_owner)
-    async def unload(self, *, extension: str):
-        """
-        Unload an extension.
-        """
-        extension = extension.lower()
-        try:
-            self.bot.unload_extension("dicordbot.cogs.{}".format(extension))
-        except Exception as e:
-            traceback.print_exc()
-            await self.bot.say("Could not unload `{}` -> `{}`".format(extension, e))
-        else:
-            await self.bot.say("Unloaded `{}`.".format(extension))
-
-    @commands.command()
-    @commands.check(is_owner)
-    async def reload(self, *, extension: str):
-        """
-        Reload an extension.
-        """
-        extension = extension.lower()
-        try:
-            self.bot.unload_extension("discordbot.cogs.{}".format(extension))
-            self.bot.load_extension("discordbot.cogs.{}".format(extension))
-        except Exception as e:
-            traceback.print_exc()
-            await self.bot.say("Could not reload `{}` -> `{}`".format(extension, e))
-        else:
-            await self.bot.say("Reloaded `{}`.".format(extension))
-
-    @commands.command()
-    @commands.check(is_owner)
-    async def reloadall(self):
-        """
-        Reload all extensions.
-        """
-        for extension in self.bot.extensions:
-            try:
-                self.bot.unload_extension(extension)
-                self.bot.load_extension(extension)
-            except Exception as e:
-                await self.bot.say("Could not reload `{}` -> `{}`".format(extension, e))
-
-        await self.bot.say("Reloaded all.")
-
-    @commands.command()
-    @commands.check(is_owner)
-    async def refresh(self):
-        """
-        Re-initialise the cogs folder.
-        """
-        await self.bot.say("Please wait...")
-
-        for extension in consts.modules:
-            try:
-                self.bot.unload_extension(extension)
-            except Exception as e:
-                await self.bot.say("Could not unload `{}` -> `{}`".format(extension, e))
-
-        consts.modules = []
-
-        for i in glob.glob(os.getcwd() + "/discordbot/cogs/*.py"):
-            consts.modules.append(i.replace(os.getcwd() + "/", "").replace("\\", ".").replace("/", ".")[:-3])
-
-        for extension in consts.modules:
-            try:
-                self.bot.load_extension(extension)
-            except Exception as e:
-                self.bot.logger.critical("Could not load module {}, {}".format(extension, e))
-            else:
-                self.bot.logger.info("Loaded extension {}.".format(extension))
-
-        await self.bot.say("Refreshed all modules!")
-
-    @commands.command()
-    @commands.check(is_owner)
-    async def endbot(self):
-        """
-        Segfault the bot in order to kill it.
-        """
-        await self.bot.say("Goodbye!")
-        self.restarting.delete("restarting")
-        await self.bot.logout()
-        return
-
-    @commands.command(pass_context=True)
-    @commands.check(is_owner)
-    async def restart(self, ctx):
-        """
-        Restart the bot.
-        """
-        await self.bot.say("Restarting...")
-        self.restarting.place("restarting", "True")
-        self.restarting.place("restart_channel", ctx.message.channel.id)
-        child = subprocess.Popen("python bot.py", shell=True, stdout=subprocess.PIPE)
-        output, error = child.communicate()
-        print(output, error)
-        sys.exit()
 
     @commands.command(pass_context=True, hidden=True)
     @commands.check(is_owner)
@@ -317,6 +158,173 @@ class Owner:
                 pass
             except discord.HTTPException as e:
                 await self.bot.send_message(msg.channel, "Unexpected error: `{}`".format(e))
+
+    # ========================
+    #   Bot related commands
+    # ========================
+
+    @commands.command()
+    @commands.check(is_owner)
+    async def game(self, game: str, *, url: str = None):
+        """
+        Change the bots game.
+        """
+        if not url:
+            game = discord.Game(name=game, type=0)
+        else:
+            game = discord.Game(name=game, url=url, type=1)
+
+        await self.bot.change_presence(game=game)
+
+    @commands.command()
+    @commands.check(is_owner)
+    async def status(self, *, status: str):
+        """
+        Change the bots online status.
+        """
+        await self.bot.change_presence(status=discord.Status(status))
+
+    @commands.command()
+    @commands.check(is_owner)
+    async def name(self, *, name: str):
+        """
+        Change the bot name.
+        """
+        await self.bot.edit_profile(username=name)
+        await self.bot.say("Changed name to {}.".format(name))
+
+    @commands.command()
+    @commands.check(is_owner)
+    async def setavatar(self, *, url: str):
+        """
+        Change the bot's avatar.
+        """
+        avatar = await util.get_file(url)
+        await self.bot.edit_profile(avatar=avatar)
+        await self.bot.say("Changed avatar.")
+
+    # ===========================
+    #   Module related commands
+    # ===========================
+
+    @commands.command()
+    @commands.check(is_owner)
+    async def load(self, *, extension: str):
+        """
+        Load an extension.
+        """
+        extension = extension.lower()
+        try:
+            self.bot.load_extension("discordbot.cogs.{}".format(extension))
+        except Exception as e:
+            traceback.print_exc()
+            await self.bot.say("Could not load `{}` -> `{}`".format(extension, e))
+        else:
+            await self.bot.say("Loaded cog `discordbot.cogs.{}`.".format(extension))
+
+    @commands.command()
+    @commands.check(is_owner)
+    async def unload(self, *, extension: str):
+        """
+        Unload an extension.
+        """
+        extension = extension.lower()
+        try:
+            self.bot.unload_extension("dicordbot.cogs.{}".format(extension))
+        except Exception as e:
+            traceback.print_exc()
+            await self.bot.say("Could not unload `{}` -> `{}`".format(extension, e))
+        else:
+            await self.bot.say("Unloaded `{}`.".format(extension))
+
+    @commands.command()
+    @commands.check(is_owner)
+    async def reload(self, *, extension: str):
+        """
+        Reload an extension.
+        """
+        extension = extension.lower()
+        try:
+            self.bot.unload_extension("discordbot.cogs.{}".format(extension))
+            self.bot.load_extension("discordbot.cogs.{}".format(extension))
+        except Exception as e:
+            traceback.print_exc()
+            await self.bot.say("Could not reload `{}` -> `{}`".format(extension, e))
+        else:
+            await self.bot.say("Reloaded `{}`.".format(extension))
+
+    @commands.command()
+    @commands.check(is_owner)
+    async def reloadall(self):
+        """
+        Reload all extensions.
+        """
+        for extension in self.bot.extensions:
+            try:
+                self.bot.unload_extension(extension)
+                self.bot.load_extension(extension)
+            except Exception as e:
+                await self.bot.say("Could not reload `{}` -> `{}`".format(extension, e))
+
+        await self.bot.say("Reloaded all.")
+
+    @commands.command()
+    @commands.check(is_owner)
+    async def refresh(self):
+        """
+        Re-initialise the cogs folder.
+        """
+        await self.bot.say("Please wait...")
+
+        for extension in consts.modules:
+            try:
+                self.bot.unload_extension(extension)
+            except Exception as e:
+                await self.bot.say("Could not unload `{}` -> `{}`".format(extension, e))
+
+        consts.modules = []
+
+        for i in glob.glob(os.getcwd() + "/discordbot/cogs/*.py"):
+            consts.modules.append(i.replace(os.getcwd() + "/", "").replace("\\", ".").replace("/", ".")[:-3])
+
+        for extension in consts.modules:
+            try:
+                self.bot.load_extension(extension)
+            except Exception as e:
+                self.bot.logger.critical("Could not load module {}, {}".format(extension, e))
+            else:
+                self.bot.logger.info("Loaded extension {}.".format(extension))
+
+        await self.bot.say("Refreshed all modules!")
+
+    # ===============================
+    #   Management related commands
+    # ===============================
+
+    @commands.command()
+    @commands.check(is_owner)
+    async def endbot(self):
+        """
+        Segfault the bot in order to kill it.
+        """
+        await self.bot.say("Goodbye!")
+        self.restarting.delete("restarting")
+        await self.bot.logout()
+        return
+
+    @commands.command(pass_context=True)
+    @commands.check(is_owner)
+    async def restart(self, ctx):
+        """
+        Restart the bot.
+        """
+        await self.bot.say("Restarting...")
+        self.restarting.place("restarting", "True")
+        self.restarting.place("restart_channel", ctx.message.channel.id)
+        child = subprocess.Popen("python bot.py", shell=True, stdout=subprocess.PIPE)
+        output, error = child.communicate()
+        print(output, error)
+        sys.exit()
 
     @commands.command(pass_context=True)
     @commands.check(is_owner)
