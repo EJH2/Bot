@@ -5,7 +5,7 @@ import shutil
 import sys
 import time
 
-import yaml
+from ruamel import yaml
 
 from discordbot.cogs.utils import util
 
