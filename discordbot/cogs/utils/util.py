@@ -19,12 +19,12 @@ async def get_file(url):
             return data
 
 
-def neatly(entries):
+def neatly(entries, colors=""):
     """
     Neatly order text.
     """
     width = max(map(lambda t: len(t[0]), entries))
-    output = ["```"]
+    output = ["```{}".format(colors)]
     fmt = "\u200b{0:>{width}}: {1}"
     for name, entry in entries:
         output.append(fmt.format(name, entry, width=width))
