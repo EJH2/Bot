@@ -3,6 +3,7 @@ Fun commands.
 """
 
 import asyncio
+import random
 
 import discord
 from discord.ext import commands
@@ -10,6 +11,9 @@ from discord.ext.commands import BucketType
 from pyfiglet import figlet_format
 
 from discordbot.bot import DiscordBot
+
+rr_bullet = random.randint(1, 6)
+rr_count = 1
 
 
 # noinspection PyTypeChecker
@@ -30,7 +34,7 @@ class Fun:
                 await self.bot.say(
                     "You attempted to shoot me, {}, but I dodged it!\n"
                     "http://45.media.tumblr.com/c1165e983042a9cd1f17028a1c78170b/tumblr_n9c38m14291s5f9ado1_500.gif"
-                        .format(ctx.message.author.name))
+                    .format(ctx.message.author.name))
             elif member.id == ctx.message.author.id:
                 await self.bot.say(
                     "{} committed suicide!\nhttps://media.giphy.com/media/5xaOcLAo1Gg0oRgBz0Y/giphy.gif".format(
@@ -40,6 +44,22 @@ class Fun:
                     "{1} was shot dead by the mighty {0}!\n"
                     "https://s-media-cache-ak0.pinimg.com/originals/2d/fa/a9/2dfaa995a09d81a07cad24d3ce18e011.gif"
                     .format(ctx.message.author.name, member.name))
+
+    @commands.command()
+    async def rr(self):
+        """Allows the user to take part in the famous Russian Pasttime."""
+        await self.bot.say('You spin the cylinder of the revolver with 1 bullet in it...')
+        await asyncio.sleep(1)
+        await self.bot.say('...you place the muzzle against your head and pull the trigger...')
+        await asyncio.sleep(2)
+        global rr_bullet, rr_count
+        if rr_bullet == rr_count:
+            await self.bot.say('...your brain gets splattered all over the wall.')
+            rr_bullet = random.randint(1, 6)
+            rr_count = 1
+        else:
+            await self.bot.say('...you live to see another day.')
+            rr_count += 1
 
     @commands.command()
     async def lmgtfy(self, *, query: str):
@@ -73,15 +93,25 @@ class Fun:
             end_timer = self.bot.say("{}, your timer for {} seconds has expired!".format(ctx.message.author.name,
                                                                                          seconds))
             await self.bot.say("{}, you have set a timer for {} seconds!".format(ctx.message.author.name, seconds))
-            await asyncio.sleep(float(seconds))
-            await end_timer
+            timer = await self.bot.wait_for_message(author=ctx.message.author,
+                                                    content="{0.bot.command_prefix}cancel".format(self),
+                                                    timeout=seconds)
+            if timer is None:
+                await end_timer
+                return
+            await self.bot.reply("Cancelling your timer...")
         else:
             end_timer = self.bot.say("{}, your timer for {} seconds has expired! I was instructed to remind you about "
                                      "`{}`!".format(ctx.message.author.mention, seconds, remember))
             await self.bot.say("{}, I will remind you about `{}` in {} seconds!".format(ctx.message.author.mention,
                                                                                         seconds, remember))
-            await asyncio.sleep(float(seconds))
-            await end_timer
+            timer = await self.bot.wait_for_message(author=ctx.message.author,
+                                                    content="{0.bot.command_prefix}cancel".format(self),
+                                                    timeout=seconds)
+            if timer is None:
+                await end_timer
+                return
+            await self.bot.reply("Cancelling your timer...")
 
     @commands.command()
     async def shame(self):
