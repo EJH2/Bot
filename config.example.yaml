@@ -8,7 +8,7 @@ bot:
   OWMKey: <your key>
 
   # Command prefix
-  prefix: <your prefix>
+  command_prefix: <your prefix>
 
   # Bot version
   version: <bot version>
