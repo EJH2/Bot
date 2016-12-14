@@ -13,10 +13,14 @@ def is_owner(ctx):
 
 
 def is_server_owner(ctx):
+    if is_owner:
+        return True
     return ctx.message.author.id == ctx.message.server.owner.id
 
 
 def check_permissions(ctx, perms):
+    if is_server_owner:
+        return True
     ch = ctx.message.channel
     author = ctx.message.author
     resolved = ch.permissions_for(author)
@@ -29,6 +33,8 @@ def permissions(**perms):
 
 def role(role_name):
     def predicate(ctx):
+        if is_server_owner:
+            return True
         if ctx.message.server:
             for role in ctx.message.server.me.roles:
                 if role.name.lower() == role_name.lower():
