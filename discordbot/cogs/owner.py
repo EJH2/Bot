@@ -27,7 +27,7 @@ from discordbot.cogs.utils.checks import is_owner
 class Owner:
     def __init__(self, bot: DiscordBot):
         self.bot = bot
-        self.config = config.Config("ignored.yaml")
+        self.ignored = config.Config("ignored.yaml")
         self.restarting = config.Config("restart.yaml")
         self.sessions = set()
 
@@ -301,6 +301,53 @@ class Owner:
     #   Management related commands
     # ===============================
 
+    @commands.group(pass_context=True, invoke_without_command=True)
+    @commands.check(is_owner)
+    async def settings(self, ctx):
+        """
+        Command for getting/editing bot configs.
+        """
+        await self.bot.say("Invalid subcommand passed: {0.subcommand_passed}".format(ctx), delete_after=5)
+
+    @settings.command()
+    async def get(self, config, *, keys: str):
+        """
+        Gets a config value.
+        """
+        keys = keys.split(", ")
+        configfile = config.Config(config).todict()
+        value = configfile
+        for x in keys:
+            value = dict.get(value, x)
+        await self.bot.say(value)
+
+    @settings.command()
+    async def set(self, configfile, keys, *, value):
+        """
+        Sets a config value.
+        """
+        if len(keys) > 1:
+            keys = keys.split(", ")
+            configfile = config.Config(configfile)
+            configfile_dict = configfile.todict()
+            key = configfile_dict
+            for x in keys[:-1]:
+                key = dict.get(key, x)
+            keys = "".join(keys[-1:])
+            key[keys] = value
+            configfile.save()
+            if hasattr(self.bot, keys):
+                self.bot.__dict__[keys] = value
+        else:
+            configfile = config.Config(configfile)
+            configfile_dict = configfile.todict()
+            key = configfile_dict
+            keys = "".join(keys[-1:])
+            key[keys] = value
+            configfile.save()
+            if hasattr(self.bot, keys):
+                self.bot.__dict__[keys] = value
+
     @commands.command()
     @commands.check(is_owner)
     async def endbot(self):
@@ -336,13 +383,13 @@ class Owner:
             await self.bot.say("You can0't bot ban the owner!")
             return
 
-        plonks = self.config.get("users", [])
+        plonks = self.ignored.get("users", [])
         if member.id in plonks:
             await self.bot.say("That user is already bot banned.")
             return
 
         plonks.append(member.id)
-        self.config.place("users", plonks)
+        self.ignored.place("users", plonks)
         await self.bot.say("{0.name} has been banned from using the bot.".format(member))
 
     @commands.command(pass_context=True)
@@ -355,12 +402,12 @@ class Owner:
             await self.bot.say("You can't un-bot ban the owner, because he can't be banned!")
             return
 
-        plonks = self.config.get("users", [])
+        plonks = self.ignored.get("users", [])
         if member.id not in plonks:
             await self.bot.say("That user isn't bot banned.")
             return
 
-        self.config.remove("users", member.id)
+        self.ignored.remove("users", member.id)
         await self.bot.say("{0.name} has been unbanned from using the bot.".format(member))
 
     @commands.command()
