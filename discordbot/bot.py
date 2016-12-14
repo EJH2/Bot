@@ -154,6 +154,17 @@ class DiscordBot(Bot):
             else:
                 traceback.print_exception(type(e), e, e.__traceback__, file=sys.stderr)
 
+    async def on_command(self, command, ctx):
+        embeddable = ctx.message.channel.permissions_for(ctx.message.server.me).embed_links
+        if command.name == "help":
+            if not embeddable:
+                await super().send_message(ctx.message.channel,
+                                           "\N{ENVELOPE WITH DOWNWARDS ARROW ABOVE} Sent to your DMs!")
+            else:
+                em = discord.Embed(title="Sent!", description="\N{ENVELOPE WITH DOWNWARDS ARROW ABOVE} "
+                                                              "Sent to your DMs!", color=0xFFFFFF)
+                await super().send_message(ctx.message.channel, content="", embed=em)
+
     async def on_command_completion(self, command, ctx):
         self.commands_used[command.name] += 1
         await asyncio.sleep(5)
