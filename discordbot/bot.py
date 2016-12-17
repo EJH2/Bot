@@ -60,7 +60,8 @@ class DiscordBot(Bot):
         """
         Override for send_message that replaces `@everyone` with `@everyone` with a ZWSP.
         """
-        content = str(content).replace("@everyone", "@\u200beveryone").replace("@here", "@\u200bhere")
+        content = str(content).replace("@everyone", "@\u200beveryone").replace("@here", "@\u200bhere") \
+            if content is not None else content
 
         msg = await super().send_message(destination, content, tts=tts, embed=embed)
 
