@@ -19,6 +19,7 @@ async def download_config():
     try:
         shutil.copy("config.example.yaml", "config.yaml")
         print("Created a new bot config file - please fill out the required fields and restart the bot.")
+        input("Press any ket to continue...")
         sys.exit(1)
     except FileNotFoundError:
         print("It seems that you did not download the example bot config file! Downloading and copying...")
@@ -27,10 +28,12 @@ async def download_config():
                                 "config.example.yaml")
         except util.Borked:
             print("Config could not be cloned automatically, please ask on GitHub or Discord", file=sys.stderr)
+            input("Press any ket to continue...")
             sys.exit(1)
         print("Cloning...")
         shutil.copy("config.example.yaml", "config.yaml")
         print("Created a new bot config file - please fill out the required fields and restart the bot.")
+        input("Press any ket to continue...")
         sys.exit(1)
 
 
