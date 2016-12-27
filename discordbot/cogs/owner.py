@@ -163,20 +163,29 @@ class Owner:
     #   Bot related commands
     # ========================
 
-    @commands.command()
+    @commands.group(pass_context=True, invoke_without_command=True)
+    @commands.check(is_owner)
+    async def appearance(self, ctx):
+        """
+        Command for getting/editing bot configs.
+        """
+        await self.bot.say("Invalid subcommand passed: {0.subcommand_passed}".format(ctx), delete_after=5)
+
+    @appearance.command()
     @commands.check(is_owner)
     async def game(self, game: str, *, url: str = None):
         """
         Change the bots game.
         """
         if not url:
-            game = discord.Game(name=game, type=0)
+            status = discord.Game(name=game, type=0)
         else:
-            game = discord.Game(name=game, url=url, type=1)
+            status = discord.Game(name=game, url=url, type=1)
 
-        await self.bot.change_presence(game=game)
+        await self.bot.change_presence(game=status)
+        await self.bot.say("Changed game to {}{}.".format(game, " on " + url if url else ""))
 
-    @commands.command()
+    @appearance.command()
     @commands.check(is_owner)
     async def status(self, *, status: str):
         """
@@ -184,7 +193,7 @@ class Owner:
         """
         await self.bot.change_presence(status=discord.Status(status))
 
-    @commands.command()
+    @appearance.command()
     @commands.check(is_owner)
     async def name(self, *, name: str):
         """
@@ -193,9 +202,9 @@ class Owner:
         await self.bot.edit_profile(username=name)
         await self.bot.say("Changed name to {}.".format(name))
 
-    @commands.command()
+    @appearance.command()
     @commands.check(is_owner)
-    async def setavatar(self, *, url: str):
+    async def avatar(self, *, url: str):
         """
         Change the bot's avatar.
         """
