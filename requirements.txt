@@ -4,4 +4,4 @@ pyfiglet
 pyowm
 aiohttp
 beautifulsoup4
-ruamel.base
+ruamel.yaml
