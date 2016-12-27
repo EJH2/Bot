@@ -180,6 +180,8 @@ class DiscordBot(Bot):
         """
         try:
             super().run(self.bot_config["bot"]["token"])
+            input("Press any key to continue...")
         except discord.errors.LoginFailure as e:
             self.logger.error("Failed to login to discord: {}".format(e.args[0]))
+            input("Press any key to continue...")
             sys.exit(2)
