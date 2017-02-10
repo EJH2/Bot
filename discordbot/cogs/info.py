@@ -23,6 +23,7 @@ class Information:
         self.config = config.Config("ignored.yaml")
 
     def __check(self, ctx):
+
         author = ctx.message.author
         if checks.is_owner(ctx):
             return True
@@ -49,14 +50,15 @@ class Information:
     #   Bot related commands
     # ========================
 
-    @commands.group(aliases=["stats"], pass_context=True)
+    @commands.group(aliases=["stats"])
+    @commands.check(checks.needs_embed)
     async def info(self, ctx):
         """
         Gives information about the bot.
         """
         if ctx.invoked_subcommand is None:
             app_info = await self.bot.application_info()
-            owner = str(app_info.owner)
+            owner = app_info.owner
             seconds = time.time() - consts.start
             m, s = divmod(seconds, 60)
             h, m = divmod(m, 60)
@@ -64,9 +66,12 @@ class Information:
             w, d = divmod(d, 7)
             unique_members = set(self.bot.get_all_members())
             unique_online = sum(1 for m in unique_members if m.status != discord.Status.offline)
-            channel_types = Counter(c.type for c in self.bot.get_all_channels())
-            voice = channel_types[discord.ChannelType.voice]
-            text = channel_types[discord.ChannelType.text]
+            channel_types = Counter(type(c) for c in self.bot.get_all_channels())
+            voice = channel_types[discord.channel.VoiceChannel]
+            text = channel_types[discord.channel.TextChannel]
+            perms = discord.Permissions.none()
+            perms.administrator = True
+            url = discord.utils.oauth_url(app_info.id, perms)
             try:
                 c = self.bot.commands_used
                 max_value = max(c.values())
@@ -75,35 +80,39 @@ class Information:
             except ValueError:
                 most_used = "None"
 
-            msg = ["```swift",
-                   "Stats:",
-                   "           Developer: {} (ID: 125370065624236033)".format(owner),
-                   "             Library: Discord.py (Python {0.version_info[0]}.{0.version_info[1]}."
-                   "{0.version_info[2]})".format(sys),
-                   "         Bot Version: {}".format(consts.bot_config["bot"]["version"]),
-                   "             Servers: {}".format(len(self.bot.servers)),
-                   "              Uptime: {}w : {}d : {}h : {}m : {}s".format(int(w), int(d), int(h), int(m), int(s)),
-                   "  Total Unique Users: {} ({} online)".format(len(unique_members), unique_online),
-                   "       Text Channels: {}".format(text),
-                   "      Voice Channels: {}".format(voice),
-                   "Most Used Command(s): {} (see {}info commands for more stats)".format(most_used,
-                                                                                          self.bot.command_prefix),
-                   "```"]
-
-            await self.bot.say("\n".join(msg))
+            em = discord.Embed(description="Bot Stats:")
+            em.title = "Bot Invite Link"
+            em.url = url
+            em.set_author(name=str(owner), icon_url=owner.avatar_url)
+            em.add_field(name="Library:", value="Discord.py (Python {0.version_info[0]}.{0.version_info[1]}."
+                                                "{0.version_info[2]})".format(sys))
+            em.add_field(name="Bot Version:", value=consts.bot_config["bot"]["version"])
+            em.add_field(name="Servers:", value=str(len(ctx.bot.guilds)))
+            em.add_field(name="Uptime:", value="{}w : {}d : {}h : {}m : {}s".format(int(w), int(d), int(h), int(m),
+                                                                                    int(s)))
+            em.add_field(name="Total Unique Users:", value="{} ({} online)".format(len(unique_members), unique_online))
+            em.add_field(name="Text Channels:", value=str(text))
+            em.add_field(name="Voice Channels:", value=str(voice))
+            em.add_field(name="Most Used", value=str(most_used))
+            em.add_field(name="\u200b", value="\u200b")  # dummy field cuz discord is retarded
+            await ctx.send(embed=em)
 
     @info.command(aliases=["commands"])
-    async def commands_used(self):
+    async def commands_used(self, ctx):
         """
         Gives info on how many commands have been used.
         """
         msg = []
-        for k, v in dict(self.bot.commands_used).items():
-            msg.append((str(k), str(v) + " uses"))
-        await self.bot.say(util.neatly(entries=msg, colors="autohotkey"))
+        if dict(self.bot.commands_used):
+            for k, v in dict(ctx.bot.commands_used).items():
+                msg.append((str(k), str(v) + " uses"))
+        else:
+            msg = [("None", "No commands seemed to have been run yet!")]
+        await ctx.send(embed=discord.Embed(title="Commands Run:", description=util.neatly(
+                           entries=msg, colors="autohotkey")))
 
     @commands.command()
-    async def ping(self):
+    async def ping(self, ctx):
         """
         Pings the bot.
         """
@@ -114,35 +123,26 @@ class Information:
         resp = Soup(r, 'html.parser')
         joke = resp.find('div', {'class': 'wrapper'}).text.strip("\n")
         ping_time = time.time()
-        ping_msg = await self.bot.say("Pinging Server...")
+        ping_msg = await ctx.send("Pinging Server...")
         ping = time.time() - ping_time
-        await self.bot.edit_message(ping_msg, joke + " // ***%.01f secs***" % ping)
+        await ping_msg.edit(content=joke + " // ***%.01f secs***" % ping)
 
     # ===========================
     #   Player related commands
     # ===========================
 
     @commands.command(aliases=["oauth"])
-    async def join(self):
+    async def join(self, ctx):
         """
         Gives my OAuth url.
         """
         app_info = await self.bot.application_info()
         app_id = str(app_info.id)
         perms = discord.Permissions.none()
-        perms.read_messages = True
-        perms.send_messages = True
-        perms.manage_roles = True
-        perms.ban_members = True
-        perms.kick_members = True
-        perms.manage_messages = True
-        perms.embed_links = True
-        perms.read_message_history = True
-        perms.attach_files = True
         perms.administrator = True
-        await self.bot.say(discord.utils.oauth_url(app_id, perms))
+        await ctx.send(discord.utils.oauth_url(app_id, perms))
 
-    @commands.command(pass_context=True, aliases=["playerstats", "player", "userinfo", "userstats", "user"])
+    @commands.command(aliases=["playerstats", "player", "userinfo", "userstats", "user"])
     async def playerinfo(self, ctx, *, user: discord.User = None):
         """
         Gives you player info on a user. If a user isn"t passed then the shown info is yours.
@@ -152,9 +152,9 @@ class Information:
 
         roles = [role.name.replace("@", "@\u200b") for role in user.roles]
         share = sum(1 for m in self.bot.get_all_members() if m.id == user.id)
-        voice_channel = user.voice_channel
+        voice_channel = user.voice
         if voice_channel is not None:
-            voice_channel = voice_channel.name
+            voice_channel = voice_channel.channel.name
         else:
             voice_channel = "Not in a voice channel."
 
@@ -174,19 +174,18 @@ class Information:
             ("Avatar URL", user.avatar_url)
         ]
 
-        await self.bot.say(util.neatly(msg))
+        await ctx.send(util.neatly(msg))
 
-    @commands.command(pass_context=True, aliases=["serverstats", "serverdata", "server"])
+    @commands.command(aliases=["serverstats", "serverdata", "server"])
     async def serverinfo(self, ctx):
         """
         Gives information about the current server.
         """
-        server = ctx.message.server
+        server = ctx.message.guild
 
         roles = [role.name.replace("@", "@\u200b") for role in server.roles]
 
         member = copy.copy(server.me)
-        member.id = "0"
         member.roles = [server.default_role]
 
         secret_channels = 0
@@ -194,7 +193,7 @@ class Information:
         text_channels = 0
         for channel in server.channels:
             perms = channel.permissions_for(member)
-            is_text = channel.type == discord.ChannelType.text
+            is_text = type(channel) == discord.channel.TextChannel
             text_channels += is_text
             if is_text and not perms.read_messages:
                 secret_channels += 1
@@ -220,9 +219,9 @@ class Information:
             ("Roles", ", ".join(roles))
         ]
 
-        await self.bot.say(util.neatly(msg))
+        await ctx.send(util.neatly(msg))
 
-    @commands.command(pass_context=True)
+    @commands.command()
     async def avatar(self, ctx, *, member: discord.Member = None):
         """
         Shows a members avatar.
@@ -230,9 +229,9 @@ class Information:
         if not member:
             member = ctx.message.author
 
-        await self.bot.say("The avatar of {} is: {}".format(member.name, member.avatar_url))
+        await ctx.send("The avatar of {} is: {}".format(member.name, member.avatar_url))
 
-    @commands.command(pass_context=True)
+    @commands.command()
     async def discrim(self, ctx, discrim: int = None):
         """
         Shows other people with your discriminator.
@@ -242,18 +241,18 @@ class Information:
         else:
             discrim = int(ctx.message.author.discriminator)
         disc = []
-        for server in self.bot.servers:
+        for server in ctx.bot.guilds:
             for member in server.members:
                 if int(member.discriminator) == discrim:
                     if member.name not in disc:
                         disc.append(member.name)
-        await self.bot.say("```\n{}\n```".format(", ".join(disc)))
+        await ctx.send("```\n{}\n```".format(", ".join(disc)))
 
-    @commands.command(pass_context=True)
+    @commands.command()
     async def test(self, ctx, message):
         embed = discord.Embed(title="Look at this", color=discord.Color(0xFFF000), url="https://ejh2.me")
         embed.set_author(name=message, url="https://ejh2.me", icon_url=ctx.message.author.avatar_url)
-        await self.bot.say(content="Check it", embed=embed)
+        await ctx.send(content="Check it", embed=embed)
 
 
 def setup(bot: DiscordBot):
