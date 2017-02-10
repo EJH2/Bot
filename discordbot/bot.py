@@ -56,24 +56,6 @@ class DiscordBot(Bot):
         if not self.http.session.closed:
             self.http.session.close()
 
-    async def send_message(self, destination, content=None, *, tts=False, embed=None, delete_after=None):
-        """
-        Override for send_message that replaces `@everyone` with `@everyone` with a ZWSP.
-        """
-        content = str(content).replace("@everyone", "@\u200beveryone").replace("@here", "@\u200bhere") \
-            if content is not None else content
-
-        msg = await super().send_message(destination, content, tts=tts, embed=embed)
-
-        if delete_after is not None:
-            async def delete():
-                await asyncio.sleep(delete_after)
-                await self.delete_message(msg)
-
-            discord.compat.create_task(delete(), loop=self.loop)
-
-        return msg
-
     async def on_ready(self):
         if self._loaded:
             return
@@ -99,8 +81,7 @@ class DiscordBot(Bot):
                 self.logger.info("Loaded extension {}.".format(mod))
 
         if self.restarting.get("restarting"):
-            await self.send_message(self.get_channel(str(self.restarting.get("restart_channel"))),
-                                    "Finished! Hello again ;)")
+            await self.get_channel(int(self.restarting.get("restart_channel"))).send("Finished! Hello again ;)")
             self.restarting.delete("restarting")
 
         self._loaded = True
@@ -120,9 +101,9 @@ class DiscordBot(Bot):
         self.logger.info("Received message: {message.clean_content}{attachment} from {message.author.display_name}{bot}"
                          .format(message=message, attachment=attachment, bot=" [BOT]" if message.author.bot else ""))
 
-        if message.server is not None:
+        if message.guild is not None:
             self.logger.info(" On channel: #{message.channel.name}".format(message=message))
-            self.logger.info(" On server: {0.server.name} ({0.server.id})".format(message))
+            self.logger.info(" On server: {0.guild.name} ({0.guild.id})".format(message))
         else:
             self.logger.info(" Inside private message")
 
@@ -133,44 +114,46 @@ class DiscordBot(Bot):
         Catch command errors.
         """
         if isinstance(e, (commands.errors.BadArgument, commands.errors.MissingRequiredArgument)):
-            await self.send_message(ctx.message.channel,
-                                    ":x: Bad argument: {}".format(" ".join(e.args)), delete_after=5)
+            await ctx.message.channel.send(":x: Bad argument: {}".format(" ".join(e.args)), delete_after=5)
         elif isinstance(e, exceptions.ClearanceError):
-            await self.send_message(ctx.message.channel, e, delete_after=5)
+            await ctx.message.channel.send(e, delete_after=5)
             return
         elif isinstance(e, commands.errors.CheckFailure):
-            await self.send_message(ctx.message.channel,
-                                    ":x: Check failed. You probably don't have permission to do this.", delete_after=5)
+            await ctx.message.channel.send(":x: Check failed. You probably don't have permission to do this.",
+                                           delete_after=5)
             return
         elif isinstance(e, commands.errors.CommandNotFound):
             return
+        elif isinstance(e, exceptions.EmbedError):
+            await ctx.message.channel.send(":no_entry: This command requires the `Embed Links` permission to execute!",
+                                           delete_after=5)
+            return
         elif isinstance(e, exceptions.Ignored):
-            await self.send_message(ctx.message.channel, ":x: This channel is currently being ignored.", delete_after=5)
+            await ctx.message.channel.send(":x: This channel is currently being ignored.", delete_after=5)
             return
         else:
-            await self.send_message(ctx.message.channel,
-                                    ":no_entry: An error happened. This has been logged and reported.", delete_after=5)
+            await ctx.message.channel.send(":no_entry: An error happened. This has been logged and reported.",
+                                           delete_after=5)
             if isinstance(e, commands.errors.CommandInvokeError):
                 traceback.print_exception(type(e), e.__cause__, e.__cause__.__traceback__, file=sys.stderr)
             else:
                 traceback.print_exception(type(e), e, e.__traceback__, file=sys.stderr)
 
-    async def on_command(self, command, ctx):
-        embeddable = ctx.message.channel.permissions_for(ctx.message.server.me).embed_links
-        if command.name == "help":
+    async def on_command(self, ctx):
+        embeddable = ctx.message.channel.permissions_for(ctx.message.guild.me).embed_links
+        if ctx.command.name == "help":
             if not embeddable:
-                await super().send_message(ctx.message.channel,
-                                           "\N{ENVELOPE WITH DOWNWARDS ARROW ABOVE} Sent to your DMs!")
+                await ctx.message.channel.send("\N{ENVELOPE WITH DOWNWARDS ARROW ABOVE} Sent to your DMs!")
             else:
                 em = discord.Embed(title="Sent!", description="\N{ENVELOPE WITH DOWNWARDS ARROW ABOVE} "
                                                               "Sent to your DMs!", color=0xFFFFFF)
-                await super().send_message(ctx.message.channel, content="", embed=em)
+                await ctx.message.channel.send(content="", embed=em)
 
-    async def on_command_completion(self, command, ctx):
-        self.commands_used[command.name] += 1
+    async def on_command_completion(self, ctx):
+        self.commands_used[ctx.command.name] += 1
         await asyncio.sleep(5)
         try:
-            await self.delete_message(ctx.message)
+            await ctx.message.delete()
         except Exception as e:
             print(e)
 
@@ -181,6 +164,7 @@ class DiscordBot(Bot):
         try:
             super().run(self.bot_config["bot"]["token"])
             input("Press any key to continue...")
+            sys.exit(2)
         except discord.errors.LoginFailure as e:
             self.logger.error("Failed to login to discord: {}".format(e.args[0]))
             input("Press any key to continue...")
