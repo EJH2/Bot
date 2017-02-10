@@ -10,3 +10,7 @@ class ClearanceError(CommandError):
 
 class Ignored(CommandError):
     pass
+
+
+class EmbedError(CommandError):
+    pass
