@@ -12,7 +12,7 @@ class API:
     def __init__(self, bot: DiscordBot):
         self.bot = bot
 
-    @commands.group(pass_context=True)
+    @commands.group()
     async def api(self, ctx):
         """Gives information on various APIs.
 
@@ -20,10 +20,10 @@ class API:
         """
 
         if ctx.invoked_subcommand is None:
-            await self.bot.say("{0.subcommand_passed}, isn\t ".format(ctx))
+            await ctx.send("{0.subcommand_passed}, isn't ".format(ctx))
 
     @api.command()
-    async def steam(self):
+    async def steam(self, ctx):
         """
         Steam API
         """
@@ -84,12 +84,12 @@ class API:
             "        TF2: \"{7}\"\n" \
             "        DOTA 2: \"{8}\"\n" \
             "        CS:GO: \"{9}\"".format(
-            steam_client, steam_community, steam_store, steam_user, steam_tf2_items, steam_dota2_items,
-            steam_csgo_items, steam_tf2_games, steam_dota2_games, steam_csgo_games)
-        await self.bot.say("```xl\n{}\n```".format(x))
+                steam_client, steam_community, steam_store, steam_user, steam_tf2_items, steam_dota2_items,
+                steam_csgo_items, steam_tf2_games, steam_dota2_games, steam_csgo_games)
+        await ctx.send("```xl\n{}\n```".format(x))
 
     @api.command()
-    async def discord(self):
+    async def discord(self, ctx):
         """
         Discord API
         """
@@ -112,12 +112,12 @@ class API:
             "        US East: \"{10}\"\n" \
             "        US South: \"{11}\"\n" \
             "        US West: \"{12}\"".format(
-            resp["components"][1]["status"], resp["components"][2]["status"], resp["components"][4]["status"],
-            resp["components"][7]["status"], resp["components"][0]["status"], resp["components"][3]["status"],
-            resp["components"][5]["status"], resp["components"][6]["status"], resp["components"][8]["status"],
-            resp["components"][9]["status"], resp["components"][10]["status"], resp["components"][11]["status"],
-            resp["components"][12]["status"], resp["status"]["description"])
-        await self.bot.say("```xl\n{}\n```".format(x))
+                resp["components"][1]["status"], resp["components"][2]["status"], resp["components"][4]["status"],
+                resp["components"][7]["status"], resp["components"][0]["status"], resp["components"][3]["status"],
+                resp["components"][5]["status"], resp["components"][6]["status"], resp["components"][8]["status"],
+                resp["components"][9]["status"], resp["components"][10]["status"], resp["components"][11]["status"],
+                resp["components"][12]["status"], resp["status"]["description"])
+        await ctx.send("```xl\n{}\n```".format(x))
 
 
 def setup(bot: DiscordBot):
