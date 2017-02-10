@@ -47,7 +47,7 @@ class Owner:
     def get_syntax_error(self, e):
         return "```py\n{0.text}{1:>{0.offset}}\n{2}: {0}```".format(e, "^", type(e).__name__)
 
-    @commands.command(pass_context=True, hidden=True)
+    @commands.command(hidden=True)
     @commands.check(is_owner)
     async def debug(self, ctx, *, code: str):
         """Evaluates code."""
@@ -56,10 +56,10 @@ class Owner:
         result = None
 
         env = {
-            "bot": self.bot,
+            "bot": self,
             "ctx": ctx,
             "message": ctx.message,
-            "server": ctx.message.server,
+            "server": ctx.message.guild,
             "channel": ctx.message.channel,
             "author": ctx.message.author
         }
@@ -72,41 +72,44 @@ class Owner:
                 await result
                 return
         except Exception as e:
-            await self.bot.say(python.format(type(e).__name__ + ": " + str(e)))
+            await ctx.send(python.format(type(e).__name__ + ": " + str(e)))
             traceback.print_exception(type(e), e, e.__traceback__, file=sys.stderr)
             return
 
-        await self.bot.say(python.format(result))
+        await ctx.send(python.format(result))
 
-    @commands.command(pass_context=True, hidden=True)
+    @commands.command(hidden=True)
     @commands.check(is_owner)
     async def repl(self, ctx):
         msg = ctx.message
 
         variables = {
             "ctx": ctx,
-            "bot": self.bot,
+            "bot": self,
             "message": msg,
-            "server": msg.server,
+            "server": msg.guild,
             "channel": msg.channel,
             "author": msg.author,
             "last": None,
         }
 
         if msg.channel.id in self.sessions:
-            await self.bot.say("Already running a REPL session in this channel. Exit it with `quit`.")
+            await ctx.send("Already running a REPL session in this channel. Exit it with `quit`.")
             return
 
         self.sessions.add(msg.channel.id)
-        await self.bot.say("Enter code to execute or evaluate. `exit()` or `quit` to exit.")
+        await ctx.send("Enter code to execute or evaluate. `exit()` or `quit` to exit.")
+
+        def check(m):
+            return m.author == ctx.message.author and m.channel == ctx.message.channel and m.content.startswith("`")
+
         while True:
-            response = await self.bot.wait_for_message(author=msg.author, channel=msg.channel,
-                                                       check=lambda m: m.content.startswith("`"))
+            response = await ctx.bot.wait_for("message", check=check)
 
             cleaned = self.cleanup_code(response.content)
 
             if cleaned in ("quit", "exit", "exit()"):
-                await self.bot.say("Exiting.")
+                await ctx.send("Exiting.")
                 self.sessions.remove(msg.channel.id)
                 return
 
@@ -124,7 +127,7 @@ class Owner:
                 try:
                     code = compile(cleaned, "<repl session>", "exec")
                 except SyntaxError as e:
-                    await self.bot.say(self.get_syntax_error(e))
+                    await ctx.send(self.get_syntax_error(e))
                     continue
 
             variables["message"] = response
@@ -151,29 +154,29 @@ class Owner:
             try:
                 if fmt is not None:
                     if len(fmt) > 2000:
-                        await self.bot.send_message(msg.channel, "Content too big to be printed.")
+                        await ctx.send("Content too big to be printed.")
                     else:
-                        await self.bot.send_message(msg.channel, fmt)
+                        await ctx.send(fmt)
             except discord.Forbidden:
                 pass
             except discord.HTTPException as e:
-                await self.bot.send_message(msg.channel, "Unexpected error: `{}`".format(e))
+                await ctx.send("Unexpected error: `{}`".format(e))
 
     # ========================
     #   Bot related commands
     # ========================
 
-    @commands.group(pass_context=True, invoke_without_command=True)
+    @commands.group(invoke_without_command=True)
     @commands.check(is_owner)
     async def appearance(self, ctx):
         """
         Command for getting/editing bot configs.
         """
-        await self.bot.say("Invalid subcommand passed: {0.subcommand_passed}".format(ctx), delete_after=5)
+        await ctx.send("Invalid subcommand passed: {0.subcommand_passed}".format(ctx), delete_after=5)
 
     @appearance.command()
     @commands.check(is_owner)
-    async def game(self, game: str, *, url: str = None):
+    async def game(self, ctx, game: str, *, url: str = None):
         """
         Change the bots game.
         """
@@ -182,35 +185,35 @@ class Owner:
         else:
             status = discord.Game(name=game, url=url, type=1)
 
-        await self.bot.change_presence(game=status)
-        await self.bot.say("Changed game to {}{}.".format(game, " on " + url if url else ""))
+        await ctx.bot.change_presence(game=status)
+        await ctx.send("Changed game to {}{}.".format(game, " on " + url if url else ""))
 
     @appearance.command()
     @commands.check(is_owner)
-    async def status(self, *, status: str):
+    async def status(self, ctx, *, status: str):
         """
         Change the bots online status.
         """
-        await self.bot.change_presence(status=discord.Status(status))
+        await ctx.change_presence(status=discord.Status(status))
 
     @appearance.command()
     @commands.check(is_owner)
-    async def name(self, *, name: str):
+    async def name(self, ctx, *, name: str):
         """
         Change the bot name.
         """
-        await self.bot.edit_profile(username=name)
-        await self.bot.say("Changed name to {}.".format(name))
+        await ctx.bot.user.edit(username=name)
+        await ctx.send("Changed name to {}.".format(name))
 
     @appearance.command()
     @commands.check(is_owner)
-    async def avatar(self, *, url: str):
+    async def avatar(self, ctx, *, url: str):
         """
         Change the bot's avatar.
         """
         avatar = await util.get_file(url)
-        await self.bot.edit_profile(avatar=avatar)
-        await self.bot.say("Changed avatar.")
+        await ctx.bot.user.edit(avatar=avatar)
+        await ctx.send("Changed avatar.")
 
     # ===========================
     #   Module related commands
@@ -218,78 +221,78 @@ class Owner:
 
     @commands.command()
     @commands.check(is_owner)
-    async def load(self, *, extension: str):
+    async def load(self, ctx, *, extension: str):
         """
         Load an extension.
         """
         extension = extension.lower()
         try:
-            self.bot.load_extension("discordbot.cogs.{}".format(extension))
+            ctx.bot.load_extension("discordbot.cogs.{}".format(extension))
         except Exception as e:
             traceback.print_exc()
-            await self.bot.say("Could not load `{}` -> `{}`".format(extension, e))
+            await ctx.send("Could not load `{}` -> `{}`".format(extension, e))
         else:
-            await self.bot.say("Loaded cog `discordbot.cogs.{}`.".format(extension))
+            await ctx.send("Loaded cog `discordbot.cogs.{}`.".format(extension))
 
     @commands.command()
     @commands.check(is_owner)
-    async def unload(self, *, extension: str):
+    async def unload(self, ctx, *, extension: str):
         """
         Unload an extension.
         """
         extension = extension.lower()
         try:
-            self.bot.unload_extension("dicordbot.cogs.{}".format(extension))
+            ctx.bot.unload_extension("dicordbot.cogs.{}".format(extension))
         except Exception as e:
             traceback.print_exc()
-            await self.bot.say("Could not unload `{}` -> `{}`".format(extension, e))
+            await ctx.send("Could not unload `{}` -> `{}`".format(extension, e))
         else:
-            await self.bot.say("Unloaded `{}`.".format(extension))
+            await ctx.send("Unloaded `{}`.".format(extension))
 
     @commands.command()
     @commands.check(is_owner)
-    async def reload(self, *, extension: str):
+    async def reload(self, ctx, *, extension: str):
         """
         Reload an extension.
         """
         extension = extension.lower()
         try:
-            self.bot.unload_extension("discordbot.cogs.{}".format(extension))
-            self.bot.load_extension("discordbot.cogs.{}".format(extension))
+            ctx.bot.unload_extension("discordbot.cogs.{}".format(extension))
+            ctx.bot.load_extension("discordbot.cogs.{}".format(extension))
         except Exception as e:
             traceback.print_exc()
-            await self.bot.say("Could not reload `{}` -> `{}`".format(extension, e))
+            await ctx.send("Could not reload `{}` -> `{}`".format(extension, e))
         else:
-            await self.bot.say("Reloaded `{}`.".format(extension))
+            await ctx.send("Reloaded `{}`.".format(extension))
 
     @commands.command()
     @commands.check(is_owner)
-    async def reloadall(self):
+    async def reloadall(self, ctx):
         """
         Reload all extensions.
         """
-        for extension in self.bot.extensions:
+        for extension in ctx.bot.extensions:
             try:
-                self.bot.unload_extension(extension)
-                self.bot.load_extension(extension)
+                ctx.bot.unload_extension(extension)
+                ctx.bot.load_extension(extension)
             except Exception as e:
-                await self.bot.say("Could not reload `{}` -> `{}`".format(extension, e))
+                await ctx.send("Could not reload `{}` -> `{}`".format(extension, e))
 
-        await self.bot.say("Reloaded all.")
+        await ctx.send("Reloaded all.")
 
     @commands.command()
     @commands.check(is_owner)
-    async def refresh(self):
+    async def refresh(self, ctx):
         """
         Re-initialise the cogs folder.
         """
-        await self.bot.say("Please wait...")
+        await ctx.send("Please wait...")
 
         for extension in consts.modules:
             try:
-                self.bot.unload_extension(extension)
+                ctx.bot.unload_extension(extension)
             except Exception as e:
-                await self.bot.say("Could not unload `{}` -> `{}`".format(extension, e))
+                await ctx.send("Could not unload `{}` -> `{}`".format(extension, e))
 
         consts.modules = []
 
@@ -298,40 +301,44 @@ class Owner:
 
         for extension in consts.modules:
             try:
-                self.bot.load_extension(extension)
+                ctx.load_extension(extension)
             except Exception as e:
-                self.bot.logger.critical("Could not load module {}, {}".format(extension, e))
+                ctx.bot.logger.critical("Could not load module {}, {}".format(extension, e))
             else:
-                self.bot.logger.info("Loaded extension {}.".format(extension))
+                ctx.bot.logger.info("Loaded extension {}.".format(extension))
 
-        await self.bot.say("Refreshed all modules!")
+        await ctx.send("Refreshed all modules!")
 
     # ===============================
     #   Management related commands
     # ===============================
 
-    @commands.group(pass_context=True, invoke_without_command=True)
+    @commands.group(invoke_without_command=True)
     @commands.check(is_owner)
     async def settings(self, ctx):
         """
         Command for getting/editing bot configs.
         """
-        await self.bot.say("Invalid subcommand passed: {0.subcommand_passed}".format(ctx), delete_after=5)
+        await ctx.send("Invalid subcommand passed: {0.subcommand_passed}".format(ctx), delete_after=5)
 
     @settings.command()
-    async def get(self, config, *, keys: str):
+    async def get(self, ctx, configfile, *, keys: str):
         """
         Gets a config value.
         """
         keys = keys.split(", ")
-        configfile = config.Config(config).todict()
+        configfile = config.Config(configfile).todict()
         value = configfile
         for x in keys:
             value = dict.get(value, x)
-        await self.bot.say(value)
+        if value is not None:
+            await ctx.send(value)
+            return
+        else:
+            await ctx.send("I couldn't find that key in the specified config!")
 
     @settings.command()
-    async def set(self, configfile, keys, *, value):
+    async def set(self, ctx, configfile, keys, *, value):
         """
         Sets a config value.
         """
@@ -345,8 +352,8 @@ class Owner:
             keys = "".join(keys[-1:])
             key[keys] = value
             configfile.save()
-            if hasattr(self.bot, keys):
-                self.bot.__dict__[keys] = value
+            if hasattr(ctx.bot, keys):
+                ctx.bot.__dict__[keys] = value
         else:
             configfile = config.Config(configfile)
             configfile_dict = configfile.todict()
@@ -354,79 +361,80 @@ class Owner:
             keys = "".join(keys[-1:])
             key[keys] = value
             configfile.save()
-            if hasattr(self.bot, keys):
-                self.bot.__dict__[keys] = value
+            if hasattr(ctx.bot, keys):
+                ctx.bot.__dict__[keys] = value
 
     @commands.command()
     @commands.check(is_owner)
-    async def endbot(self):
+    async def endbot(self, ctx):
         """
         Segfault the bot in order to kill it.
         """
-        await self.bot.say("Goodbye!")
+        await ctx.send("Goodbye!")
         self.restarting.delete("restarting")
-        await self.bot.logout()
+        await ctx.bot.logout()
         return
 
-    @commands.command(pass_context=True)
+    @commands.command()
     @commands.check(is_owner)
     async def restart(self, ctx):
         """
         Restart the bot.
         """
-        await self.bot.say("Restarting...")
+        await ctx.send("Restarting...")
         self.restarting.place("restarting", "True")
         self.restarting.place("restart_channel", ctx.message.channel.id)
-        child = subprocess.Popen("python bot.py", shell=True, stdout=subprocess.PIPE)
-        output, error = child.communicate()
-        print(output, error)
-        sys.exit()
+        ctx.bot.logger.info("\n"
+                            "-------------------"
+                            "\n")
+        await ctx.bot.logout()
+        subprocess.call([sys.executable, ctx.bot.filename])
 
-    @commands.command(pass_context=True)
+    @commands.command()
     @commands.check(is_owner)
     async def botban(self, ctx, *, member: discord.Member):
         """
         Bans a user from using the bot.
         """
         if member.id == ctx.bot.owner_id:
-            await self.bot.say("You can0't bot ban the owner!")
+            await ctx.send("You can't bot ban the owner!")
             return
 
         plonks = self.ignored.get("users", [])
         if member.id in plonks:
-            await self.bot.say("That user is already bot banned.")
+            await ctx.send("That user is already bot banned.")
             return
 
         plonks.append(member.id)
         self.ignored.place("users", plonks)
-        await self.bot.say("{0.name} has been banned from using the bot.".format(member))
+        await ctx.send("{0.name} has been banned from using the bot.".format(member))
 
-    @commands.command(pass_context=True)
+    @commands.command()
     @commands.check(is_owner)
     async def unbotban(self, ctx, *, member: discord.Member):
         """
         Unbans a user from using the bot.
         """
         if member.id == ctx.bot.owner_id:
-            await self.bot.say("You can't un-bot ban the owner, because he can't be banned!")
+            await ctx.send("You can't un-bot ban the owner, because he can't be banned!")
             return
 
         plonks = self.ignored.get("users", [])
         if member.id not in plonks:
-            await self.bot.say("That user isn't bot banned.")
+            await ctx.send("That user isn't bot banned.")
             return
 
         self.ignored.remove("users", member.id)
-        await self.bot.say("{0.name} has been unbanned from using the bot.".format(member))
+        await ctx.send("{0.name} has been unbanned from using the bot.".format(member))
 
     @commands.command()
     @commands.check(is_owner)
-    async def sneaky(self, *, server: str):
+    async def sneaky(self, ctx, *, server: str):
         """
         Generates an invite link for the specified server.
         """
-        invite = await self.bot.create_invite(discord.utils.find(lambda m: m.name == server, self.bot.servers))
-        await self.bot.say(str(invite))
+        invite = await ctx.bot.create_invite(destination=discord.utils.find(lambda m: m.name == server, ctx.bot.guilds))
+        await ctx.send(invite)
 
 
 def setup(bot: DiscordBot):
