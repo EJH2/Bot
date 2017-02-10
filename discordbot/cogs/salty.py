@@ -16,7 +16,7 @@ class Salty:
 
     @commands.command()
     @checks.role("salty")
-    async def insult(self, user: discord.User = None):
+    async def insult(self, ctx, user: discord.User = None):
         """Insults a user."""
         url = "http://www.insultgenerator.org/"
         with aiohttp.ClientSession() as session:
@@ -27,10 +27,10 @@ class Salty:
             pre = user.name + ": "
         else:
             pre = ""
-        await self.bot.say(pre + resp.find('div', {'class': 'wrap'}).text.strip("\n"))
+        await ctx.send(pre + resp.find('div', {'class': 'wrap'}).text.strip("\n"))
 
     @commands.command()
-    async def urband(self, *, query: str):
+    async def urband(self, ctx, *, query: str):
         """
         Finds a phrase in the Urban Dictionary.
         """
@@ -39,9 +39,9 @@ class Salty:
             async with session.get(url) as resp:
                 r = await resp.json()
         try:
-            await self.bot.say(r['list'][0]['definition'])
+            await ctx.send(r['list'][0]['definition'])
         except AttributeError:
-            await self.bot.say(
+            await ctx.send(
                 "Either the page doesn't exist, or you typed it in wrong. Either way, please try again.")
 
 
