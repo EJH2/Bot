@@ -21,34 +21,34 @@ class Moderation:
     #   Blacklisting related commands
     # =================================
 
-    @commands.group(pass_context=True, no_pm=True, invoke_without_command=True)
+    @commands.group(no_pm=True, invoke_without_command=True)
     @commands.check(permissions(manage_channels=True))
     async def ignore(self, ctx):
         """
         Command for ignoring the channel/server.
         """
-        await self.bot.say("Invalid subcommand passed: {0.subcommand_passed}".format(ctx), delete_after=5)
+        await ctx.send("Invalid subcommand passed: {0.subcommand_passed}".format(ctx), delete_after=5)
 
-    @ignore.command(pass_context=True, name="list", no_pm=True)
+    @ignore.command(name="list", no_pm=True)
     async def ignore_list(self, ctx):
         """
         Grabs a list of currently ignored channels in the server.
         """
         ignored = self.ignored.get("channels", [])
-        channel_ids = set(c.id for c in ctx.message.server.channels)
+        channel_ids = set(c.id for c in ctx.message.guild.channels)
         result = []
         for channel in ignored:
             if channel in channel_ids:
                 result.append("<#{}>".format(channel))
 
         if result:
-            await self.bot.say("The following channels are ignored:\n\n{}".format(", ".join(result)), delete_after=5)
+            await ctx.send("The following channels are ignored:\n\n{}".format(", ".join(result)), delete_after=5)
         else:
-            await self.bot.say("I am not ignoring any channels here.", delete_after=5)
+            await ctx.send("I am not ignoring any channels here.", delete_after=5)
 
-    @ignore.command(name="channel", pass_context=True)
+    @ignore.command(name="channel")
     @commands.check(permissions(manage_channels=True))
-    async def ignore_channel(self, ctx, *, channel: discord.Channel = None):
+    async def ignore_channel(self, ctx, *, channel: discord.channel.ChannelType.text = None):
         """Ignores a specific channel from being read by the bot.
 
         If you don"t specify a channel the current channel will be ignored.
@@ -60,12 +60,12 @@ class Moderation:
 
         ignored = self.ignored.get("channels", [])
         if channel.id in ignored:
-            await self.bot.say("That channel is already ignored.", delete_after=5)
+            await ctx.send("That channel is already ignored.", delete_after=5)
             return
 
         ignored.append(channel.id)
         self.ignored.place("channels", ignored)
-        await self.bot.say("I am no longer reading from that channel.", delete_after=5)
+        await ctx.send("I am no longer reading from that channel.", delete_after=5)
 
     @ignore.command(name="server", pass_context=True)
     @commands.check(permissions(manage_server=True))
@@ -355,7 +355,7 @@ class Moderation:
 
     @roles.command(name="delete", pass_context=True)
     @commands.check(permissions(manage_roles=True))
-    async def delete_delete(self, ctx, *, role: discord.Role):
+    async def roles_delete(self, ctx, *, role: discord.Role):
         """
         Deletes a role from the server.
         """
