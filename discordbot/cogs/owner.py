@@ -2,6 +2,7 @@
 Owner-only commands.
 """
 
+import asyncio
 import glob
 import inspect
 import io
@@ -227,12 +228,15 @@ class Owner:
         """
         extension = extension.lower()
         try:
-            ctx.bot.load_extension("discordbot.cogs.{}".format(extension))
+            ext = ctx.bot.load_extension("discordbot.cogs.{}".format(extension))
         except Exception as e:
             traceback.print_exc()
             await ctx.send("Could not load `{}` -> `{}`".format(extension, e))
         else:
-            await ctx.send("Loaded cog `discordbot.cogs.{}`.".format(extension))
+            if ext is not None:
+                await ctx.send("Loaded cog `discordbot.cogs.{}`.".format(extension))
+            else:
+                await ctx.send("Could not load `{}` -> `It's already loaded!`".format(extension))
 
     @commands.command()
     @commands.check(is_owner)
@@ -241,11 +245,10 @@ class Owner:
         Unload an extension.
         """
         extension = extension.lower()
-        try:
-            ctx.bot.unload_extension("dicordbot.cogs.{}".format(extension))
-        except Exception as e:
-            traceback.print_exc()
-            await ctx.send("Could not unload `{}` -> `{}`".format(extension, e))
+        ext = ctx.bot.unload_extension("discordbot.cogs.{}".format(extension))
+        if ext is None:
+            await ctx.send("Could not unload `{}` -> `Either it doesn't exist or it's already loaded!`".format(
+                extension))
         else:
             await ctx.send("Unloaded `{}`.".format(extension))
 
@@ -275,8 +278,10 @@ class Owner:
             try:
                 ctx.bot.unload_extension(extension)
                 ctx.bot.load_extension(extension)
+                await asyncio.sleep(1)
             except Exception as e:
                 await ctx.send("Could not reload `{}` -> `{}`".format(extension, e))
+                await asyncio.sleep(1)
 
         await ctx.send("Reloaded all.")
 
@@ -289,10 +294,11 @@ class Owner:
         await ctx.send("Please wait...")
 
         for extension in consts.modules:
-            try:
-                ctx.bot.unload_extension(extension)
-            except Exception as e:
-                await ctx.send("Could not unload `{}` -> `{}`".format(extension, e))
+            ext = ctx.bot.unload_extension("discordbot.cogs.{}".format(extension))
+            if ext is None:
+                await ctx.send("Could not unload `{}` -> It doesn't exist!".format(extension))
+            else:
+                await ctx.send("Unloaded `{}`.".format(extension))
 
         consts.modules = []
 
@@ -303,9 +309,11 @@ class Owner:
             try:
                 ctx.load_extension(extension)
             except Exception as e:
-                ctx.bot.logger.critical("Could not load module {}, {}".format(extension, e))
+                ctx.send("Could not load module `{}` -> `{}`".format(extension, e))
+                await asyncio.sleep(1)
             else:
-                ctx.bot.logger.info("Loaded extension {}.".format(extension))
+                ctx.bot.logger.info("Loaded extension `{}`.".format(extension))
+                await asyncio.sleep(1)
 
         await ctx.send("Refreshed all modules!")
 
@@ -327,7 +335,7 @@ class Owner:
         Gets a config value.
         """
         keys = keys.split(", ")
-        configfile = config.Config(configfile).todict()
+        configfile = config.Config(configfile).to_dict()
         value = configfile
         for x in keys:
             value = dict.get(value, x)
@@ -345,7 +353,7 @@ class Owner:
         if len(keys) > 1:
             keys = keys.split(", ")
             configfile = config.Config(configfile)
-            configfile_dict = configfile.todict()
+            configfile_dict = configfile.to_dict()
             key = configfile_dict
             for x in keys[:-1]:
                 key = dict.get(key, x)
@@ -356,7 +364,7 @@ class Owner:
                 ctx.bot.__dict__[keys] = value
         else:
             configfile = config.Config(configfile)
-            configfile_dict = configfile.todict()
+            configfile_dict = configfile.to_dict()
             key = configfile_dict
             keys = "".join(keys[-1:])
             key[keys] = value
