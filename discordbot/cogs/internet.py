@@ -2,7 +2,6 @@
 Internet commands.
 """
 
-import io
 from random import randint
 
 import aiohttp
@@ -12,7 +11,6 @@ from bs4 import BeautifulSoup as BSoup
 from discord.ext import commands
 
 from discordbot.bot import DiscordBot
-from discordbot.cogs.utils import util
 from discordbot.consts import bot_config
 
 
@@ -22,29 +20,25 @@ class Internet:
         self.bot = bot
 
     @commands.command()
-    async def penguin(self, ctx):
-        """
-        Penguins!
-        """
-        url = "http://penguin.wtf/"
-        url1 = await util.get_file(url)
-        file = await util.get_file(url1.decode())
-        await ctx.send(file=io.BytesIO(file), filename="penguin.png")
-
-    @commands.command()
     async def rip(self, ctx, user: discord.User = None):
         """
         RIP.
         """
-        user = user.display_name
+        if user is not None:
+            user = user.display_name
+        else:
+            user = ctx.message.author.display_name
         await ctx.send("<http://ripme.xyz/{}>".format(user.replace(" ", "%20")))
 
     @commands.command()
-    async def robohash(self, ctx, user: discord.User):
+    async def robohash(self, ctx, user: discord.User = None):
         """
         Robot pics.
         """
-        user = user.display_name
+        if user is not None:
+            user = user.display_name
+        else:
+            user = ctx.message.author.display_name
         await ctx.send("https://robohash.org/{}.png".format(user.replace(" ", "%20")))
 
     @commands.command()
@@ -62,7 +56,7 @@ class Internet:
         elif not query.isdigit():
             await ctx.send("You have to put a number!")
         else:
-            await ctx.send("I don't know how you managed to do it, but you borked it.")
+            await ctx.send("I don't know how you managed to do it, but you broke it.")
         with aiohttp.ClientSession() as session:
             async with session.get(url) as resp:
                 r = await resp.read()
