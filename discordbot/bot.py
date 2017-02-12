@@ -139,7 +139,8 @@ class DiscordBot(Bot):
             else:
                 traceback.print_exception(type(e), e, e.__traceback__, file=sys.stderr)
 
-    async def on_command(self, ctx):
+    @staticmethod
+    async def on_command(ctx):
         embeddable = ctx.message.channel.permissions_for(ctx.message.guild.me).embed_links
         if ctx.command.name == "help":
             if not embeddable:
