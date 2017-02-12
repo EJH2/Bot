@@ -20,7 +20,7 @@ class API:
         """
 
         if ctx.invoked_subcommand is None:
-            await ctx.send("{0.subcommand_passed}, isn't ".format(ctx))
+            await ctx.send("Invalid subcommand passed: {0.subcommand_passed}".format(ctx))
 
     @api.command()
     async def steam(self, ctx):
@@ -52,25 +52,25 @@ class API:
         else:
             steam_tf2_items = "Offline"
         if resp["IEconItems"]["570"]["online"] == 1:
-            steam_dota2_items = "Online"
+            steam__d_o_t_a2_items = "Online"
         else:
-            steam_dota2_items = "Offline"
+            steam__d_o_t_a2_items = "Offline"
         if resp["IEconItems"]["730"]["online"] == 1:
-            steam_csgo_items = "Online"
+            steam__c_s_g_o_items = "Online"
         else:
-            steam_csgo_items = "Offline"
+            steam__c_s_g_o_items = "Offline"
         if resp["ISteamGameCoordinator"]["440"]["online"] == 1:
             steam_tf2_games = "Online"
         else:
             steam_tf2_games = "Offline"
         if resp["ISteamGameCoordinator"]["570"]["online"] == 1:
-            steam_dota2_games = "Online"
+            steam__d_o_t_a2_games = "Online"
         else:
-            steam_dota2_games = "Offline"
+            steam__d_o_t_a2_games = "Offline"
         if resp["ISteamGameCoordinator"]["730"]["online"] == 1:
-            steam_csgo_games = "Online"
+            steam__c_s_g_o_games = "Online"
         else:
-            steam_csgo_games = "Offline"
+            steam__c_s_g_o_games = "Offline"
         x = "Steam Statuses:\n" \
             "	Steam Client: \"{0}\"\n" \
             "	Steam Community: \"{1}\"\n" \
@@ -78,14 +78,14 @@ class API:
             "	Steam Users: \"{3}\"\n" \
             "	Item Servers:\n" \
             "        TF2: \"{4}\"\n" \
-            "        DOTA 2: \"{5}\"\n" \
+            "        DotA 2: \"{5}\"\n" \
             "        CS:GO: \"{6}\"\n" \
             "	Game Coordinator:\n" \
             "        TF2: \"{7}\"\n" \
-            "        DOTA 2: \"{8}\"\n" \
+            "        DotA 2: \"{8}\"\n" \
             "        CS:GO: \"{9}\"".format(
-                steam_client, steam_community, steam_store, steam_user, steam_tf2_items, steam_dota2_items,
-                steam_csgo_items, steam_tf2_games, steam_dota2_games, steam_csgo_games)
+                steam_client, steam_community, steam_store, steam_user, steam_tf2_items, steam__d_o_t_a2_items,
+                steam__c_s_g_o_items, steam_tf2_games, steam__d_o_t_a2_games, steam__c_s_g_o_games)
         await ctx.send("```xl\n{}\n```".format(x))
 
     @api.command()
