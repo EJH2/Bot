@@ -88,8 +88,8 @@ class Information:
                                                 "{0.version_info[2]})".format(sys))
             em.add_field(name="Bot Version:", value=consts.bot_config["bot"]["version"])
             em.add_field(name="Servers:", value=str(len(ctx.bot.guilds)))
-            em.add_field(name="Uptime:", value="{}w : {}d : {}h : {}m : {}s".format(int(w), int(d), int(h), int(m),
-                                                                                    int(s)))
+            em.add_field(name="Up-time:", value="{}w : {}d : {}h : {}m : {}s".format(int(w), int(d), int(h), int(m),
+                                                                                     int(s)))
             em.add_field(name="Total Unique Users:", value="{} ({} online)".format(len(unique_members), unique_online))
             em.add_field(name="Text Channels:", value=str(text))
             em.add_field(name="Voice Channels:", value=str(voice))
@@ -143,7 +143,7 @@ class Information:
         await ctx.send(discord.utils.oauth_url(app_id, perms))
 
     @commands.command(aliases=["playerstats", "player", "userinfo", "userstats", "user"])
-    async def playerinfo(self, ctx, *, user: discord.User = None):
+    async def playerinfo(self, ctx, *, user: discord.Member = None):
         """
         Gives you player info on a user. If a user isn"t passed then the shown info is yours.
         """
