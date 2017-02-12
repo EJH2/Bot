@@ -31,7 +31,7 @@ class Config:
         with open(self.file, "w") as file:
             yaml.round_trip_dump(self.db, file, indent=self.ind, block_seq_indent=self.bsi)
 
-    def todict(self):
+    def to_dict(self):
         return dict(self.db)
 
     def get(self, key, *args):
