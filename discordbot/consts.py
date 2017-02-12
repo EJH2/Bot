@@ -45,7 +45,7 @@ if not os.path.exists(config_file):
 with open(config_file) as f:
     bot_config = yaml.load(f)
 
-# Bot Uptime Calculation things
+# Bot Up-time Calculation things
 start2 = time.ctime(int(time.time()))
 
 start = time.time()
