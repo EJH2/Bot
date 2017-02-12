@@ -36,8 +36,8 @@ def role(role_name):
         if is_server_owner:
             return True
         if ctx.message.guild:
-            for role in ctx.message.guild.me.roles:
-                if role.name.lower() == role_name.lower():
+            for _role in ctx.message.guild.me.roles:
+                if _role.name.lower() == role_name.lower():
                     return True
         raise exceptions.ClearanceError("Bot requires role \"{}\" to run that command.".format(role_name.title()))
 
