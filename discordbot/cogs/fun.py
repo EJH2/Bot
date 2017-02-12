@@ -47,7 +47,7 @@ class Fun:
 
     @commands.command()
     async def rr(self, ctx):
-        """Allows the user to take part in the famous Russian Pasttime."""
+        """Allows the user to take part in the famous Russian Pastime."""
         await ctx.send('You spin the cylinder of the revolver with 1 bullet in it...')
         await asyncio.sleep(1)
         await ctx.send('...you place the muzzle against your head and pull the trigger...')
@@ -90,32 +90,26 @@ class Fun:
         Sets a timer for a user with the option of setting a reminder text.
         """
         if not remember:
-            end_timer = ctx.send("{}, your timer for {} seconds has expired!".format(ctx.message.author.name,
-                                                                                         seconds))
-            await ctx.send("{}, you have set a timer for {} seconds!".format(ctx.message.author.name, seconds))
+            await ctx.send("{}, you have set a timer for {} seconds!".format(ctx.message.author.mention, seconds))
+            end_timer = ctx.send("{}, your timer for {} seconds has expired!".format(ctx.message.author.mention,
+                                 seconds))
 
-            def check(m):
-                return m.author == ctx.message.author and ctx.message.content == "{0.bot.command_prefix}cancel".format(
-                    ctx)
-            timer = await ctx.wait_for(check=check, timeout=seconds)
-            if timer is None:
-                await end_timer
-                return
-            await ctx.send("{}, Cancelling your timer...".format(ctx.message.author.mention))
         else:
+            await ctx.send("{}, I will remind you about `{}` in {} seconds!".format(ctx.message.author.mention,
+                                                                                    remember, seconds))
             end_timer = ctx.send("{}, your timer for {} seconds has expired! I was instructed to remind you about "
                                  "`{}`!".format(ctx.message.author.mention, seconds, remember))
-            await ctx.send("{}, I will remind you about `{}` in {} seconds!".format(ctx.message.author.mention,
-                                                                                    seconds, remember))
 
-            def check(m):
-                return m.author == ctx.message.author and ctx.message.content == "{0.bot.command_prefix}cancel".format(
-                    ctx)
-            timer = await ctx.wait_for(check=check, timeout=seconds)
-            if timer is None:
-                await end_timer
-                return
-            await ctx.send("{}, Cancelling your timer...".format(ctx.message.author.mention))
+        def check(m):
+            return m.author == ctx.message.author and m.content == "{0.bot.command_prefix}cancel".format(
+                ctx)
+        try:
+            timer = await ctx.bot.wait_for("message", check=check, timeout=seconds)
+            if timer:
+                await ctx.send("{}, Cancelling your timer...".format(ctx.message.author.mention))
+        except asyncio.TimeoutError:
+            await end_timer
+            return
 
     @commands.command()
     async def shame(self, ctx):
@@ -141,7 +135,7 @@ class Fun:
     @commands.command()
     async def fancify(self, ctx, *, text: str):
         """
-        Fancify text.
+        "Fancy-ify" text.
         """
         output = ""
         for letter in text:
