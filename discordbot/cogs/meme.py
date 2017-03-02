@@ -1,9 +1,7 @@
 """
 Dedicated Meme commands.
 """
-
-import os
-import random
+import io
 
 import aiohttp
 import discord
@@ -21,8 +19,6 @@ class Meme:
     async def meme(self, ctx, meme: str, line1: str, line2: str, style=""):
         """Generates a meme."""
         if ctx.invoked_subcommand is None:
-            i = random.randint(0, 9999)
-            path = "discordbot/cogs/utils/files/tempmeme{}.jpg".format(i)
             rep = [["-", "--"], ["_", "__"], ["?", "~q"], ["%", "~p"], [" ", "%20"], ["''", "\""]]
             for i in rep:
                 line1 = line1.replace(i[0], i[1])
@@ -31,9 +27,8 @@ class Meme:
                 link = "http://memegen.link/{0}/{1}/{2}.jpg".format(meme, line1, line2)
             else:
                 link = "http://memegen.link/{0}/{1}/{2}.jpg?alt={3}".format(meme, line1, line2, style)
-            await util.download(link, path)
-            await ctx.send(file=path)
-            os.remove(path)
+            file = await util.get_file(link)
+            await ctx.send(file=io.BytesIO(file), filename="meme.png")
 
     @meme.command(name="custom")
     async def meme_custom(self, ctx, link: str, line1: str, line2: str):
@@ -44,37 +39,42 @@ class Meme:
                 content = get.headers['Content-Type']
                 type_split = content.split("/")
                 if type_split[0] == "image" and type_split[1] in ["png", "jpeg", "bmp"]:
-                    i = random.randint(0, 9999)
-                    path = "discordbot/cogs/utils/files/tempmeme{}.jpg".format(i)
                     rep = [["-", "--"], ["_", "__"], ["?", "~q"], ["%", "~p"], [" ", "%20"], ["''", "\""]]
                     for i in rep:
                         line1 = line1.replace(i[0], i[1])
                         line2 = line2.replace(i[0], i[1])
                     link = "http://memegen.link/custom/{0}/{1}.jpg?alt={2}".format(line1, line2, link)
-                    await util.download(link, path)
-                    await ctx.send(file=path)
-                    os.remove(path)
+                    file = await util.get_file(link)
+                    await ctx.send(file=io.BytesIO(file), filename="meme.png")
                 else:
                     await ctx.send("Only jpeg, png, or bmp images please!")
 
     @meme.command(name="user")
     async def meme_user(self, ctx, user: discord.User, line1: str, line2: str):
         """Generates a meme on a users avatar."""
-        i = random.randint(0, 9999)
-        path = "discordbot/cogs/utils/files/tempmeme{}.jpg".format(i)
         rep = [["-", "--"], ["_", "__"], ["?", "~q"], ["%", "~p"], [" ", "%20"], ["''", "\""]]
         for i in rep:
             line1 = line1.replace(i[0], i[1])
             line2 = line2.replace(i[0], i[1])
         link = "http://memegen.link/custom/{0}/{1}.jpg?alt={2}".format(line1, line2, user.avatar_url)
-        await util.download(link, path)
-        await ctx.send(file=path)
-        os.remove(path)
+        file = await util.get_file(link)
+        await ctx.send(file=io.BytesIO(file), filename="meme.gif")
 
     @meme.group(name="templates", invoke_without_command=True)
     async def meme_templates(self, ctx):
         """Gives users a list of meme templates."""
         await ctx.send("All stock templates can be found here: <{}>".format("http://memegen.link/templates/"))
+
+    @commands.command()
+    async def trump(self, ctx, *, meme: str):
+        """Generates a meme."""
+        if ctx.invoked_subcommand is None:
+            rep = [["-", "--"], ["_", "__"], ["?", "~q"], ["%", "~p"], [" ", "%20"], ["''", "\""]]
+            for i in rep:
+                meme = meme.replace(i[0], i[1])
+            link = "https://martmists.tk/api/v1/illegal?query={}".format(meme)
+            file = await util.get_file(link)
+            await ctx.send(file=io.BytesIO(file), filename="meme.gif")
 
 
 def setup(bot: DiscordBot):
