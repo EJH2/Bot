@@ -175,9 +175,9 @@ class Owner:
         """
         await ctx.send("Invalid subcommand passed: {0.subcommand_passed}".format(ctx), delete_after=5)
 
-    @appearance.command()
+    @appearance.command(name="game")
     @commands.check(is_owner)
-    async def game(self, ctx, game: str, *, url: str = None):
+    async def appearance_game(self, ctx, game: str, *, url: str = None):
         """
         Change the bots game.
         """
@@ -189,26 +189,26 @@ class Owner:
         await ctx.bot.change_presence(game=status)
         await ctx.send("Changed game to {}{}.".format(game, " on " + url if url else ""))
 
-    @appearance.command()
+    @appearance.command(name="status")
     @commands.check(is_owner)
-    async def status(self, ctx, *, status: str):
+    async def appearance_status(self, ctx, *, status: str):
         """
         Change the bots online status.
         """
         await ctx.change_presence(status=discord.Status(status))
 
-    @appearance.command()
+    @appearance.command(name="name")
     @commands.check(is_owner)
-    async def name(self, ctx, *, name: str):
+    async def appearance_name(self, ctx, *, name: str):
         """
         Change the bot name.
         """
         await ctx.bot.user.edit(username=name)
         await ctx.send("Changed name to {}.".format(name))
 
-    @appearance.command()
+    @appearance.command(name="avatar")
     @commands.check(is_owner)
-    async def avatar(self, ctx, *, url: str):
+    async def appearance_avatar(self, ctx, *, url: str):
         """
         Change the bot's avatar.
         """
