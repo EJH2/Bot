@@ -22,7 +22,7 @@ class Information:
         self.bot = bot
         self.config = config.Config("ignored.yaml")
 
-    def __check(self, ctx):
+    def __global_check(self, ctx):
 
         author = ctx.message.author
         if checks.is_owner(ctx):
@@ -236,9 +236,7 @@ class Information:
         """
         Shows other people with your discriminator.
         """
-        if discrim is not None:
-            discrim = discrim
-        else:
+        if not discrim:
             discrim = int(ctx.message.author.discriminator)
         disc = []
         for server in ctx.bot.guilds:
@@ -247,12 +245,6 @@ class Information:
                     if member.name not in disc:
                         disc.append(member.name)
         await ctx.send("```\n{}\n```".format(", ".join(disc)))
-
-    @commands.command()
-    async def test(self, ctx, message):
-        embed = discord.Embed(title="Look at this", color=discord.Color(0xFFF000), url="https://ejh2.me")
-        embed.set_author(name=message, url="https://ejh2.me", icon_url=ctx.message.author.avatar_url)
-        await ctx.send(content="Check it", embed=embed)
 
 
 def setup(bot: DiscordBot):
