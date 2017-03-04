@@ -4,6 +4,7 @@ Owner-only commands.
 
 import asyncio
 import glob
+import importlib
 import inspect
 import io
 import os
@@ -362,6 +363,7 @@ class Owner:
             configfile.save()
             if hasattr(ctx.bot, keys):
                 ctx.bot.__dict__[keys] = value
+            importlib.reload(consts)
         else:
             configfile = config.Config(configfile)
             configfile_dict = configfile.to_dict()
@@ -371,6 +373,7 @@ class Owner:
             configfile.save()
             if hasattr(ctx.bot, keys):
                 ctx.bot.__dict__[keys] = value
+            importlib.reload(consts)
 
     @commands.command()
     @commands.check(is_owner)
