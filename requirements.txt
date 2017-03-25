@@ -1,4 +1,6 @@
-git+https://github.com/Rapptz/discord.py@master#egg=discord.py
+xkcd
+geocoder
+git+https://github.com/Rapptz/discord.py@rewrite#egg=discord.py
 Logbook
 pyfiglet
 pyowm
