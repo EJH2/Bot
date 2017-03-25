@@ -1,5 +1,4 @@
 from ruamel import yaml
-from ruamel.yaml.comments import CommentedMap
 from ruamel.yaml.util import load_yaml_guess_indent
 
 
@@ -28,8 +27,12 @@ class Config:
         """
         Saves a bot_config file.
         """
-        with open(self.file, "w") as file:
-            yaml.round_trip_dump(self.db, file, indent=self.ind, block_seq_indent=self.bsi)
+        try:
+            with open(self.file, "w") as file:
+                yaml.round_trip_dump(self.db, file, indent=self.ind, block_seq_indent=self.bsi)
+        except AttributeError:
+            with open(self.file, "w") as file:
+                yaml.round_trip_dump(self.db, file)
 
     def to_dict(self):
         return dict(self.db)
@@ -48,7 +51,6 @@ class Config:
         """
         Edits an entry value.
         """
-        assert isinstance(self.db, CommentedMap)
         self.db[key] = value
         self.save()
 
