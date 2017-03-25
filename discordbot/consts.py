@@ -43,7 +43,7 @@ if not os.path.exists(config_file):
     loop.run_until_complete(download_config())
 
 with open(config_file) as f:
-    bot_config = yaml.load(f)
+    bot_config = yaml.safe_load(f)
 
 # Bot Up-time Calculation things
 start2 = time.ctime(int(time.time()))
