@@ -44,6 +44,7 @@ class DiscordBot(Bot):
         self._loaded = False
 
         self.restarting = config.Config("restart.yaml")
+        self.ignored = config.Config("ignored.yaml")
 
         self.owner_id = None
 
@@ -90,49 +91,58 @@ class DiscordBot(Bot):
         """
         Process commands and log.
         """
-        if message.attachments:
-            if message.clean_content:
-                attachment = " " + message.attachments[0]["url"]
+        if message.channel.id not in self.ignored.get("channels"):
+            if message.attachments:
+                if message.clean_content:
+                    attachment = " " + message.attachments[0]["url"]
+                else:
+                    attachment = message.attachments[0]["url"]
             else:
-                attachment = message.attachments[0]["url"]
-        else:
-            attachment = ""
+                attachment = ""
 
-        self.logger.info("Received message: {message.clean_content}{attachment} from {message.author.display_name}{bot}"
-                         .format(message=message, attachment=attachment, bot=" [BOT]" if message.author.bot else ""))
+            self.logger.info("Received message: {message.clean_content}{attachment}".format(message=message,
+                                                                                            attachment=attachment))
+            self.logger.info(" From user: {message.author.display_name}{bot} ({message.author.id})"
+                             .format(message=message, bot=" [BOT]" if message.author.bot else ""))
 
-        if message.guild is not None:
-            self.logger.info(" On channel: #{message.channel.name}".format(message=message))
-            self.logger.info(" On server: {0.guild.name} ({0.guild.id})".format(message))
-        else:
-            self.logger.info(" Inside private message")
+            if message.guild is not None:
+                self.logger.info(" In channel: #{message.channel.name}".format(message=message))
+                self.logger.info(" In server: {0.guild.name} ({0.guild.id})".format(message))
+            else:
+                self.logger.info(" Inside private message")
 
         await super().on_message(message)
+
+    async def on_message_edit(self, before, after):
+        """
+        Checks message edit to see if I screwed up a command...
+        """
+        await super().on_message(after)
 
     async def on_command_error(self, e, ctx):
         """
         Catch command errors.
         """
         if isinstance(e, (commands.errors.BadArgument, commands.errors.MissingRequiredArgument)):
-            await ctx.message.channel.send(":x: Bad argument: {}".format(" ".join(e.args)), delete_after=5)
+            await ctx.message.channel.send("\N{CROSS MARK} Bad argument: {}".format(" ".join(e.args)), delete_after=5)
         elif isinstance(e, exceptions.ClearanceError):
             await ctx.message.channel.send(e, delete_after=5)
             return
         elif isinstance(e, commands.errors.CheckFailure):
-            await ctx.message.channel.send(":x: Check failed. You probably don't have permission to do this.",
-                                           delete_after=5)
+            await ctx.message.channel.send("\N{CROSS MARK} Check failed. You probably don't have permission to do this."
+                                           , delete_after=5)
             return
         elif isinstance(e, commands.errors.CommandNotFound):
             return
         elif isinstance(e, exceptions.EmbedError):
-            await ctx.message.channel.send(":no_entry: This command requires the `Embed Links` permission to execute!",
-                                           delete_after=5)
+            await ctx.message.channel.send("\N{NO ENTRY} This command requires the `Embed Links` permission to execute!"
+                                           , delete_after=5)
             return
         elif isinstance(e, exceptions.Ignored):
-            await ctx.message.channel.send(":x: This channel is currently being ignored.", delete_after=5)
+            await ctx.message.channel.send("\N{CROSS MARK} This channel is currently being ignored.", delete_after=5)
             return
         else:
-            await ctx.message.channel.send(":no_entry: An error happened. This has been logged and reported.",
+            await ctx.message.channel.send("\N{NO ENTRY} An error happened. This has been logged and reported.",
                                            delete_after=5)
             if isinstance(e, commands.errors.CommandInvokeError):
                 traceback.print_exception(type(e), e.__cause__, e.__cause__.__traceback__, file=sys.stderr)
@@ -158,15 +168,19 @@ class DiscordBot(Bot):
         except Exception as e:
             print(e)
 
-    def run(self):
+    def _run(self):
         """
         Convenience function to run the bot with the specified token.
         """
         try:
             super().run(self.bot_config["bot"]["token"])
-            input("Press any key to continue...")
-            sys.exit(2)
         except discord.errors.LoginFailure as e:
             self.logger.error("Failed to login to discord: {}".format(e.args[0]))
-            input("Press any key to continue...")
-            sys.exit(2)
+
+    def run(self):
+        """
+        Extra cleanup for _run.
+        """
+        self._run()
+        input("Press any key to continue...")
+        sys.exit(2)
