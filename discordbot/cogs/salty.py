@@ -1,11 +1,11 @@
 """
 Salty commands, require the bot to have the role "Salty"
 """
-import aiohttp
+
 import discord
-from bs4 import BeautifulSoup as Soup
 from discord.ext import commands
 import random
+import urbandictionary as ud
 
 from discordbot.bot import DiscordBot
 from discordbot.cogs.utils import checks
@@ -123,28 +123,29 @@ class Salty:
         await ctx.send("{} You are {} {} {} and a {} {} {}.".format(name, a, b, c, d, e, f))
 
     @commands.command()
-    async def urband(self, ctx, *, query: str):
-        """Finds a phrase in the Urban Dictionary."""
-        url = "http://www.urbandictionary.com/define.php?term={}".format(query.replace(" ", "%20"))
-        with aiohttp.ClientSession() as session:
-            async with session.get(url) as resp:
-                r = await resp.read()
-        resp = Soup(r, 'html.parser')
-        try:
-            if len(resp.find('div', {'class': 'meaning'}).text.strip('\n').replace("\u0027", "'")) >= 1000:
-                meaning = resp.find('div', {'class': 'meaning'}).text.strip('\n').replace("\u0027", "'")[:1000] + "..."
+    async def urband(self, ctx, query: str, page: int = None):
+        """
+        Finds a phrase in the Urban Dictionary.
+        """
+        resp = await ud.define(query)
+        if resp:
+            if page:
+                term = resp[page-1]
             else:
-                meaning = resp.find('div', {'class': 'meaning'}).text.strip('\n').replace("\u0027", "'")
-            await ctx.send(":mag:**{0}**: \n{1}\n\n**Example**: \n{2}\n\n**~{3}**".format(query, meaning,
-                                                                                          resp.find('div',
-                                                                                                    {'class': 'example'}
-                                                                                                    ).text.strip('\n'),
-                                                                                          resp.find(
-                                                                                              'div', {'class':
-                                                                                                      'contributor'}
-                                                                                          ).text.strip('\n')))
-        except AttributeError:
-            await ctx.send("Either the page doesn't exist, or you typed it in wrong. Either way, please try again.")
+                term = resp[0]
+            em = discord.Embed(color=0x2EAE48)
+            em.title = term.word
+            em.url = term.permalink
+            em.description = term.definition
+            em.add_field(name="Example", value=term.example)
+            em.set_footer(text="Author: {}".format(term.author))
+            em.timestamp = ctx.message.created_at
+            await ctx.send(embed=em)
+        else:
+            em = discord.Embed(color=discord.Color.red())
+            em.title = "\N{CROSS MARK} Error"
+            em.description = "Either the page doesn't exist, or you typed it in wrong. Either way, please try again."
+            await ctx.send(embed=em)
 
 
 def setup(bot: DiscordBot):
