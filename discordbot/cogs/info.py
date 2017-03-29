@@ -7,9 +7,8 @@ import sys
 import time
 from collections import Counter
 
-import aiohttp
 import discord
-from bs4 import BeautifulSoup as Soup
+import markovify
 from discord.ext import commands
 
 from discordbot import consts
@@ -20,12 +19,12 @@ from discordbot.cogs.utils import checks, config, util, exceptions
 class Information:
     def __init__(self, bot: DiscordBot):
         self.bot = bot
-        self.config = config.Config("ignored.yaml")
 
     def __global_check(self, ctx):
+        self.config = config.Config("ignored.yaml")
 
         author = ctx.message.author
-        if checks.is_owner(ctx):
+        if commands.is_owner():
             return True
 
         # user is a bot
@@ -37,7 +36,7 @@ class Information:
             return False
 
         perms = ctx.message.channel.permissions_for(author)
-        perm_list = [perms.administrator, perms.manage_messages, perms.manage_server]
+        perm_list = [perms.administrator, perms.manage_messages, perms.manage_guild]
         un_ignore = any(x for x in perm_list)
 
         # now we can finally realise if we can actually bypass the ignore
@@ -84,9 +83,10 @@ class Information:
             em.title = "Bot Invite Link"
             em.url = url
             em.set_author(name=str(owner), icon_url=owner.avatar_url)
-            em.add_field(name="Library:", value="Discord.py (Python {0.version_info[0]}.{0.version_info[1]}."
+            em.add_field(name="Library:", value="[Discord.py](https://github.com/Rapptz/discord.py)"
+                                                " (Python {0.version_info[0]}.{0.version_info[1]}."
                                                 "{0.version_info[2]})".format(sys))
-            em.add_field(name="Bot Version:", value=consts.bot_config["bot"]["version"])
+            em.add_field(name="Bot Version:", value="[{0.bot_config[bot][version]}](!!!! 'Memed')".format(consts))
             em.add_field(name="Servers:", value=str(len(ctx.bot.guilds)))
             em.add_field(name="Up-time:", value="{}w : {}d : {}h : {}m : {}s".format(int(w), int(d), int(h), int(m),
                                                                                      int(s)))
@@ -116,12 +116,10 @@ class Information:
         """
         Pings the bot.
         """
-        url = "http://www.codingexcuses.com/"
-        with aiohttp.ClientSession() as session:
-            async with session.get(url) as resp:
-                r = await resp.read()
-        resp = Soup(r, 'html.parser')
-        joke = resp.find('div', {'class': 'wrapper'}).text.strip("\n")
+        with open("discordbot/cogs/utils/files/markov.txt") as file:
+            markov_text = file.read()
+        markov = markovify.Text(markov_text)
+        joke = markov.make_sentence()
         ping_time = time.time()
         ping_msg = await ctx.send("Pinging Server...")
         ping = time.time() - ping_time
