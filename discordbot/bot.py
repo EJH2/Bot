@@ -125,6 +125,8 @@ class DiscordBot(Bot):
         """
         if isinstance(e, (commands.errors.BadArgument, commands.errors.MissingRequiredArgument)):
             await ctx.message.channel.send("\N{CROSS MARK} Bad argument: {}".format(" ".join(e.args)), delete_after=5)
+        elif isinstance(e, commands.errors.NotOwner):
+            await ctx.message.channel.send(e, delete_after=5)
         elif isinstance(e, exceptions.ClearanceError):
             await ctx.message.channel.send(e, delete_after=5)
             return
