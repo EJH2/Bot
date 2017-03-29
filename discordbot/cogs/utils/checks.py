@@ -7,13 +7,8 @@ from discord.ext import commands
 from discordbot.cogs.utils import exceptions
 
 
-def is_owner(ctx):
-    owner_id = ctx.bot.owner_id
-    return ctx.message.author.id == owner_id
-
-
 def is_server_owner(ctx):
-    if is_owner:
+    if commands.is_owner():
         return True
     return ctx.message.author.id == ctx.message.guild.owner.id
 
@@ -39,6 +34,8 @@ def role(role_name):
             for _role in ctx.message.guild.me.roles:
                 if _role.name.lower() == role_name.lower():
                     return True
+        if not ctx.message.guild:
+            return True
         raise exceptions.ClearanceError("Bot requires role \"{}\" to run that command.".format(role_name.title()))
 
     return commands.check(predicate)
