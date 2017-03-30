@@ -2,16 +2,15 @@
 Internet commands.
 """
 
-from random import randint
-
-import aiohttp
 import discord
+import geocoder
 import pyowm
-from bs4 import BeautifulSoup as BSoup
+import xkcd
 from discord.ext import commands
 
 from discordbot.bot import DiscordBot
 from discordbot.consts import bot_config
+from discordbot.cogs.utils import checks
 
 
 # noinspection PyUnboundLocalVariable
@@ -42,43 +41,57 @@ class Internet:
         await ctx.send("https://robohash.org/{}.png".format(user.replace(" ", "%20")))
 
     @commands.command()
-    async def xkcd(self, ctx, query=""):
+    @commands.check(checks.needs_embed)
+    async def xkcd(self, ctx, query: int = None):
         """Queries a random XKCD comic.
 
-        Do `^xkcd <number from 1-1662>` to pick a specific comic."""
-        if not query:
-            i = randint(1, 1662)
-            url = "https://xkcd.com/{}/".format(i)
-        elif query.isdigit() and 1 <= int(query) <= 1796:
-            url = "https://xkcd.com/{}/".format(query)
-        elif int(query) <= 0 or int(query) >= 1796:
-            await ctx.send("It has to be between 1 and 1796!")
-        elif not query.isdigit():
-            await ctx.send("You have to put a number!")
+        Do `^xkcd <number>` to pick a specific comic.
+        Alternatively, do `^xkcd latest` to get the latest comic!"""
+        if query == 404:
+            em = discord.Embed(color=discord.Color.red())
+            em.title = "\N{CROSS MARK} Error"
+            em.description = "Error 404: Comic "
+            await ctx.send(embed=em)
+            return
+        latest_comic = xkcd.getLatestComicNum()
+        if query:
+            query_req = 1 <= int(query) <= int(latest_comic)
+            if query_req:
+                comic = xkcd.getComic(query)
+            else:
+                em = discord.Embed(color=discord.Color.red())
+                em.title = "\N{CROSS MARK} Error"
+                em.description = "It has to be between 1 and {}!".format(str(latest_comic))
+                await ctx.send(embed=em)
+                return
         else:
-            await ctx.send("I don't know how you managed to do it, but you broke it.")
-        with aiohttp.ClientSession() as session:
-            async with session.get(url) as resp:
-                r = await resp.read()
-        resp = BSoup(r, "html.parser")
-        await ctx.send(
-            ":mag:**" + resp("img")[1]["alt"] + "**\nhttp:" + resp("img")[1]["src"] + "\n" + resp("img")[1]["title"])
+            comic = xkcd.getRandomComic()
+        embed = discord.Embed(title=comic.title, colour=discord.Colour(0x586024), url=comic.getExplanation(),
+                              description=comic.altText, timestamp=ctx.message.created_at)
+
+        embed.set_image(url=comic.imageLink)
+        embed.set_author(name="XKCD #{}".format(comic.number), url=comic.link,
+                         icon_url="https://xkcd.com/s/919f27.ico")
+
+        await ctx.send(embed=embed)
 
     @commands.command()
     async def weather(self, ctx, *, location):
         """
         Gives the current weather in a city.
         """
+        g = geocoder.google(location)
         owm = pyowm.OWM(bot_config["bot"]["OWMKey"])
         observation = owm.weather_at_place(location)
         w = observation.get_weather()
         obs = w.get_detailed_status()
         if obs == "clear sky":
-            await ctx.send("The weather is forecast to be a clear sky :sunny:")
+            await ctx.send("The weather is forecast to be a clear sky :sunny: in {}, {}".format(g.city, g.state))
         elif obs == "broken clouds":
-            await ctx.send("The weather is forecast to be broken clouds :cloud:")
+            await ctx.send("The weather is forecast to be broken clouds :cloud: in {}, {}".format(g.city, g.state))
         else:
-            await ctx.send("The weather is forecast to be " + "".join(map(str, obs)) + ".")
+            await ctx.send("The weather is forecast to be " + "".join(map(str, obs)) + " in {}, {}".format(g.city,
+                                                                                                           g.state))
 
 
 def setup(bot: DiscordBot):
