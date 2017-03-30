@@ -124,7 +124,7 @@ class Salty:
 
     @commands.command()
     @checks.role("salty")
-    @checks.needs_embed
+    @commands.check(checks.needs_embed)
     async def urband(self, ctx, query: str, page: int = None):
         """
         Finds a phrase in the Urban Dictionary.
