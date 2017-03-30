@@ -5,13 +5,12 @@ Owner-only commands.
 import asyncio
 import glob
 import importlib
-import inspect
-import io
 import os
 import subprocess
 import sys
 import traceback
-from contextlib import redirect_stdout
+import textwrap
+import time
 
 import discord
 from discord.ext import commands
@@ -20,7 +19,6 @@ from discordbot import consts
 from discordbot.bot import DiscordBot
 from discordbot.cogs.utils import config
 from discordbot.cogs.utils import util
-from discordbot.cogs.utils.checks import is_owner
 
 
 # noinspection PyMethodMayBeStatic,PyMethodMayBeStatic
@@ -32,144 +30,84 @@ class Owner:
         self.ignored = config.Config("ignored.yaml")
         self.restarting = config.Config("restart.yaml")
         self.sessions = set()
+        self._eval = {'env': {}, 'count': 0}
 
-    # ==============================
-    #   Debugging related commands
-    # ==============================
+    # =====================================================================
+    #   Debugging related commands (Totally not ripped from Liara#0555 at
+    #   https://github.com/Thessia/Liara/blob/rewrite/cogs/core.py#L370)
+    # =====================================================================
 
-    def cleanup_code(self, content):
-        """Automatically removes code blocks from the code."""
-        # remove ```py\n```
-        if content.startswith("```") and content.endswith("```"):
-            return "\n".join(content.split("\n")[1:-1])
+    @staticmethod
+    async def create_gist(content, filename='output.py'):
+        github_file = {'files': {filename: {'content': str(content)}}}
+        async with aiohttp.ClientSession() as session:
+            async with session.post('https://api.github.com/gists', data=json.dumps(github_file)) as response:
+                return await response.json()
 
-        # remove `foo`
-        return content.strip("` \n")
-
-    def get_syntax_error(self, e):
-        return "```py\n{0.text}{1:>{0.offset}}\n{2}: {0}```".format(e, "^", type(e).__name__)
-
-    @commands.command(hidden=True)
-    @commands.check(is_owner)
+    @commands.command()
+    @commands.is_owner()
     async def debug(self, ctx, *, code: str):
-        """Evaluates code."""
-        code = code.strip("` ")
-        python = "```py\n{}\n```"
-        result = None
+        """Evaluates Python code."""
 
-        env = {
-            "bot": self,
-            "ctx": ctx,
-            "message": ctx.message,
-            "server": ctx.message.guild,
-            "channel": ctx.message.channel,
-            "author": ctx.message.author
-        }
+        self._eval['env'].update({
+            'bot': self.bot,
+            'ctx': ctx,
+            'message': ctx.message,
+            'channel': ctx.message.channel,
+            'guild': ctx.message.guild,
+            'author': ctx.message.author,
+        })
 
-        env.update(globals())
+        # let's make this safe to work with
+        code = code.replace('```py\n', '').replace('```', '').replace('`', '')
 
+        _code = 'async def func(self):\n  try:\n{}\n  finally:\n    self._eval[\'env\'].update(locals())' \
+            .format(textwrap.indent(code, '    '))
+
+        before = time.monotonic()
+        # noinspection PyBroadException
         try:
-            result = eval(code, env)
-            if inspect.isawaitable(result):
-                await result
-                return
+            exec(_code, self._eval['env'])
+
+            func = self._eval['env']['func']
+            output = await func(self)
+
+            if output is not None:
+                output = repr(output)
         except Exception as e:
-            await ctx.send(python.format(type(e).__name__ + ": " + str(e)))
-            traceback.print_exception(type(e), e, e.__traceback__, file=sys.stderr)
-            return
+            output = ""
+            out = traceback.format_exception(type(e), e, e.__traceback__)
+            for i in out:
+                output += i
+        after = time.monotonic()
 
-        await ctx.send(python.format(result))
+        self._eval['count'] += 1
+        count = self._eval['count']
+        message = None
 
-    @commands.command(hidden=True)
-    @commands.check(is_owner)
-    async def repl(self, ctx):
-        msg = ctx.message
+        if output is not None:
+            message = '```diff\n+ In [{}]:\n``````py\n{}\n```'.format(count, code)
+            message += '\n```diff\n- Out[{}]:\n``````py\n{}\n```'.format(count, output)
+            message += '\n*{}ms*'.format(round((after - before) * 1000))
 
-        variables = {
-            "ctx": ctx,
-            "bot": self,
-            "message": msg,
-            "server": msg.guild,
-            "channel": msg.channel,
-            "author": msg.author,
-            "last": None,
-        }
-
-        if msg.channel.id in self.sessions:
-            await ctx.send("Already running a REPL session in this channel. Exit it with `quit`.")
-            return
-
-        self.sessions.add(msg.channel.id)
-        await ctx.send("Enter code to execute or evaluate. `exit()` or `quit` to exit.")
-
-        def check(m):
-            return m.author == ctx.message.author and m.channel == ctx.message.channel and m.content.startswith("`")
-
-        while True:
-            response = await ctx.bot.wait_for("message", check=check)
-
-            cleaned = self.cleanup_code(response.content)
-
-            if cleaned in ("quit", "exit", "exit()"):
-                await ctx.send("Exiting.")
-                self.sessions.remove(msg.channel.id)
-                return
-
-            executor = exec
-            if cleaned.count("\n") == 0:
-                # single statement, potentially "eval"
-                try:
-                    code = compile(cleaned, "<repl session>", "eval")
-                except SyntaxError:
-                    pass
+        if message is not None:
+            try:
+                if ctx.author.id == self.bot.user.id:
+                    await ctx.message.edit(content=message)
                 else:
-                    executor = eval
-
-            if executor is exec:
-                try:
-                    code = compile(cleaned, "<repl session>", "exec")
-                except SyntaxError as e:
-                    await ctx.send(self.get_syntax_error(e))
-                    continue
-
-            variables["message"] = response
-
-            fmt = None
-            stdout = io.StringIO()
-
-            try:
-                with redirect_stdout(stdout):
-                    result = executor(code, variables)
-                    if inspect.isawaitable(result):
-                        result = await result
-            except Exception as e:
-                value = stdout.getvalue()
-                fmt = "```py\n{}{}\n```".format(value, traceback.format_exc())
-            else:
-                value = stdout.getvalue()
-                if result is not None:
-                    fmt = "```py\n{}{}\n```".format(value, result)
-                    variables["last"] = result
-                elif value:
-                    fmt = "```py\n{}\n```".format(value)
-
-            try:
-                if fmt is not None:
-                    if len(fmt) > 2000:
-                        await ctx.send("Content too big to be printed.")
-                    else:
-                        await ctx.send(fmt)
-            except discord.Forbidden:
-                pass
-            except discord.HTTPException as e:
-                await ctx.send("Unexpected error: `{}`".format(e))
+                    await ctx.send(message)
+            except discord.HTTPException:
+                await ctx.trigger_typing()
+                gist = await self.create_gist(message.replace('``````', '```\n```'), filename='message.md')
+                await ctx.send('Sorry, that output was too large, so I uploaded it to gist instead.\n'
+                               '{0}'.format(gist['html_url']))
 
     # ========================
     #   Bot related commands
     # ========================
 
     @commands.group(invoke_without_command=True)
-    @commands.check(is_owner)
+    @commands.is_owner()
     async def appearance(self, ctx):
         """
         Command for getting/editing bot configs.
@@ -177,7 +115,7 @@ class Owner:
         await ctx.send("Invalid subcommand passed: {0.subcommand_passed}".format(ctx), delete_after=5)
 
     @appearance.command(name="game")
-    @commands.check(is_owner)
+    @commands.is_owner()
     async def appearance_game(self, ctx, game: str, *, url: str = None):
         """
         Change the bots game.
@@ -191,7 +129,7 @@ class Owner:
         await ctx.send("Changed game to {}{}.".format(game, " on " + url if url else ""))
 
     @appearance.command(name="status")
-    @commands.check(is_owner)
+    @commands.is_owner()
     async def appearance_status(self, ctx, *, status: str):
         """
         Change the bots online status.
@@ -199,7 +137,7 @@ class Owner:
         await ctx.change_presence(status=discord.Status(status))
 
     @appearance.command(name="name")
-    @commands.check(is_owner)
+    @commands.is_owner()
     async def appearance_name(self, ctx, *, name: str):
         """
         Change the bot name.
@@ -208,7 +146,7 @@ class Owner:
         await ctx.send("Changed name to {}.".format(name))
 
     @appearance.command(name="avatar")
-    @commands.check(is_owner)
+    @commands.is_owner()
     async def appearance_avatar(self, ctx, *, url: str):
         """
         Change the bot's avatar.
@@ -222,7 +160,7 @@ class Owner:
     # ===========================
 
     @commands.command()
-    @commands.check(is_owner)
+    @commands.is_owner()
     async def load(self, ctx, *, extension: str):
         """
         Load an extension.
@@ -240,7 +178,7 @@ class Owner:
                 await ctx.send("Could not load `{}` -> `It's already loaded!`".format(extension))
 
     @commands.command()
-    @commands.check(is_owner)
+    @commands.is_owner()
     async def unload(self, ctx, *, extension: str):
         """
         Unload an extension.
@@ -248,13 +186,13 @@ class Owner:
         extension = extension.lower()
         ext = ctx.bot.unload_extension("discordbot.cogs.{}".format(extension))
         if ext is None:
-            await ctx.send("Could not unload `{}` -> `Either it doesn't exist or it's already loaded!`".format(
+            await ctx.send("Could not unload `{}` -> `Either it doesn't exist or it's already unloaded!`".format(
                 extension))
         else:
             await ctx.send("Unloaded `{}`.".format(extension))
 
     @commands.command()
-    @commands.check(is_owner)
+    @commands.is_owner()
     async def reload(self, ctx, *, extension: str):
         """
         Reload an extension.
@@ -270,7 +208,7 @@ class Owner:
             await ctx.send("Reloaded `{}`.".format(extension))
 
     @commands.command()
-    @commands.check(is_owner)
+    @commands.is_owner()
     async def reloadall(self, ctx):
         """
         Reload all extensions.
@@ -287,7 +225,7 @@ class Owner:
         await ctx.send("Reloaded all.")
 
     @commands.command()
-    @commands.check(is_owner)
+    @commands.is_owner()
     async def refresh(self, ctx):
         """
         Re-initialise the cogs folder.
@@ -323,7 +261,7 @@ class Owner:
     # ===============================
 
     @commands.group(invoke_without_command=True)
-    @commands.check(is_owner)
+    @commands.is_owner()
     async def settings(self, ctx):
         """
         Command for getting/editing bot configs.
@@ -376,7 +314,7 @@ class Owner:
             importlib.reload(consts)
 
     @commands.command()
-    @commands.check(is_owner)
+    @commands.is_owner()
     async def endbot(self, ctx):
         """
         Segfault the bot in order to kill it.
@@ -387,7 +325,7 @@ class Owner:
         return
 
     @commands.command()
-    @commands.check(is_owner)
+    @commands.is_owner()
     async def restart(self, ctx):
         """
         Restart the bot.
@@ -402,7 +340,7 @@ class Owner:
         subprocess.call([sys.executable, ctx.bot.filename])
 
     @commands.command()
-    @commands.check(is_owner)
+    @commands.is_owner()
     async def botban(self, ctx, *, member: discord.Member):
         """
         Bans a user from using the bot.
@@ -421,7 +359,7 @@ class Owner:
         await ctx.send("{0.name} has been banned from using the bot.".format(member))
 
     @commands.command()
-    @commands.check(is_owner)
+    @commands.is_owner()
     async def unbotban(self, ctx, *, member: discord.Member):
         """
         Unbans a user from using the bot.
@@ -439,7 +377,7 @@ class Owner:
         await ctx.send("{0.name} has been unbanned from using the bot.".format(member))
 
     @commands.command()
-    @commands.check(is_owner)
+    @commands.is_owner()
     async def sneaky(self, ctx, *, server: str):
         """
         Generates an invite link for the specified server.
