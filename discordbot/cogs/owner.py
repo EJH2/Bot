@@ -3,14 +3,17 @@ Owner-only commands.
 """
 
 import asyncio
+import aiohttp
 import glob
 import importlib
+import inspect
+import io
+import json
 import os
 import subprocess
 import sys
 import traceback
-import textwrap
-import time
+from contextlib import redirect_stdout
 
 import discord
 from discord.ext import commands
@@ -30,12 +33,11 @@ class Owner:
         self.ignored = config.Config("ignored.yaml")
         self.restarting = config.Config("restart.yaml")
         self.sessions = set()
-        self._eval = {'env': {}, 'count': 0}
 
-    # =====================================================================
-    #   Debugging related commands (Totally not ripped from Liara#0555 at
-    #   https://github.com/Thessia/Liara/blob/rewrite/cogs/core.py#L370)
-    # =====================================================================
+    # ====================================================================
+    #   Debugging related commands (Totally not ripped from Liara#0555 &
+    #                             Danny#0007)
+    # ====================================================================
 
     @staticmethod
     async def create_gist(content, filename='output.py'):
@@ -44,63 +46,134 @@ class Owner:
             async with session.post('https://api.github.com/gists', data=json.dumps(github_file)) as response:
                 return await response.json()
 
-    @commands.command()
+    def cleanup_code(self, content):
+        """Automatically removes code blocks from the code."""
+        # remove ```py\n```
+        if content.startswith("```") and content.endswith("```"):
+            return "\n".join(content.split("\n")[1:-1])
+
+        # remove `foo`
+        return content.strip("` \n")
+
+    def get_syntax_error(self, e):
+        return "```py\n{0.text}{1:>{0.offset}}\n{2}: {0}```".format(e, "^", type(e).__name__)
+
+    @commands.command(hidden=True)
     @commands.is_owner()
     async def debug(self, ctx, *, code: str):
-        """Evaluates Python code."""
+        """Evaluates code."""
+        code = code.strip("` ")
+        python = "```py\n{}\n```"
+        result = None
 
-        self._eval['env'].update({
-            'bot': self.bot,
-            'ctx': ctx,
-            'message': ctx.message,
-            'channel': ctx.message.channel,
-            'guild': ctx.message.guild,
-            'author': ctx.message.author,
-        })
+        env = {
+            "bot": self,
+            "ctx": ctx,
+            "message": ctx.message,
+            "server": ctx.message.guild,
+            "channel": ctx.message.channel,
+            "author": ctx.message.author
+        }
 
-        # let's make this safe to work with
-        code = code.replace('```py\n', '').replace('```', '').replace('`', '')
+        env.update(globals())
 
-        _code = 'async def func(self):\n  try:\n{}\n  finally:\n    self._eval[\'env\'].update(locals())' \
-            .format(textwrap.indent(code, '    '))
-
-        before = time.monotonic()
-        # noinspection PyBroadException
         try:
-            exec(_code, self._eval['env'])
-
-            func = self._eval['env']['func']
-            output = await func(self)
-
-            if output is not None:
-                output = repr(output)
+            result = eval(code, env)
+            if inspect.isawaitable(result):
+                await result
+                return
         except Exception as e:
-            output = ""
-            out = traceback.format_exception(type(e), e, e.__traceback__)
-            for i in out:
-                output += i
-        after = time.monotonic()
+            await ctx.send(python.format(type(e).__name__ + ": " + str(e)))
+            traceback.print_exception(type(e), e, e.__traceback__, file=sys.stderr)
+            return
 
-        self._eval['count'] += 1
-        count = self._eval['count']
-        message = None
+        await ctx.send(python.format(result))
 
-        if output is not None:
-            message = '```diff\n+ In [{}]:\n``````py\n{}\n```'.format(count, code)
-            message += '\n```diff\n- Out[{}]:\n``````py\n{}\n```'.format(count, output)
-            message += '\n*{}ms*'.format(round((after - before) * 1000))
+    @commands.command(hidden=True)
+    @commands.is_owner()
+    async def repl(self, ctx):
+        msg = ctx.message
 
-        if message is not None:
-            try:
-                if ctx.author.id == self.bot.user.id:
-                    await ctx.message.edit(content=message)
+        variables = {
+            "ctx": ctx,
+            "bot": self,
+            "message": msg,
+            "server": msg.guild,
+            "channel": msg.channel,
+            "author": msg.author,
+            "last": None,
+        }
+
+        if msg.channel.id in self.sessions:
+            await ctx.send("Already running a REPL session in this channel. Exit it with `quit`.")
+            return
+
+        self.sessions.add(msg.channel.id)
+        await ctx.send("Enter code to execute or evaluate. `exit()` or `quit` to exit.")
+
+        def check(m):
+            return m.author == ctx.message.author and m.channel == ctx.message.channel and m.content.startswith("`")
+
+        while True:
+            response = await ctx.bot.wait_for("message", check=check)
+
+            cleaned = self.cleanup_code(response.content)
+
+            if cleaned in ("quit", "exit", "exit()"):
+                await ctx.send("Exiting.")
+                self.sessions.remove(msg.channel.id)
+                return
+
+            executor = exec
+            if cleaned.count("\n") == 0:
+                # single statement, potentially "eval"
+                try:
+                    code = compile(cleaned, "<repl session>", "eval")
+                except SyntaxError:
+                    pass
                 else:
-                    await ctx.send(message)
-            except discord.HTTPException:
-                await ctx.trigger_typing()
-                gist = await self.create_gist(message.replace('``````', '```\n```'), filename='message.md')
-                await ctx.send('Sorry, that output was too large, so I uploaded it to gist instead.\n'
-                               '{0}'.format(gist['html_url']))
+                    executor = eval
+
+            if executor is exec:
+                try:
+                    code = compile(cleaned, "<repl session>", "exec")
+                except SyntaxError as e:
+                    await ctx.send(self.get_syntax_error(e))
+                    continue
+
+            variables["message"] = response
+
+            fmt = None
+            stdout = io.StringIO()
+
+            try:
+                with redirect_stdout(stdout):
+                    result = executor(code, variables)
+                    if inspect.isawaitable(result):
+                        result = await result
+            except Exception as e:
+                value = stdout.getvalue()
+                fmt = "```py\n{}{}\n```".format(value, traceback.format_exc())
+            else:
+                value = stdout.getvalue()
+                if result is not None:
+                    fmt = "```py\n{}{}\n```".format(value, result)
+                    variables["last"] = result
+                elif value:
+                    fmt = "```py\n{}\n```".format(value)
+
+            try:
+                if fmt is not None:
+                    if len(fmt) > 2000:
+                        gist = await self.create_gist(fmt.replace('``````', '```\n```'), filename='message.md')
+                        await ctx.send('Sorry, that output was too large, so I uploaded it to gist instead.\n'
+                                       '{0}'.format(gist['html_url']))
+                    else:
+                        await ctx.send(fmt)
+            except discord.Forbidden:
+                pass
+            except discord.HTTPException as e:
+                await ctx.send("Unexpected error: `{}`".format(e))
 
     # ========================
     #   Bot related commands
