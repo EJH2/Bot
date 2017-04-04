@@ -75,26 +75,30 @@ class Information:
                 c = self.bot.commands_used
                 max_value = max(c.values())
                 commands_used = [(key, c[key]) for key in c if c[key] == max_value]
-                most_used = ", ".join([str(x[0]) + " - " + str(x[1]) for x in commands_used])
+                if len(commands_used) > 3:
+                    most_used = "See `{}info commands`".format(self.bot.command_prefix)
+                else:
+                    most_used = ", ".join([str(x[0]) + " - " + str(x[1]) for x in commands_used])
             except ValueError:
                 most_used = "None"
 
             em = discord.Embed(description="Bot Stats:")
             em.title = "Bot Invite Link"
             em.url = url
-            em.set_author(name=str(owner), icon_url=owner.avatar_url)
+            em.set_thumbnail(url=self.bot.user.avatar_url)
+            em.set_author(name="Owned by: " + str(owner), icon_url=owner.avatar_url)
             em.add_field(name="Library:", value="[Discord.py](https://github.com/Rapptz/discord.py)"
                                                 " (Python {0.version_info[0]}.{0.version_info[1]}."
                                                 "{0.version_info[2]})".format(sys))
-            em.add_field(name="Bot Version:", value="[{0.bot_config[bot][version]}](!!!! 'Memed')".format(consts))
+            em.add_field(name="Bot Version:", value="[{0.bot_config[bot][version]}](!!!! '{0.bot_config[bot][codename]}"
+                                                    "')".format(consts))
             em.add_field(name="Servers:", value=str(len(ctx.bot.guilds)))
             em.add_field(name="Up-time:", value="{}w : {}d : {}h : {}m : {}s".format(int(w), int(d), int(h), int(m),
                                                                                      int(s)))
             em.add_field(name="Total Unique Users:", value="{} ({} online)".format(len(unique_members), unique_online))
             em.add_field(name="Text Channels:", value=str(text))
             em.add_field(name="Voice Channels:", value=str(voice))
-            em.add_field(name="Most Used", value=str(most_used))
-            em.add_field(name="\u200b", value="\u200b")  # dummy field cuz discord is retarded
+            em.add_field(name="Most Used Commands", value=str(most_used))
             await ctx.send(embed=em)
 
     @info.command(aliases=["commands"])
