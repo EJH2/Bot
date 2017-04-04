@@ -131,14 +131,14 @@ class DiscordBot(Bot):
             await ctx.message.channel.send(e, delete_after=5)
             return
         elif isinstance(e, commands.errors.CheckFailure):
-            await ctx.message.channel.send("\N{CROSS MARK} Check failed. You probably don't have permission to do this."
-                                           , delete_after=5)
+            await ctx.message.channel.send("\N{CROSS MARK} Check failed. You probably don't have "
+                                           "permission to do this.", delete_after=5)
             return
         elif isinstance(e, commands.errors.CommandNotFound):
             return
         elif isinstance(e, exceptions.EmbedError):
-            await ctx.message.channel.send("\N{NO ENTRY} This command requires the `Embed Links` permission to execute!"
-                                           , delete_after=5)
+            await ctx.message.channel.send("\N{NO ENTRY} This command requires the `Embed Links` "
+                                           "permission to execute!", delete_after=5)
             return
         elif isinstance(e, exceptions.Ignored):
             await ctx.message.channel.send("\N{CROSS MARK} This channel is currently being ignored.", delete_after=5)
