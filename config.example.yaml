@@ -13,5 +13,8 @@ bot:
   # Bot version
   version: <bot version>
 
+  # Bot version codename
+  codename: <codename>
+
 # The default log level
 log_level: INFO
