@@ -91,6 +91,7 @@ class DiscordBot(Bot):
         """
         Process commands and log.
         """
+        self.ignored = config.Config("ignored.yaml")
         if message.channel.id not in self.ignored.get("channels"):
             if message.attachments:
                 if message.clean_content:
