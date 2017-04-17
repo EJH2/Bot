@@ -294,35 +294,35 @@ class Fun:
         """
         Whoosh!
         """
-        await ctx.send(file="discordbot/cogs/utils/files/overhead.png")
+        await ctx.send(file=discord.File(fp="discordbot/cogs/utils/files/overhead.png"))
 
     @commands.command(aliases=["pybelike"])
     async def python(self, ctx):
         """
         Gives an accurate XKCD representation of Python.
         """
-        await ctx.send(file="discordbot/cogs/utils/files/python.png")
+        await ctx.send(file=discord.File(fp="discordbot/cogs/utils/files/python.png"))
 
     @commands.command(aliases=["star"])
     async def goldstar(self, ctx):
         """
         You get a gold star!
         """
-        await ctx.send(file="discordbot/cogs/utils/files/goldstar.png")
+        await ctx.send(file=discord.File(fp="discordbot/cogs/utils/files/goldstar.png"))
 
     @commands.command()
     async def tried(self, ctx):
         """
         At least you tried...
         """
-        await ctx.send(file="discordbot/cogs/utils/files/tried.png")
+        await ctx.send(file=discord.File(fp="discordbot/cogs/utils/files/tried.png"))
 
     @commands.command()
     async def works(self, ctx):
         """
         It worked for me ¯\_(ツ)_/¯
         """
-        await ctx.send(file="discordbot/cogs/utils/files/works.png")
+        await ctx.send(file=discord.File(fp="discordbot/cogs/utils/files/works.png"))
 
 
 def setup(bot: DiscordBot):

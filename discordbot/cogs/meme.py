@@ -28,7 +28,7 @@ class Meme:
             else:
                 link = "http://memegen.link/{0}/{1}/{2}.jpg?alt={3}".format(meme, line1, line2, style)
             file = await util.get_file(link)
-            await ctx.send(file=io.BytesIO(file), filename="meme.png")
+            await ctx.send(file=discord.File(fp=io.BytesIO(file), filename="meme.png"))
 
     @meme.command(name="custom")
     async def meme_custom(self, ctx, link: str, line1: str, line2: str):
@@ -45,7 +45,7 @@ class Meme:
                         line2 = line2.replace(i[0], i[1])
                     link = "http://memegen.link/custom/{0}/{1}.jpg?alt={2}".format(line1, line2, link)
                     file = await util.get_file(link)
-                    await ctx.send(file=io.BytesIO(file), filename="meme.png")
+                    await ctx.send(file=discord.File(fp=io.BytesIO(file), filename="meme.png"))
                 else:
                     await ctx.send("Only jpeg, png, or bmp images please!")
 
@@ -58,7 +58,7 @@ class Meme:
             line2 = line2.replace(i[0], i[1])
         link = "http://memegen.link/custom/{0}/{1}.jpg?alt={2}".format(line1, line2, user.avatar_url)
         file = await util.get_file(link)
-        await ctx.send(file=io.BytesIO(file), filename="meme.gif")
+        await ctx.send(file=discord.File(fp=io.BytesIO(file), filename="meme.gif"))
 
     @meme.group(name="templates", invoke_without_command=True)
     async def meme_templates(self, ctx):
@@ -74,7 +74,7 @@ class Meme:
                 meme = meme.replace(i[0], i[1])
             link = "https://martmists.tk/api/v1/illegal?query={}".format(meme)
             file = await util.get_file(link)
-            await ctx.send(file=io.BytesIO(file), filename="meme.gif")
+            await ctx.send(file=discord.File(fp=io.BytesIO(file), filename="meme.gif"))
 
 
 def setup(bot: DiscordBot):
