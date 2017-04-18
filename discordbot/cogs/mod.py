@@ -183,13 +183,17 @@ class Moderation:
         """
         Bans a member and deletes their messages.
         """
+        banned = 0
         for member in members:
             try:
                 await ctx.message.guild.ban(member, delete_message_days=7)
-                await ctx.send(member.name + " was banned from the server.")
-                await asyncio.sleep(1)
-            except discord.errors.Forbidden:
-                await ctx.send("Skipping `{}`, permissions error.".format(member))
+                banned += 1
+            except discord.errors.DiscordException as e:
+                try:
+                    await ctx.send("User `{}` (ID: `{}`) could not be banned: `{}`".format(str(member), member.id, e))
+                except discord.errors.DiscordException as err:
+                    await ctx.send("User `{}` could not be banned: `{}`".format(member, err))
+        await ctx.send("Successfully banned {}/{} users".format(banned, len(members)))
 
     @commands.command(guild_only=True)
     @commands.check(permissions(manage_server=True))
@@ -197,12 +201,11 @@ class Moderation:
         """
         Unbans a member.
         """
-        server = ctx.message.guild
         bans = await ctx.message.guild.bans()
-        member = discord.utils.get(bans, name=name)
+        member = discord.utils.get(bans, user__name=name)
         if member:
-            await ctx.message.guild.unban(server, member)
-            await ctx.send("{0.name}#{0.discriminator} has been unbanned from the server!".format(member))
+            await ctx.message.guild.unban(member.user)
+            await ctx.send("{0.name}#{0.discriminator} has been unbanned from the server!".format(member.user))
             return
         await ctx.send("You can't unban a member that hasn't been banned!")
 
@@ -216,7 +219,6 @@ class Moderation:
             try:
                 await ctx.message.guild.ban(discord.Object(id=user_id))
                 banned += 1
-                print(banned)
             except discord.errors.DiscordException as e:
                 try:
                     user = await ctx.bot.get_user_info(user_id)
