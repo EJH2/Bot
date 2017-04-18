@@ -124,16 +124,13 @@ class DiscordBot(Bot):
         """
         Catch command errors.
         """
-        if isinstance(e, (commands.errors.BadArgument, commands.errors.MissingRequiredArgument)):
-            await ctx.message.channel.send("\N{CROSS MARK} Bad argument: {}".format(" ".join(e.args)), delete_after=5)
+        if isinstance(e, exceptions.Ignored):
+            await ctx.message.channel.send("\N{CROSS MARK} This channel is currently being ignored.", delete_after=5)
+            return
         elif isinstance(e, commands.errors.NotOwner):
             await ctx.message.channel.send(e, delete_after=5)
         elif isinstance(e, exceptions.ClearanceError):
             await ctx.message.channel.send(e, delete_after=5)
-            return
-        elif isinstance(e, commands.errors.CheckFailure):
-            await ctx.message.channel.send("\N{CROSS MARK} Check failed. You probably don't have "
-                                           "permission to do this.", delete_after=5)
             return
         elif isinstance(e, commands.errors.CommandNotFound):
             return
@@ -141,9 +138,15 @@ class DiscordBot(Bot):
             await ctx.message.channel.send("\N{NO ENTRY} This command requires the `Embed Links` "
                                            "permission to execute!", delete_after=5)
             return
-        elif isinstance(e, exceptions.Ignored):
-            await ctx.message.channel.send("\N{CROSS MARK} This channel is currently being ignored.", delete_after=5)
+        elif isinstance(e, commands.errors.NoPrivateMessage):
+            await ctx.message.channel.send("\N{NO ENTRY} That command can not be run in PMs!",
+                                           delete_after=5)
+        elif isinstance(e, commands.errors.CheckFailure):
+            await ctx.message.channel.send("\N{CROSS MARK} Check failed. You probably don't have "
+                                           "permission to do this.", delete_after=5)
             return
+        elif isinstance(e, (commands.errors.BadArgument, commands.errors.MissingRequiredArgument)):
+            await ctx.message.channel.send("\N{CROSS MARK} Bad argument: {}".format(" ".join(e.args)), delete_after=5)
         else:
             await ctx.message.channel.send("\N{NO ENTRY} An error happened. This has been logged and reported.",
                                            delete_after=5)
@@ -154,7 +157,10 @@ class DiscordBot(Bot):
 
     @staticmethod
     async def on_command(ctx):
-        embeddable = ctx.message.channel.permissions_for(ctx.message.guild.me).embed_links
+        if not ctx.message.channel:
+            embeddable = True
+        else:
+            embeddable = ctx.message.channel.permissions_for(ctx.message.guild.me).embed_links
         if ctx.command.name == "help":
             if not embeddable:
                 await ctx.message.channel.send("\N{ENVELOPE WITH DOWNWARDS ARROW ABOVE} Sent to your DMs!")
