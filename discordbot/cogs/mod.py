@@ -21,7 +21,8 @@ class Moderation:
     #   Blacklisting related commands
     # =================================
 
-    @commands.group(guild_only=True, invoke_without_command=True)
+    @commands.group(invoke_without_command=True)
+    @commands.guild_only()
     @commands.check(permissions(manage_channels=True))
     async def ignore(self, ctx):
         """
@@ -29,7 +30,8 @@ class Moderation:
         """
         await ctx.send("Invalid subcommand passed: {0.subcommand_passed}".format(ctx), delete_after=5)
 
-    @ignore.command(name="list", guild_only=True)
+    @ignore.command(name="list")
+    @commands.guild_only()
     async def ignore_list(self, ctx):
         """
         Grabs a list of currently ignored channels in the server.
@@ -81,7 +83,8 @@ class Moderation:
         self.ignored.place("channels", list(set(ignored)))  # make unique
         await ctx.send("I am now ignoring this server.", delete_after=5)
 
-    @commands.group(guild_only=True)
+    @commands.group()
+    @commands.guild_only()
     @commands.check(permissions(manage_channels=True))
     async def unignore(self, ctx):
         """
@@ -90,7 +93,8 @@ class Moderation:
         if ctx.invoked_subcommand is None:
             await ctx.send("Invalid subcommand passed: {0.subcommand_passed}".format(ctx), delete_after=5)
 
-    @unignore.command(name="channel", guild_only=True)
+    @unignore.command(name="channel")
+    @commands.guild_only()
     @commands.check(permissions(manage_channels=True))
     async def unignore_channel(self, ctx, channel: discord.TextChannel = None):
         """Unignores channels from being read by the bot.
@@ -114,7 +118,8 @@ class Moderation:
         self.ignored.place("channels", ignored)
         await ctx.send("I am now reading from that channel.", delete_after=5)
 
-    @unignore.command(name="server", guild_only=True)
+    @unignore.command(name="server")
+    @commands.guild_only()
     @commands.check(permissions(manage_server=True))
     async def unignore_server(self, ctx):
         """
@@ -137,7 +142,8 @@ class Moderation:
     #   Banning related commands
     # ============================
 
-    @commands.command(guild_only=True)
+    @commands.command()
+    @commands.guild_only()
     @commands.check(permissions(manage_server=True))
     async def listbans(self, ctx):
         """
@@ -149,7 +155,8 @@ class Moderation:
         else:
             await ctx.send("The currently active bans for this server are: " + ", ".join(map(str, bans)))
 
-    @commands.command(guild_only=True)
+    @commands.command()
+    @commands.guild_only()
     @commands.check(permissions(manage_server=True))
     async def kick(self, ctx, *members: discord.Member):
         """
@@ -162,7 +169,8 @@ class Moderation:
             except discord.errors.Forbidden:
                 await ctx.send("Skipping `{}`, permissions error.".format(member))
 
-    @commands.command(guild_only=True)
+    @commands.command()
+    @commands.guild_only()
     @commands.check(permissions(manage_server=True))
     async def softban(self, ctx, *members: discord.Member):
         """
@@ -177,7 +185,8 @@ class Moderation:
             except discord.errors.Forbidden:
                 await ctx.send("Skipping `{}`, permissions error.".format(member))
 
-    @commands.command(guild_only=True)
+    @commands.command()
+    @commands.guild_only()
     @commands.check(permissions(manage_server=True))
     async def ban(self, ctx, *members: discord.Member):
         """
@@ -195,7 +204,8 @@ class Moderation:
                     await ctx.send("User `{}` could not be banned: `{}`".format(member, err))
         await ctx.send("Successfully banned {}/{} users".format(banned, len(members)))
 
-    @commands.command(guild_only=True)
+    @commands.command()
+    @commands.guild_only()
     @commands.check(permissions(manage_server=True))
     async def unban(self, ctx, *, name: str):
         """
@@ -209,7 +219,8 @@ class Moderation:
             return
         await ctx.send("You can't unban a member that hasn't been banned!")
 
-    @commands.command(guild_only=True)
+    @commands.command()
+    @commands.guild_only()
     async def hackban(self, ctx, *user_ids: int):
         """
         Preemptive bans a user.
@@ -273,7 +284,8 @@ class Moderation:
     #   Invite related commands
     # ===========================
 
-    @commands.group(pass_context=True, guild_only=True, invoke_without_command=True)
+    @commands.group(invoke_without_command=True)
+    @commands.guild_only()
     async def invites(self, ctx):
         """
         Command for server invites.
@@ -313,7 +325,8 @@ class Moderation:
     #   Role related commands
     # =========================
 
-    @commands.group(guild_only=True)
+    @commands.group()
+    @commands.guild_only()
     @commands.check(permissions(manage_roles=True))
     async def roles(self, ctx):
         """
@@ -395,7 +408,8 @@ class Moderation:
     #   Nickname related commands
     # =============================
 
-    @commands.command(guild_only=True)
+    @commands.command()
+    @commands.guild_only()
     @commands.check(permissions(manage_server=True))
     async def changenick(self, ctx, nickname, *members: discord.Member):
         """
@@ -409,7 +423,8 @@ class Moderation:
             except discord.errors.Forbidden:
                 await ctx.send("Skipping `{}`, permissions error.".format(member))
 
-    @commands.command(guild_only=True)
+    @commands.command()
+    @commands.guild_only()
     @commands.check(permissions(manage_server=True))
     async def massnick(self, ctx, *, nickname):
         """
@@ -423,7 +438,8 @@ class Moderation:
             except discord.errors.Forbidden:
                 await ctx.send("Skipping `{}`, permissions error.".format(member))
 
-    @commands.command(guild_only=True)
+    @commands.command()
+    @commands.guild_only()
     @commands.check(permissions(manage_server=True))
     async def massunnick(self, ctx):
         """
