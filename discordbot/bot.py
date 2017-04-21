@@ -174,8 +174,8 @@ class DiscordBot(Bot):
         await asyncio.sleep(5)
         try:
             await ctx.message.delete()
-        except Exception as e:
-            print(e)
+        except discord.DiscordException:
+            pass
 
     def _run(self):
         """

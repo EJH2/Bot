@@ -16,7 +16,7 @@ class Salty:
         self.bot = bot
 
     @commands.command()
-    @checks.role("salty")
+    @commands.check(checks.bot_roles("salty"))
     async def insult(self, ctx, user: discord.Member = None):
         """Insults a user."""
         name = "{0}".format(user.mention + ": " if user else "")
@@ -123,7 +123,7 @@ class Salty:
         await ctx.send("{} You are {} {} {} and a {} {} {}.".format(name, a, b, c, d, e, f))
 
     @commands.command()
-    @checks.role("salty")
+    @commands.check(checks.bot_roles("salty"))
     @commands.check(checks.needs_embed)
     async def urband(self, ctx, query: str, page: int = None):
         """

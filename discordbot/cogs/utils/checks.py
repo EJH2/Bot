@@ -2,46 +2,77 @@
 Checks.
 """
 
-from discord.ext import commands
+import discord
 
 from discordbot.cogs.utils import exceptions
 
 
+def is_owner(ctx):
+    owner_id = ctx.bot.owner_id
+    return ctx.message.author.id == owner_id
+
+
 def is_server_owner(ctx):
-    if commands.is_owner():
+    if is_owner(ctx):
         return True
     return ctx.message.author.id == ctx.message.guild.owner.id
 
 
 def check_permissions(ctx, perms):
-    if is_server_owner:
+    if is_server_owner(ctx):
         return True
-    ch = ctx.message.channel
-    author = ctx.message.author
-    resolved = ch.permissions_for(author)
-    return all(getattr(resolved, name, None) == value for name, value in perms.items())
+    ch = ctx.channel
+    perm_list = ch.permissions_for(ctx.author)
+    return all(getattr(perm_list, perm, None) == value for perm, value in perms.items())
 
 
 def permissions(**perms):
     return lambda ctx: check_permissions(ctx, perms)
 
 
-def role(role_name):
-    def predicate(ctx):
-        if is_server_owner:
-            return True
-        if ctx.message.guild:
-            for _role in ctx.message.guild.me.roles:
-                if _role.name.lower() == role_name.lower():
-                    return True
-        if not ctx.message.guild:
-            return True
-        raise exceptions.ClearanceError("Bot requires role \"{}\" to run that command.".format(role_name.title()))
+def check_bot_roles(ctx, role_names):
+    if is_server_owner(ctx):
+        return True
+    ch = ctx.channel
+    if not isinstance(ch, discord.abc.GuildChannel):
+        return False
+    me = ctx.guild.me
+    role_list = list(map(lambda r: r.name.lower(), me.roles))
+    _roles = any(name in role_list for name in role_names)
+    if _roles:
+        return True
+    raise exceptions.ClearanceError("Bot requires role{} \"{}\" to run that command.".format("s" if len(role_names) > 1
+                                                                                             else "", ", ".join(
+        [role_name.title() for role_name in role_names])))
 
-    return commands.check(predicate)
+
+def bot_roles(*role_names):
+    return lambda ctx: check_bot_roles(ctx, role_names)
+
+
+def check_user_roles(ctx, role_names):
+    if is_server_owner(ctx):
+        return True
+    ch = ctx.channel
+    if not isinstance(ch, discord.abc.GuildChannel):
+        return False
+    me = ctx.author
+    role_list = list(map(lambda r: r.name.lower(), me.roles))
+    _roles = any(name in role_list for name in role_names)
+    if _roles:
+        return True
+    raise exceptions.ClearanceError("You need role{} \"{}\" to run that command.".format("s" if len(role_names) > 1
+                                                                                             else "", ", ".join(
+        [role_name.title() for role_name in role_names])))
+
+
+def user_roles(*role_names):
+    return lambda ctx: check_user_roles(ctx, role_names)
 
 
 def needs_embed(ctx):
+    if not isinstance(ctx.channel, discord.abc.GuildChannel):
+        return True
     if ctx.message.channel.permissions_for(ctx.message.guild.me).embed_links:
         return True
     raise exceptions.EmbedError
