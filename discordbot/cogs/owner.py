@@ -30,8 +30,6 @@ from discordbot.cogs.utils import util
 class Owner:
     def __init__(self, bot: DiscordBot):
         self.bot = bot
-        self.ignored = config.Config("ignored.yaml")
-        self.restarting = config.Config("restart.yaml")
         self.sessions = set()
 
     # ====================================================================
@@ -422,13 +420,13 @@ class Owner:
             await ctx.send("You can't bot ban the owner!")
             return
 
-        plonks = self.ignored.get("users", [])
+        plonks = self.bot.ignored.get("users", [])
         if member.id in plonks:
             await ctx.send("That user is already bot banned.")
             return
 
         plonks.append(member.id)
-        self.ignored.place("users", plonks)
+        self.bot.ignored.place("users", plonks)
         await ctx.send("{0.name} has been banned from using the bot.".format(member))
 
     @commands.command()
@@ -441,12 +439,12 @@ class Owner:
             await ctx.send("You can't un-bot ban the owner, because he can't be banned!")
             return
 
-        plonks = self.ignored.get("users", [])
+        plonks = self.bot.ignored.get("users", [])
         if member.id not in plonks:
             await ctx.send("That user isn't bot banned.")
             return
 
-        self.ignored.remove("users", member.id)
+        self.bot.ignored.remove("users", member.id)
         await ctx.send("{0.name} has been unbanned from using the bot.".format(member))
 
     @commands.command()

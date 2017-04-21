@@ -15,7 +15,6 @@ from discordbot.cogs.utils.checks import permissions
 class Moderation:
     def __init__(self, bot):
         self.bot = bot
-        self.ignored = config.Config("ignored.yaml")
 
     # =================================
     #   Blacklisting related commands
@@ -36,7 +35,7 @@ class Moderation:
         """
         Grabs a list of currently ignored channels in the server.
         """
-        ignored = self.ignored.get("channels", [])
+        ignored = self.bot.ignored.get("channels", [])
         channel_ids = set(c.id for c in ctx.message.guild.channels)
         result = []
         for channel in ignored:
@@ -60,13 +59,13 @@ class Moderation:
         if channel is None:
             channel = ctx.message.channel
 
-        ignored = self.ignored.get("channels", [])
+        ignored = self.bot.ignored.get("channels", [])
         if channel.id in ignored:
             await ctx.send("That channel is already ignored.", delete_after=5)
             return
 
         ignored.append(channel.id)
-        self.ignored.place("channels", ignored)
+        self.bot.ignored.place("channels", ignored)
         await ctx.send("I am no longer reading from that channel.", delete_after=5)
 
     @ignore.command(name="server")
@@ -77,10 +76,10 @@ class Moderation:
         To use this you need Manage Server.
         """
 
-        ignored = self.ignored.get("channels", [])
+        ignored = self.bot.ignored.get("channels", [])
         channels = ctx.message.guild.channels
         ignored.extend(c.id for c in channels if c.type == discord.ChannelType.text)
-        self.ignored.place("channels", list(set(ignored)))  # make unique
+        self.bot.ignored.place("channels", list(set(ignored)))  # make unique
         await ctx.send("I am now ignoring this server.", delete_after=5)
 
     @commands.group()
@@ -108,14 +107,14 @@ class Moderation:
 
         # a set is the proper data type for the ignore list
         # however, JSON only supports arrays and objects not sets.
-        ignored = self.ignored.get("channels", [])
+        ignored = self.bot.ignored.get("channels", [])
         if channel.id not in ignored:
             await ctx.send("I am not currently ignoring that channel.", delete_after=5)
             return
 
-        self.ignored.remove("channels", channel.id)
+        self.bot.ignored.remove("channels", channel.id)
 
-        self.ignored.place("channels", ignored)
+        self.bot.ignored.place("channels", ignored)
         await ctx.send("I am now reading from that channel.", delete_after=5)
 
     @unignore.command(name="server")
@@ -128,14 +127,14 @@ class Moderation:
         To use this you need Manage Server.
         """
         channels = [c for c in ctx.message.guild.channels if c.type is discord.channel.ChannelType.text]
-        ignored = self.ignored.get("channels", [])
+        ignored = self.bot.ignored.get("channels", [])
         for channel in channels:
             try:
-                self.ignored.remove("channels", channel.id)
+                self.bot.ignored.remove("channels", channel.id)
             except ValueError:
                 pass
 
-        self.ignored.place("channels", ignored)
+        self.bot.ignored.place("channels", ignored)
         await ctx.send("I am now reading from this server.", delete_after=5)
 
     # ============================
