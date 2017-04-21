@@ -23,7 +23,7 @@ def check_permissions(ctx, perms):
         return True
     ch = ctx.channel
     perm_list = ch.permissions_for(ctx.author)
-    return all(getattr(perm_list, perm, None) == value for perm, value in perms.items())
+    return any(getattr(perm_list, perm, None) == value for perm, value in perms.items())
 
 
 def permissions(**perms):
