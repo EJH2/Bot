@@ -239,14 +239,14 @@ class Moderation:
         await ctx.send("Successfully banned {}/{} users".format(banned, len(user_ids)))
 
     @commands.command()
-    @commands.check(permissions(manage_server=True))
+    @commands.check(permissions(manage_guild=True, kick_members=True, ban_members=True))
     async def leave(self, ctx):
         """
         Makes me leave the server.
         """
         server = ctx.message.guild
         await ctx.send("Alright, everyone! I'm off to a new life elsewhere! Until next time! :wave:")
-        await ctx.bot.leave_server(server)
+        await server.leave()
 
     # =========================
     #   Chat related commands
