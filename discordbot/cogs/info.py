@@ -123,7 +123,9 @@ class Information:
         with open("discordbot/cogs/utils/files/markov.txt") as file:
             markov_text = file.read()
         markov = markovify.Text(markov_text)
-        joke = markov.make_sentence()
+        joke = None
+        while joke is None:
+            joke = markov.make_sentence()
         ping_time = time.time()
         ping_msg = await ctx.send("Pinging Server...")
         ping = time.time() - ping_time
