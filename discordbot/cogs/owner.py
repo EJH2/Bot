@@ -391,7 +391,7 @@ class Owner:
         Segfault the bot in order to kill it.
         """
         await ctx.send("Goodbye!")
-        self.restarting.delete("restarting")
+        self.bot.restarting.delete("restarting")
         await ctx.bot.logout()
         return
 
@@ -402,8 +402,8 @@ class Owner:
         Restart the bot.
         """
         await ctx.send("Restarting...")
-        self.restarting.place("restarting", "True")
-        self.restarting.place("restart_channel", ctx.message.channel.id)
+        self.bot.restarting.place("restarting", "True")
+        self.bot.restarting.place("restart_channel", ctx.message.channel.id)
         ctx.bot.logger.info("\n"
                             "-------------------"
                             "\n")
