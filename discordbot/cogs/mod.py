@@ -4,6 +4,7 @@ Moderation commands.
 
 import asyncio
 
+import aiohttp
 import discord
 from discord.ext import commands
 
@@ -186,7 +187,7 @@ class Moderation:
 
     @commands.command()
     @commands.guild_only()
-    @commands.check(permissions(manage_server=True))
+    @commands.check(permissions(ban_members=True))
     async def ban(self, ctx, *members: discord.Member):
         """
         Bans a member and deletes their messages.
@@ -205,7 +206,7 @@ class Moderation:
 
     @commands.command()
     @commands.guild_only()
-    @commands.check(permissions(manage_server=True))
+    @commands.check(permissions(ban_members=True))
     async def unban(self, ctx, *, name: str):
         """
         Unbans a member.
@@ -218,8 +219,9 @@ class Moderation:
             return
         await ctx.send("You can't unban a member that hasn't been banned!")
 
-    @commands.command()
+    @commands.group(invoke_without_command=True)
     @commands.guild_only()
+    @commands.check(permissions(ban_members=True))
     async def hackban(self, ctx, *user_ids: int):
         """
         Preemptive bans a user.
@@ -236,6 +238,22 @@ class Moderation:
                 except discord.errors.DiscordException as err:
                     await ctx.send("User `{}` could not be banned: `{}`".format(user_id, err))
         await ctx.send("Successfully banned {}/{} users".format(banned, len(user_ids)))
+
+    @hackban.command()
+    @commands.guild_only()
+    @commands.check(permissions(ban_members=True))
+    async def url(self, ctx, url: str):
+        """
+        Attempts to ban a list of raw IDs from a raw pastebin link.
+        """
+        if "https://pastebin.com/raw/" not in url:
+            return await ctx.send("The link should look like https://pastebin.com/raw/{Random String}")
+        with aiohttp.ClientSession() as sess:
+            async with sess.get(url) as get:
+                assert isinstance(get, aiohttp.ClientResponse)
+                data = await get.read()
+                data = data.decode("utf-8").split()
+                await ctx.invoke(self.hackban, *data)
 
     @commands.command()
     @commands.check(permissions(manage_guild=True, kick_members=True, ban_members=True))
