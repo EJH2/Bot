@@ -17,7 +17,9 @@ class Meme:
 
     @commands.group(invoke_without_command=True)
     async def meme(self, ctx, meme: str, line1: str, line2: str, style=""):
-        """Generates a meme."""
+        """
+        Generates a meme.
+        """
         if ctx.invoked_subcommand is None:
             rep = [["-", "--"], ["_", "__"], ["?", "~q"], ["%", "~p"], [" ", "%20"], ["''", "\""]]
             for i in rep:
@@ -32,7 +34,9 @@ class Meme:
 
     @meme.command(name="custom")
     async def meme_custom(self, ctx, link: str, line1: str, line2: str):
-        """Generates a meme using a custom picture."""
+        """
+        Generates a meme using a custom picture.
+        """
         with aiohttp.ClientSession() as sess:
             async with sess.get(link) as get:
                 assert isinstance(get, aiohttp.ClientResponse)
@@ -51,7 +55,9 @@ class Meme:
 
     @meme.command(name="user")
     async def meme_user(self, ctx, user: discord.User, line1: str, line2: str):
-        """Generates a meme on a users avatar."""
+        """
+        Generates a meme on a users avatar.
+        """
         rep = [["-", "--"], ["_", "__"], ["?", "~q"], ["%", "~p"], [" ", "%20"], ["''", "\""]]
         for i in rep:
             line1 = line1.replace(i[0], i[1])
@@ -62,19 +68,22 @@ class Meme:
 
     @meme.group(name="templates", invoke_without_command=True)
     async def meme_templates(self, ctx):
-        """Gives users a list of meme templates."""
+        """
+        Gives users a list of meme templates.
+        """
         await ctx.send("All stock templates can be found here: <{}>".format("http://memegen.link/templates/"))
 
     @commands.command()
     async def trump(self, ctx, *, meme: str):
-        """Generates a meme."""
-        if ctx.invoked_subcommand is None:
-            rep = [["-", "--"], ["_", "__"], ["?", "~q"], ["%", "~p"], [" ", "%20"], ["''", "\""]]
-            for i in rep:
-                meme = meme.replace(i[0], i[1])
-            link = "https://martmists.tk/api/v1/illegal?query={}".format(meme)
-            file = await util.get_file(link)
-            await ctx.send(file=discord.File(fp=io.BytesIO(file), filename="meme.gif"))
+        """
+        Generates a meme.
+        """
+        rep = [["-", "--"], ["_", "__"], ["?", "~q"], ["%", "~p"], [" ", "%20"], ["''", "\""]]
+        for i in rep:
+            meme = meme.replace(i[0], i[1])
+        link = "https://martmists.com/api/v1/illegal?query={}".format(meme)
+        file = await util.get_file(link)
+        await ctx.send(file=discord.File(fp=io.BytesIO(file), filename="meme.gif"))
 
 
 def setup(bot: DiscordBot):
