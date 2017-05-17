@@ -26,6 +26,7 @@ class DiscordBot(Bot):
         self.bot_config = bot_config
 
         # Set up logging
+        formatter.setup_logger("discord")
         self.logger = formatter.setup_logger("Bot")
         self.command_logger = formatter.setup_logger("Commands")
         self.file_logger = formatter.file_logger

@@ -8,7 +8,6 @@ import re
 
 import colorlog
 import discord
-import logbook
 
 from discordbot.cogs.utils import checks
 from discordbot.consts import bot_config
@@ -122,7 +121,7 @@ def setup_logger(logger_name: str):
         datefmt=""
     )
     logger = logging.getLogger(logger_name)
-    logger.level = getattr(logbook, bot_config.get("log_level", "INFO"), logbook.INFO)
+    logger.level = getattr(logging, bot_config.get("log_level", "INFO"), logging.INFO)
 
     # Set the root logger level, too.
     logging.root.setLevel(logger.level)
