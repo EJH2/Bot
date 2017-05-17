@@ -387,6 +387,7 @@ class Owner:
             else:
                 ctx.bot.__dict__[keys] = value
         importlib.reload(consts)
+        await ctx.send("Alright, I changed `{}` to `{}`!".format(keys, value))
 
     @commands.command()
     @commands.is_owner()
