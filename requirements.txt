@@ -1,3 +1,4 @@
+colorlog
 markovify
 git+https://github.com/EJH2/urbandictionary-py@master
 xkcd
