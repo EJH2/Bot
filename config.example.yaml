@@ -18,3 +18,6 @@ bot:
 
 # The default log level
 log_level: INFO
+
+#Do file logging
+logging: True
