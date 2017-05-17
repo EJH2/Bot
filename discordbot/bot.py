@@ -47,6 +47,8 @@ class DiscordBot(Bot):
         self.remove_command("help")
         self.command(**self.help_attrs)(formatter.default_help_command)
 
+        discord.abc.Messageable.send = formatter.new_send
+
     def __del__(self):
         # Silence aiohttp.
         if not self.http.session.closed:

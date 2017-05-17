@@ -92,6 +92,7 @@ async def default_help_command(ctx, *commands: str):
                                                               "Sent to your DMs!", color=0xFFFFFF)
                 await ctx.message.channel.send(content="", embed=em)
 
+
 # ==============================
 #   Logging related formatting
 # ==============================
@@ -143,3 +144,16 @@ def file_logger(path):
     log.addHandler(handler)
 
     return log
+
+
+# ==============================
+#   Message related formatting
+# ==============================
+
+
+old_send = discord.abc.Messageable.send
+
+
+async def new_send(self, content, **kwargs):
+    content = content.replace("@everyone", "@\u200beveryone").replace("@here", "@\u200bhere")
+    return await old_send(self, content, **kwargs)
