@@ -3,20 +3,15 @@ Main bot file.
 """
 
 import asyncio
-import logging
 import sys
 import traceback
 from collections import Counter
 
 import discord
-import logbook
 from discord.ext import commands
 from discord.ext.commands import Bot
-from logbook import Logger
-from logbook import StreamHandler
-from logbook.compat import redirect_logging
 
-from discordbot.cogs.utils import config, exceptions
+from discordbot.cogs.utils import config, exceptions, util, formatter
 from discordbot.consts import modules, bot_config
 
 
@@ -26,20 +21,16 @@ class DiscordBot(Bot):
     """
 
     def __init__(self, *args, **kwargs):
-
         super().__init__(*args, **kwargs)
 
         self.bot_config = bot_config
 
         # Set up logging
-        redirect_logging()
-        StreamHandler(sys.stderr).push_application()
+        self.logger = formatter.setup_logger("Bot")
+        self.command_logger = formatter.setup_logger("Commands")
+        self.file_logger = formatter.file_logger
 
-        self.logger = Logger("Bot")
-        self.logger.level = getattr(logbook, self.bot_config.get("log_level", "INFO"), logbook.INFO)
-
-        # Set the root logger level, too.
-        logging.root.setLevel(self.logger.level)
+        self.logging = bot_config.get("logging", "True")
 
         self._loaded = False
 
@@ -51,6 +42,10 @@ class DiscordBot(Bot):
         self.pm_help = True
 
         self.commands_used = Counter()
+
+        # As the great Danny once said: "pay no mind to this ugliness."
+        self.remove_command("help")
+        self.command(**self.help_attrs)(formatter.default_help_command)
 
     def __del__(self):
         # Silence aiohttp.
@@ -87,40 +82,13 @@ class DiscordBot(Bot):
 
         self._loaded = True
 
-    async def on_message(self, message):
-        """
-        Process commands and log.
-        """
-        self.ignored = config.Config("ignored.yaml")
-        if message.channel.id not in self.ignored.get("channels"):
-            if message.attachments:
-                if message.clean_content:
-                    attachment = " " + message.attachments[0]["url"]
-                else:
-                    attachment = message.attachments[0]["url"]
-            else:
-                attachment = ""
-
-            self.logger.info("Received message: {message.clean_content}{attachment}".format(message=message,
-                                                                                            attachment=attachment))
-            self.logger.info(" From user: {message.author.display_name}{bot} ({message.author.id})"
-                             .format(message=message, bot=" [BOT]" if message.author.bot else ""))
-
-            if message.guild is not None:
-                self.logger.info(" In channel: #{message.channel.name}".format(message=message))
-                self.logger.info(" In server: {0.guild.name} ({0.guild.id})".format(message))
-            else:
-                self.logger.info(" Inside private message")
-
-        await super().on_message(message)
-
     async def on_message_edit(self, before, after):
         """
         Checks message edit to see if I screwed up a command...
         """
         await super().on_message(after)
 
-    async def on_command_error(self, e, ctx):
+    async def on_command_error(self, ctx, e):
         """
         Catch command errors.
         """
@@ -141,6 +109,9 @@ class DiscordBot(Bot):
         elif isinstance(e, commands.errors.NoPrivateMessage):
             await ctx.message.channel.send("\N{NO ENTRY} That command can not be run in PMs!",
                                            delete_after=5)
+        elif isinstance(e, commands.errors.DisabledCommand):
+            await ctx.message.channel.send("\N{NO ENTRY} Sorry, but that command is currently disabled!",
+                                           delete_after=5)
         elif isinstance(e, commands.errors.CheckFailure):
             await ctx.message.channel.send("\N{CROSS MARK} Check failed. You probably don't have "
                                            "permission to do this.", delete_after=5)
@@ -155,19 +126,14 @@ class DiscordBot(Bot):
             else:
                 traceback.print_exception(type(e), e, e.__traceback__, file=sys.stderr)
 
-    @staticmethod
-    async def on_command(ctx):
-        if not ctx.message.channel:
-            embeddable = True
+    async def on_command(self, ctx):
+        author = str(ctx.author)
+        if ctx.guild is not None:
+            self.command_logger.info("{0.guild.name} (ID: {0.guild.id}) > {author} (ID: {0.author.id}): {0.message"
+                                     ".clean_content}".format(ctx, author=author))
         else:
-            embeddable = ctx.message.channel.permissions_for(ctx.message.guild.me).embed_links
-        if ctx.command.name == "help":
-            if not embeddable:
-                await ctx.message.channel.send("\N{ENVELOPE WITH DOWNWARDS ARROW ABOVE} Sent to your DMs!")
-            else:
-                em = discord.Embed(title="Sent!", description="\N{ENVELOPE WITH DOWNWARDS ARROW ABOVE} "
-                                                              "Sent to your DMs!", color=0xFFFFFF)
-                await ctx.message.channel.send(content="", embed=em)
+            self.command_logger.info("Private Messages > {author} (ID: {0.author.id}): {0.message.clean_content}"
+                                     .format(ctx, author=author))
 
     async def on_command_completion(self, ctx):
         self.commands_used[ctx.command.name] += 1
