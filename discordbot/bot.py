@@ -11,7 +11,7 @@ import discord
 from discord.ext import commands
 from discord.ext.commands import Bot
 
-from discordbot.cogs.utils import config, exceptions, util, formatter
+from discordbot.cogs.utils import config, exceptions, formatter
 from discordbot.consts import modules, bot_config
 
 
