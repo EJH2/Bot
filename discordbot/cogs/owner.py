@@ -12,6 +12,7 @@ import json
 import os
 import subprocess
 import sys
+import textwrap
 import traceback
 from contextlib import redirect_stdout
 
@@ -30,6 +31,7 @@ from discordbot.cogs.utils import util
 class Owner:
     def __init__(self, bot: DiscordBot):
         self.bot = bot
+        self._last_result = None
         self.sessions = set()
 
     # ====================================================================
@@ -47,86 +49,96 @@ class Owner:
     def cleanup_code(self, content):
         """Automatically removes code blocks from the code."""
         # remove ```py\n```
-        if content.startswith("```") and content.endswith("```"):
-            return "\n".join(content.split("\n")[1:-1])
+        if content.startswith('```') and content.endswith('```'):
+            return '\n'.join(content.split('\n')[1:-1])
 
         # remove `foo`
-        return content.strip("` \n")
+        return content.strip('` \n')
 
     def get_syntax_error(self, e):
-        return "```py\n{0.text}{1:>{0.offset}}\n{2}: {0}```".format(e, "^", type(e).__name__)
+        if e.text is None:
+            return '```py\n{0.__class__.__name__}: {0}\n```'.format(e)
+        return '```py\n{0.text}{1:>{0.offset}}\n{2}: {0}```'.format(e, '^', type(e).__name__)
 
-    @commands.command(hidden=True)
+    @commands.command()
     @commands.is_owner()
-    async def debug(self, ctx, *, code: str):
-        """Evaluates code."""
-        code = code.strip("` ")
-        python = "```py\n{}\n```"
-        result = None
-
+    async def debug(self, ctx, *, body: str):
         env = {
-            "bot": self,
-            "ctx": ctx,
-            "message": ctx.message,
-            "server": ctx.message.guild,
-            "channel": ctx.message.channel,
-            "author": ctx.message.author
+            'bot': ctx.bot,
+            'ctx': ctx,
+            'channel': ctx.channel,
+            'author': ctx.author,
+            'server': ctx.guild,
+            'message': ctx.message,
+            '_': self._last_result
         }
 
         env.update(globals())
 
+        body = self.cleanup_code(body)
+        stdout = io.StringIO()
+
+        to_compile = 'async def func():\n%s' % textwrap.indent(body, '  ')
+
         try:
-            result = eval(code, env)
-            if inspect.isawaitable(result):
-                await result
-                return
+            exec(to_compile, env)
+        except SyntaxError as e:
+            return await self.bot.say(self.get_syntax_error(e))
+
+        func = env['func']
+        try:
+            with redirect_stdout(stdout):
+                ret = await func()
         except Exception as e:
-            await ctx.send(python.format(type(e).__name__ + ": " + str(e)))
-            traceback.print_exception(type(e), e, e.__traceback__, file=sys.stderr)
-            return
+            value = stdout.getvalue()
+            await ctx.send('```py\n{}{}\n```'.format(value, traceback.format_exc()))
+        else:
+            value = stdout.getvalue()
 
-        await ctx.send(python.format(result))
+            if ret is None:
+                if value:
+                    await ctx.send('```py\n%s\n```' % value)
+            else:
+                self._last_result = ret
+                await ctx.send('```py\n%s%s\n```' % (value, ret))
 
-    @commands.command(hidden=True)
+    @commands.command()
     @commands.is_owner()
     async def repl(self, ctx):
         msg = ctx.message
 
         variables = {
-            "ctx": ctx,
-            "bot": self,
-            "message": msg,
-            "server": msg.guild,
-            "channel": msg.channel,
-            "author": msg.author,
-            "last": None,
+            'ctx': ctx,
+            'bot': ctx.bot,
+            'message': ctx.message,
+            'server': ctx.guild,
+            'channel': ctx.channel,
+            'author': ctx.author,
+            '_': None,
         }
 
         if msg.channel.id in self.sessions:
-            await ctx.send("Already running a REPL session in this channel. Exit it with `quit`.")
+            await ctx.send('Already running a REPL session in this channel. Exit it with `quit`.')
             return
 
         self.sessions.add(msg.channel.id)
-        await ctx.send("Enter code to execute or evaluate. `exit()` or `quit` to exit.")
-
-        def check(m):
-            return m.author == ctx.message.author and m.channel == ctx.message.channel and m.content.startswith("`")
-
+        await ctx.send('Enter code to execute or evaluate. `exit()` or `quit` to exit.')
         while True:
-            response = await ctx.bot.wait_for("message", check=check)
+            response = await self.bot.wait_for_message(author=msg.author, channel=msg.channel,
+                                                       check=lambda m: m.content.startswith('`'))
 
             cleaned = self.cleanup_code(response.content)
 
-            if cleaned in ("quit", "exit", "exit()"):
-                await ctx.send("Exiting.")
+            if cleaned in ('quit', 'exit', 'exit()'):
+                await ctx.send('Exiting.')
                 self.sessions.remove(msg.channel.id)
                 return
 
             executor = exec
-            if cleaned.count("\n") == 0:
-                # single statement, potentially "eval"
+            if cleaned.count('\n') == 0:
+                # single statement, potentially 'eval'
                 try:
-                    code = compile(cleaned, "<repl session>", "eval")
+                    code = compile(cleaned, '<repl session>', 'eval')
                 except SyntaxError:
                     pass
                 else:
@@ -134,12 +146,12 @@ class Owner:
 
             if executor is exec:
                 try:
-                    code = compile(cleaned, "<repl session>", "exec")
+                    code = compile(cleaned, '<repl session>', 'exec')
                 except SyntaxError as e:
                     await ctx.send(self.get_syntax_error(e))
                     continue
 
-            variables["message"] = response
+            variables['message'] = response
 
             fmt = None
             stdout = io.StringIO()
@@ -151,14 +163,14 @@ class Owner:
                         result = await result
             except Exception as e:
                 value = stdout.getvalue()
-                fmt = "```py\n{}{}\n```".format(value, traceback.format_exc())
+                fmt = '```py\n{}{}\n```'.format(value, traceback.format_exc())
             else:
                 value = stdout.getvalue()
                 if result is not None:
-                    fmt = "```py\n{}{}\n```".format(value, result)
-                    variables["last"] = result
+                    fmt = '```py\n{}{}\n```'.format(value, result)
+                    variables['_'] = result
                 elif value:
-                    fmt = "```py\n{}\n```".format(value)
+                    fmt = '```py\n{}\n```'.format(value)
 
             try:
                 if fmt is not None:
@@ -171,7 +183,7 @@ class Owner:
             except discord.Forbidden:
                 pass
             except discord.HTTPException as e:
-                await ctx.send("Unexpected error: `{}`".format(e))
+                await ctx.send('Unexpected error: `{}`'.format(e))
 
     # ========================
     #   Bot related commands
