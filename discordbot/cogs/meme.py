@@ -5,6 +5,7 @@ import io
 
 import aiohttp
 import discord
+import urllib.parse
 from discord.ext import commands
 
 from discordbot.bot import DiscordBot
@@ -73,15 +74,13 @@ class Meme:
         """
         await ctx.send("All stock templates can be found here: <{}>".format("http://memegen.link/templates/"))
 
-    @commands.command()
+    @commands.command(aliases=["illegal"])
     async def trump(self, ctx, *, meme: str):
         """
         Generates a meme.
         """
-        rep = [["-", "--"], ["_", "__"], ["?", "~q"], ["%", "~p"], [" ", "%20"], ["''", "\""]]
-        for i in rep:
-            meme = meme.replace(i[0], i[1])
-        link = "https://martmists.com/api/v1/illegal?query={}".format(meme)
+        meme = urllib.parse.quote_plus(meme)
+        link = "http://martmists.com/api/v1/illegal?query={}".format(meme)
         file = await util.get_file(link)
         await ctx.send(file=discord.File(fp=io.BytesIO(file), filename="meme.gif"))
 
