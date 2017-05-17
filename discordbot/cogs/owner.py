@@ -372,29 +372,21 @@ class Owner:
         """
         Sets a config value.
         """
+        configfile = config.Config(configfile)
+        key = configfile.to_dict()
         if len(keys) > 1:
             keys = keys.split(", ")
-            configfile = config.Config(configfile)
-            configfile_dict = configfile.to_dict()
-            key = configfile_dict
             for x in keys[:-1]:
                 key = dict.get(key, x)
-            keys = "".join(keys[-1:])
-            key[keys] = value
-            configfile.save()
-            if hasattr(ctx.bot, keys):
+        keys = "".join(keys[-1:])
+        key[keys] = value
+        configfile.save()
+        if hasattr(ctx.bot, keys):
+            if keys == "command_prefix":
+                ctx.bot.command_prefix = commands.when_mentioned_or(value)
+            else:
                 ctx.bot.__dict__[keys] = value
-            importlib.reload(consts)
-        else:
-            configfile = config.Config(configfile)
-            configfile_dict = configfile.to_dict()
-            key = configfile_dict
-            keys = "".join(keys[-1:])
-            key[keys] = value
-            configfile.save()
-            if hasattr(ctx.bot, keys):
-                ctx.bot.__dict__[keys] = value
-            importlib.reload(consts)
+        importlib.reload(consts)
 
     @commands.command()
     @commands.is_owner()
