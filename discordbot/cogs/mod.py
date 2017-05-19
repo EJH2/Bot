@@ -83,15 +83,14 @@ class Moderation:
         self.bot.ignored.place("channels", list(set(ignored)))  # make unique
         await ctx.send("I am now ignoring this server.", delete_after=5)
 
-    @commands.group()
+    @commands.group(invoke_without_command=True)
     @commands.guild_only()
     @commands.check(permissions(manage_channels=True))
     async def unignore(self, ctx):
         """
         Command for un-ignoring channels/the server.
         """
-        if ctx.invoked_subcommand is None:
-            await ctx.send("Invalid subcommand passed: {0.subcommand_passed}".format(ctx), delete_after=5)
+        await ctx.send("Invalid subcommand passed: {0.subcommand_passed}".format(ctx), delete_after=5)
 
     @unignore.command(name="channel")
     @commands.guild_only()
@@ -342,15 +341,14 @@ class Moderation:
     #   Role related commands
     # =========================
 
-    @commands.group()
+    @commands.group(invoke_without_command=True)
     @commands.guild_only()
     @commands.check(permissions(manage_roles=True))
     async def roles(self, ctx):
         """
         Command for server roles.
         """
-        if ctx.invoked_subcommand is None:
-            await ctx.send("Invalid subcommand passed: {0.subcommand_passed}".format(ctx))
+        await ctx.send("Invalid subcommand passed: {0.subcommand_passed}".format(ctx))
 
     @roles.command(name="create")
     @commands.check(permissions(manage_roles=True))

@@ -21,17 +21,16 @@ class Meme:
         """
         Generates a meme.
         """
-        if ctx.invoked_subcommand is None:
-            rep = [["-", "--"], ["_", "__"], ["?", "~q"], ["%", "~p"], [" ", "%20"], ["''", "\""]]
-            for i in rep:
-                line1 = line1.replace(i[0], i[1])
-                line2 = line2.replace(i[0], i[1])
-            if not style:
-                link = "http://memegen.link/{0}/{1}/{2}.jpg".format(meme, line1, line2)
-            else:
-                link = "http://memegen.link/{0}/{1}/{2}.jpg?alt={3}".format(meme, line1, line2, style)
-            file = await util.get_file(link)
-            await ctx.send(file=discord.File(fp=io.BytesIO(file), filename="meme.png"))
+        rep = [["-", "--"], ["_", "__"], ["?", "~q"], ["%", "~p"], [" ", "%20"], ["''", "\""]]
+        for i in rep:
+            line1 = line1.replace(i[0], i[1])
+            line2 = line2.replace(i[0], i[1])
+        if not style:
+            link = "http://memegen.link/{0}/{1}/{2}.jpg".format(meme, line1, line2)
+        else:
+            link = "http://memegen.link/{0}/{1}/{2}.jpg?alt={3}".format(meme, line1, line2, style)
+        file = await util.get_file(link)
+        await ctx.send(file=discord.File(fp=io.BytesIO(file), filename="meme.png"))
 
     @meme.command(name="custom")
     async def meme_custom(self, ctx, link: str, line1: str, line2: str):

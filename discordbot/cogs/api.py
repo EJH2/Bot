@@ -12,15 +12,13 @@ class API:
     def __init__(self, bot: DiscordBot):
         self.bot = bot
 
-    @commands.group()
+    @commands.group(invoke_without_command=True)
     async def api(self, ctx):
         """Gives information on various APIs.
 
             Currently available APIs: steam, discord
         """
-
-        if ctx.invoked_subcommand is None:
-            await ctx.send("Invalid subcommand passed: {0.subcommand_passed}".format(ctx))
+        await ctx.send("Invalid subcommand passed: {0.subcommand_passed}".format(ctx))
 
     @api.command()
     async def steam(self, ctx):
