@@ -175,14 +175,19 @@ class Moderation:
         """
         Kicks a member and deletes 7 days of their messages.
         """
+        softbanned = 0
         for member in members:
             try:
                 await ctx.message.guild.ban(member, delete_message_days=7)
-                await ctx.message.guild.unban(member.server, member)
-                await ctx.send(member.name + " was softbanned from the server.")
-                await asyncio.sleep(1)
-            except discord.errors.Forbidden:
-                await ctx.send("Skipping `{}`, permissions error.".format(member))
+                await ctx.message.guild.unban(member)
+                softbanned += 1
+            except discord.errors.DiscordException as e:
+                try:
+                    await ctx.send("User `{}` (ID: `{}`) could not be softbanned: `{}`".format(str(member), member.id,
+                                                                                               e))
+                except discord.errors.DiscordException as err:
+                    await ctx.send("User `{}` could not be softbanned: `{}`".format(member, err))
+        await ctx.send("Successfully softbanned {}/{} users".format(softbanned, len(members)))
 
     @commands.command()
     @commands.guild_only()
