@@ -153,6 +153,6 @@ def file_logger(path):
 old_send = discord.abc.Messageable.send
 
 
-async def new_send(self, content, **kwargs):
-    content = content.replace("@everyone", "@\u200beveryone").replace("@here", "@\u200bhere")
+async def new_send(self, content=None, **kwargs):
+    content = content.replace("@everyone", "@\u200beveryone").replace("@here", "@\u200bhere") if content else None
     return await old_send(self, content, **kwargs)
