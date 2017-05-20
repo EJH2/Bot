@@ -52,6 +52,10 @@ start = time.time()
 
 # Bot Module Loading things
 modules = []
+init_modules = []
 
 for i in glob.glob(os.getcwd() + "/discordbot/cogs/*.py"):
-    modules.append(i.replace(os.getcwd() + "/", "").replace("\\", ".").replace("/", ".")[:-3])
+    if "init" in i:
+        init_modules.append(i.replace(os.getcwd() + "/", "").replace("\\", ".").replace("/", ".")[:-3])
+    else:
+        modules.append(i.replace(os.getcwd() + "/", "").replace("\\", ".").replace("/", ".")[:-3])

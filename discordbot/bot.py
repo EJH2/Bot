@@ -12,7 +12,7 @@ from discord.ext import commands
 from discord.ext.commands import Bot
 
 from discordbot.cogs.utils import config, exceptions, formatter
-from discordbot.consts import modules, bot_config
+from discordbot.consts import init_modules, modules, bot_config
 
 
 class DiscordBot(Bot):
@@ -50,6 +50,25 @@ class DiscordBot(Bot):
 
         discord.abc.Messageable.send = formatter.new_send
 
+        # Loads any modules that need loading before hand,
+        # to do this name the file init_whatever.py in the cogs folder
+        self.load_modules(init_modules, True)
+
+    def load_modules(self, modules_list: list, load_silent: bool = False):
+        """
+        
+        """
+        if len(modules_list) > 0:
+            for mod in modules_list:
+                try:
+                    self.load_extension(mod)
+                except Exception as e:
+                    self.logger.critical("Could not load extension `{}` -> `{}`".format(mod, e))
+                    self.logger.exception()
+                else:
+                    if not load_silent:
+                        self.logger.info("Loaded extension {}.".format(mod))
+
     def __del__(self):
         # Silence aiohttp.
         if not self.http.session.closed:
@@ -70,14 +89,7 @@ class DiscordBot(Bot):
         self.logger.info("I am owned by {}, setting owner.".format(str(app_info.owner)))
 
         # Attempt to load Bot modules
-        for mod in modules:
-            try:
-                self.load_extension(mod)
-            except Exception as e:
-                self.logger.critical("Could not load extension `{}` -> `{}`".format(mod, e))
-                self.logger.exception()
-            else:
-                self.logger.info("Loaded extension {}.".format(mod))
+        self.load_modules(modules)
 
         if self.restarting.get("restarting"):
             await self.get_channel(int(self.restarting.get("restart_channel"))).send("Finished! Hello again ;)")
@@ -96,34 +108,41 @@ class DiscordBot(Bot):
         Catch command errors.
         """
         if isinstance(e, exceptions.Ignored):
-            await ctx.message.channel.send("\N{CROSS MARK} This channel is currently being ignored.", delete_after=5)
+            await ctx.channel.send("\N{CROSS MARK} This channel is currently being ignored.", delete_after=5)
             return
         elif isinstance(e, commands.errors.NotOwner):
-            await ctx.message.channel.send(e, delete_after=5)
+            await ctx.channel.send("\N{CROSS MARK} {}".format(e), delete_after=5)
+            return
         elif isinstance(e, exceptions.ClearanceError):
-            await ctx.message.channel.send(e, delete_after=5)
+            await ctx.channel.send("\N{NO ENTRY} {}".format(e), delete_after=5)
             return
         elif isinstance(e, commands.errors.CommandNotFound):
             return
         elif isinstance(e, exceptions.EmbedError):
-            await ctx.message.channel.send("\N{NO ENTRY} This command requires the `Embed Links` "
-                                           "permission to execute!", delete_after=5)
+            await ctx.channel.send("\N{NO ENTRY} This command requires the `Embed Links` "
+                                   "permission to execute!", delete_after=5)
             return
         elif isinstance(e, commands.errors.NoPrivateMessage):
-            await ctx.message.channel.send("\N{NO ENTRY} That command can not be run in PMs!",
-                                           delete_after=5)
+            await ctx.channel.send("\N{NO ENTRY} That command can not be run in PMs!",
+                                   delete_after=5)
+            return
         elif isinstance(e, commands.errors.DisabledCommand):
-            await ctx.message.channel.send("\N{NO ENTRY} Sorry, but that command is currently disabled!",
-                                           delete_after=5)
+            await ctx.channel.send("\N{NO ENTRY} Sorry, but that command is currently disabled!",
+                                   delete_after=5)
+            return
         elif isinstance(e, commands.errors.CheckFailure):
-            await ctx.message.channel.send("\N{CROSS MARK} Check failed. You probably don't have "
-                                           "permission to do this.", delete_after=5)
+            await ctx.channel.send("\N{CROSS MARK} Check failed. You probably don't have "
+                                   "permission to do this.", delete_after=5)
+            return
+        elif isinstance(e, commands.errors.CommandOnCooldown):
+            await ctx.channel.send("\N{NO ENTRY} {}".format(e), delete_after=5)
             return
         elif isinstance(e, (commands.errors.BadArgument, commands.errors.MissingRequiredArgument)):
-            await ctx.message.channel.send("\N{CROSS MARK} Bad argument: {}".format(" ".join(e.args)), delete_after=5)
+            await ctx.channel.send("\N{CROSS MARK} Bad argument: {}".format(" ".join(e.args)), delete_after=5)
+            return
         else:
-            await ctx.message.channel.send("\N{NO ENTRY} An error happened. This has been logged and reported.",
-                                           delete_after=5)
+            await ctx.channel.send("\N{NO ENTRY} An error happened. This has been logged and reported.",
+                                   delete_after=5)
             if isinstance(e, commands.errors.CommandInvokeError):
                 traceback.print_exception(type(e), e.__cause__, e.__cause__.__traceback__, file=sys.stderr)
             else:
