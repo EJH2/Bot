@@ -165,7 +165,7 @@ class DiscordBot(Bot):
         except discord.DiscordException:
             pass
 
-    def _run(self):
+    def run(self):
         """
         Convenience function to run the bot with the specified token.
         """
@@ -173,11 +173,3 @@ class DiscordBot(Bot):
             super().run(self.bot_config["bot"]["token"])
         except discord.errors.LoginFailure as e:
             self.logger.error("Failed to login to discord: {}".format(e.args[0]))
-
-    def run(self):
-        """
-        Extra cleanup for _run.
-        """
-        self._run()
-        input("Press any key to continue...")
-        sys.exit(2)
