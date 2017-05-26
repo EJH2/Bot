@@ -83,7 +83,7 @@ class Owner:
         try:
             exec(to_compile, env)
         except SyntaxError as e:
-            return await self.bot.say(self.get_syntax_error(e))
+            return await ctx.send(self.get_syntax_error(e))
 
         func = env['func']
         try:
