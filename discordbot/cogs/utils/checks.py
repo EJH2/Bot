@@ -62,7 +62,7 @@ def check_user_roles(ctx, role_names):
     if _roles:
         return True
     raise exceptions.ClearanceError("You need role{} \"{}\" to run that command.".format("s" if len(role_names) > 1
-                                                                                             else "", ", ".join(
+                                                                                         else "", ", ".join(
         [role_name.title() for role_name in role_names])))
 
 
