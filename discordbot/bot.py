@@ -8,11 +8,29 @@ import traceback
 from collections import Counter
 
 import discord
+import sqlalchemy
+import sqlalchemy.exc
 from discord.ext import commands
 from discord.ext.commands import Bot
 
 from discordbot.cogs.utils import config, exceptions, formatter
 from discordbot.consts import init_modules, modules, bot_config
+
+
+def connect(user, password, db, host='localhost', port=5432):
+    """
+    Returns a connection and a metadata object
+    """
+    url = 'postgresql://{}:{}@{}:{}/{}'
+    url = url.format(user, password, host, port, db)
+
+    # The return value of create_engine() is our connection object
+    con = sqlalchemy.create_engine(url, client_encoding='utf8')
+
+    # We then bind the connection to MetaData()
+    meta = sqlalchemy.MetaData(bind=con, reflect=True)
+
+    return con, meta
 
 
 class DiscordBot(Bot):
@@ -48,7 +66,7 @@ class DiscordBot(Bot):
         self.remove_command("help")
         self.command(**self.help_attrs)(formatter.default_help_command)
 
-        discord.abc.Messageable.send = formatter.new_send
+        discord.abc.Messageable.send = formatter.send
 
         # Loads any modules that need loading before hand,
         # to do this name the file init_whatever.py in the cogs folder
@@ -56,7 +74,7 @@ class DiscordBot(Bot):
 
     def load_modules(self, modules_list: list, load_silent: bool = False):
         """
-        
+        Load bot extensions.
         """
         if len(modules_list) > 0:
             for mod in modules_list:
