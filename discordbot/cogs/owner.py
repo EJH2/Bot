@@ -3,7 +3,6 @@ Owner-only commands.
 """
 
 import asyncio
-import aiohttp
 import glob
 import importlib
 import inspect
@@ -16,6 +15,7 @@ import textwrap
 import traceback
 from contextlib import redirect_stdout
 
+import aiohttp
 import discord
 from discord.ext import commands
 
@@ -249,16 +249,15 @@ class Owner:
         Load an extension.
         """
         extension = extension.lower()
+        extent = "discordbot.cogs.{}".format(extension) in self.bot.extensions
+        if extent:
+            return await ctx.send("Could not load `{}` -> `It's already loaded!`".format(extension))
         try:
             ext = ctx.bot.load_extension("discordbot.cogs.{}".format(extension))
+            await ctx.send("Loaded cog `discordbot.cogs.{}`.".format(extension))
         except Exception as e:
             traceback.print_exc()
             await ctx.send("Could not load `{}` -> `{}`".format(extension, e))
-        else:
-            if ext is not None:
-                await ctx.send("Loaded cog `discordbot.cogs.{}`.".format(extension))
-            else:
-                await ctx.send("Could not load `{}` -> `It's already loaded!`".format(extension))
 
     @commands.command()
     @commands.is_owner()
@@ -267,8 +266,9 @@ class Owner:
         Unload an extension.
         """
         extension = extension.lower()
-        ext = ctx.bot.unload_extension("discordbot.cogs.{}".format(extension))
-        if ext is None:
+        ext = "discordbot.cogs.{}".format(extension) in self.bot.extensions
+        ctx.bot.unload_extension("discordbot.cogs.{}".format(extension))
+        if ext is False:
             await ctx.send("Could not unload `{}` -> `Either it doesn't exist or it's already unloaded!`".format(
                 extension))
         else:
@@ -316,16 +316,14 @@ class Owner:
         await ctx.send("Please wait...")
 
         for extension in consts.modules:
-            ext = ctx.bot.unload_extension("discordbot.cogs.{}".format(extension))
-            if ext is None:
-                await ctx.send("Could not unload `{}` -> It doesn't exist!".format(extension))
-            else:
-                await ctx.send("Unloaded `{}`.".format(extension))
+            ctx.bot.unload_extension("discordbot.cogs.{}".format(extension))
+            await ctx.send("Unloaded `{}`.".format(extension))
 
         consts.modules = []
 
         for i in glob.glob(os.getcwd() + "/discordbot/cogs/*.py"):
-            consts.modules.append(i.replace(os.getcwd() + "/", "").replace("\\", ".").replace("/", ".")[:-3])
+            if "init" not in i:
+                modules.append(i.replace(os.getcwd() + "/", "").replace("\\", ".").replace("/", ".")[:-3])
 
         for extension in consts.modules:
             try:
