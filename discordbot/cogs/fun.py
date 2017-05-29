@@ -34,12 +34,12 @@ class Fun:
             await ctx.send("You gotta give me someone to work with here!")
             return
         for member in members:
-            if member.id == self.bot.user.id:
+            if member == self.bot.user:
                 gif = await util.get_file("http://i.imgur.com/hPL5TGD.gif")
                 await ctx.send(
                     "You attempted to shoot me, {}, but I dodged it!".format(ctx.message.author.name),
-                    file=io.BytesIO(gif), filename="gif.gif")
-            elif member.id == ctx.message.author.id:
+                    file=discord.File(io.BytesIO(gif), filename="gif.gif"))
+            elif member == ctx.message.author:
                 gif = await util.get_file("https://media.giphy.com/media/5xaOcLAo1Gg0oRgBz0Y/giphy.gif")
                 await ctx.send(
                     "{} committed suicide!".format(ctx.message.author.name), file=io.BytesIO(gif), filename="gif.gif")
@@ -48,11 +48,13 @@ class Fun:
                                           "2dfaa995a09d81a07cad24d3ce18e011.gif")
                 await ctx.send(
                     "{1} was shot dead by the mighty {0}!".format(ctx.message.author.name, member.name),
-                    file=io.BytesIO(gif), filename="gif.gif")
+                    file=discord.File(io.BytesIO(gif), filename="gif.gif"))
 
     @commands.command()
     async def rr(self, ctx):
-        """Allows the user to take part in the famous Russian Pastime."""
+        """
+        Allows the user to take part in the famous Russian Pastime.
+        """
         await ctx.send('You spin the cylinder of the revolver with 1 bullet in it...')
         await asyncio.sleep(1)
         await ctx.send('...you place the muzzle against your head and pull the trigger...')
@@ -240,9 +242,18 @@ class Fun:
                 lenny = await get.json()
                 await ctx.send(lenny[0]["face"])
 
+    @commands.command(aliases=["shrug"])
+    async def meh(self, ctx):
+        """
+        Meh.
+        """
+        await ctx.send("¯\_(ツ)_/¯")
+
     @commands.command()
     async def scramble(self, ctx, word_length: int = None):
-        """Allows the user to play a word scramble with the bot."""
+        """
+        Allows the user to play a word scramble with the bot.
+        """
         with aiohttp.ClientSession() as sess:
             if word_length:
                 word_length_req = 3 <= word_length <= 20
