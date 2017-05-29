@@ -2,11 +2,12 @@
 Fun commands.
 """
 
-import aiohttp
 import asyncio
 import io
 import random
+from urllib.parse import quote_plus
 
+import aiohttp
 import discord
 from discord.ext import commands
 from discord.ext.commands import BucketType
@@ -70,9 +71,7 @@ class Fun:
         """
         Gives the user a "Let Me Google That For You" link.
         """
-        msg = query.replace(" ", "+")
-        msg = "http://lmgtfy.com/?q={}".format(msg)
-        await ctx.send(msg)
+        await ctx.send("http://lmgtfy.com/?q={}".format(quote_plus(query)))
 
     @commands.command()
     async def meh(self, ctx):
@@ -88,7 +87,7 @@ class Fun:
         """
         await ctx.send(message)
 
-    @commands.command()
+    @commands.command(aliases=["out"])
     async def nope(self, ctx):
         """Gives a user a 'nope' gif."""
         nopes = [
@@ -209,7 +208,7 @@ class Fun:
             "Outlook not so good",
             "Very doubtful"
             ]
-        await ctx.send("{0.author.mention} asked `{1}`, and the magic eight ball replied `{2}`".format(
+        await ctx.send("{0.author} asked `{1}`, and the magic eight ball replied `{2}`".format(
             ctx.message, question, random.choice(responses)
         ))
 
