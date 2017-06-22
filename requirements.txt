@@ -1,5 +1,8 @@
+pillow
+wikipedia
 colorlog
-markovify
+git+https://github.com/EJH2/yourls@master
+git+https://github.com/EJH2/ghostbin@master
 git+https://github.com/EJH2/urbandictionary-py@master
 xkcd
 geocoder

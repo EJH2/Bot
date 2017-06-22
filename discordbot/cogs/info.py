@@ -3,12 +3,12 @@ Informative commands.
 """
 
 import copy
+import random
 import sys
 import time
 from collections import Counter
 
 import discord
-import markovify
 from discord.ext import commands
 
 from discordbot import consts
@@ -49,6 +49,15 @@ class Information:
     #   Bot related commands
     # ========================
 
+    @commands.command()
+    async def alert(self, ctx, *, message):
+        """
+        Sends a message to my developer! (Use only to report bugs. Abuse will get you bot banned!)
+        """
+        await ctx.bot.owner.send("New message from " + ctx.message.author.name + "#" + ctx.message.author.discriminator
+                                 + " (" + ctx.message.author.id + ") in " + ctx.message.author.server.name +
+                                 ": " + message)
+
     @commands.group(invoke_without_command=True, aliases=["stats"])
     @commands.check(checks.needs_embed)
     async def info(self, ctx):
@@ -56,7 +65,7 @@ class Information:
         Gives information about the bot.
         """
         app_info = await self.bot.application_info()
-        owner = app_info.owner
+        owner = ctx.bot.owner
         seconds = time.time() - consts.start
         m, s = divmod(seconds, 60)
         h, m = divmod(m, 60)
@@ -119,16 +128,23 @@ class Information:
         """
         Pings the bot.
         """
-        with open("discordbot/cogs/utils/files/markov.txt") as file:
-            markov_text = file.read()
-        markov = markovify.Text(markov_text)
-        joke = None
-        while joke is None:
-            joke = markov.make_sentence()
-        ping_time = time.time()
+        joke = random.choice(["not actually pinging server...", "hey bb", "what am I doing with my life",
+                              "Some Dragon is a dank music bot tbh", "I'd like to thank the academy for this award",
+                              "The NSA is watching 👀", "`<Insert clever joke here>`", "¯\_(ツ)_/¯", "(づ｡◕‿‿◕｡)づ",
+                              "I want to believe...", "Hypesquad is a joke", "EJH2#0330 is my daddy", "Robino pls",
+                              "Seth got arrested again...", "Maxie y u do dis", "aaaaaaaaaaaAAAAAAAAAA", "owo",
+                              "uwu", "meme team best team", "made with dicksword dot pee why", "I'm running out of "
+                                                                                               "ideas here",
+                              "am I *dank* enough for u?", "this is why we can't have nice things. come on",
+                              "You'll understand when you're older...", "\"why\", you might ask? I do not know...",
+                              "I'm a little tea pot, short and stout", "I'm not crying, my eyeballs "
+                                                                       "are sweating!",
+                              "When will the pain end?", "Partnership when?", "Hey Robino, rewrite when?"])
+        before = time.monotonic()
         ping_msg = await ctx.send("Pinging Server...")
-        ping = time.time() - ping_time
-        await ping_msg.edit(content=joke + " // ***%.01f secs***" % ping)
+        after = time.monotonic()
+        ping = (after - before) * 1000
+        await ping_msg.edit(content=joke + " // ***{0:.0f}ms***".format(ping))
 
     # ===========================
     #   Player related commands
@@ -148,7 +164,7 @@ class Information:
     @commands.command(aliases=["playerstats", "player", "userinfo", "userstats", "user"])
     async def playerinfo(self, ctx, *, user: discord.Member = None):
         """
-        Gives you player info on a user. If a user isn"t passed then the shown info is yours.
+        Gives you player info on a user. If a user isn't passed then the shown info is yours.
         """
         if not user:
             user = ctx.message.author
@@ -162,8 +178,7 @@ class Information:
             voice_channel = "Not in a voice channel."
 
         msg = [
-            ("Name", user.name),
-            ("Discrim", user.discriminator),
+            ("Name", user.name), ("Discrim", user.discriminator),
             ("ID", user.id),
             ("Display Name", user.display_name),
             ("Joined at", user.joined_at),

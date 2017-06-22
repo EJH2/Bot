@@ -47,7 +47,9 @@ class Owner:
                 return await response.json()
 
     def cleanup_code(self, content):
-        """Automatically removes code blocks from the code."""
+        """
+        Automatically removes code blocks from the code.
+        """
         # remove ```py\n```
         if content.startswith('```') and content.endswith('```'):
             return '\n'.join(content.split('\n')[1:-1])
@@ -63,6 +65,9 @@ class Owner:
     @commands.command()
     @commands.is_owner()
     async def debug(self, ctx, *, body: str):
+        """
+        Evaluate Python code.
+        """
         env = {
             'bot': ctx.bot,
             'ctx': ctx,
@@ -105,6 +110,9 @@ class Owner:
     @commands.command()
     @commands.is_owner()
     async def repl(self, ctx):
+        """
+        Evaluate a bunch of Python code.
+        """
         msg = ctx.message
 
         variables = {
@@ -340,6 +348,16 @@ class Owner:
     # ===============================
     #   Management related commands
     # ===============================
+
+    @commands.command()
+    @commands.is_owner()
+    async def dm(self, ctx, id: int, *, reason: str):
+        user = ctx.bot.get_user(id)
+        if user is not None:
+            await user.send(reason)
+            await ctx.send("The message has been sent!")
+        else:
+            await ctx.send("I couldn't find that user, sorry!")
 
     @commands.group(invoke_without_command=True)
     @commands.is_owner()

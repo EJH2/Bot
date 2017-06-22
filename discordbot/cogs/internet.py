@@ -1,17 +1,18 @@
 """
 Internet commands.
 """
-import aiohttp
 import datetime
+import io
+
+import aiohttp
 import discord
 import geocoder
-import io
 import xkcd
 from discord.ext import commands
 
 from discordbot.bot import DiscordBot
-from discordbot.consts import bot_config
 from discordbot.cogs.utils import checks, util
+from discordbot.consts import bot_config
 
 
 # noinspection PyUnboundLocalVariable
@@ -53,7 +54,7 @@ class Internet:
         if query == 404:
             em = discord.Embed(color=discord.Color.red())
             em.title = "\N{CROSS MARK} Error"
-            em.description = "Error 404: Comic "
+            em.description = "Error 404: Comic Not Found"
             await ctx.send(embed=em)
             return
         latest_comic = xkcd.getLatestComicNum()
@@ -88,14 +89,11 @@ class Internet:
         crippling_depression = bot_config["bot"]["OWMKey"]
         you_made_me_do_this_forcastio = "https://api.darksky.net/forecast/{}/{},{}".format(crippling_depression,
                                                                                            lat, lng)
-        print(you_made_me_do_this_forcastio)
         with aiohttp.ClientSession() as sess:
             async with sess.get(you_made_me_do_this_forcastio) as how_could_you:
                 assert isinstance(how_could_you, aiohttp.ClientResponse)
                 oh_the_pain = await how_could_you.json()
-        print(oh_the_pain)
         today = oh_the_pain["daily"]["data"][0]
-        print(today)
         await ctx.send("Location: {}, {}\n"
                        "Sunrise Time: {}\n"
                        "Sunset Time: {}\n"

@@ -16,8 +16,25 @@ bot:
   # Bot version codename
   codename: <codename>
 
+  ## YOURLS API things, leave these None since you won't have these
+  # YOURLS API base, example http://sho.rt/yourls-api.php
+  yourls_base: None
+
+  # YOURLS API Key
+  yourls_signature: None
+
+  ## Postgres Database information. If left to None, then message logging will be disabled.
+  # Postgres DB name
+  pg_name: None
+
+  # Postgres DB user
+  pg_user: None
+
+  # Postgres DB password
+  pg_pass: None
+
 # The default log level
 log_level: INFO
 
-#Do file logging
-logging: True
+#Do message logging. Only enable this if you have set up Postgres.
+logging: False

@@ -2,10 +2,10 @@
 Dedicated Meme commands.
 """
 import io
+import urllib.parse
 
 import aiohttp
 import discord
-import urllib.parse
 from discord.ext import commands
 
 from discordbot.bot import DiscordBot
@@ -76,7 +76,7 @@ class Meme:
     @commands.command(aliases=["illegal"])
     async def trump(self, ctx, *, meme: str):
         """
-        Generates a meme.
+        Generates an extra spicy trump meme.
         """
         meme = urllib.parse.quote_plus(meme)
         link = "http://martmists.com/api/v1/illegal?query={}".format(meme)

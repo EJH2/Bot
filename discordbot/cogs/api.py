@@ -14,7 +14,8 @@ class API:
 
     @commands.group(invoke_without_command=True)
     async def api(self, ctx):
-        """Gives information on various APIs.
+        """
+            Gives information on various APIs.
 
             Currently available APIs: steam, discord
         """

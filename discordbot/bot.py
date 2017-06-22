@@ -56,6 +56,7 @@ class DiscordBot(Bot):
         self.restarting = config.Config("restart.yaml")
         self.ignored = config.Config("ignored.yaml")
 
+        self.owner = None
         self.owner_id = None
 
         self.pm_help = True
@@ -72,6 +73,27 @@ class DiscordBot(Bot):
         # to do this name the file init_whatever.py in the cogs folder
         self.load_modules(init_modules, True)
 
+    def load_logging(self):
+        """
+        Load DB logging.
+        """
+        if self.logging:
+            self.logger.info("Attempting to set up message logging...")
+            if "None" not in [bot_config["bot"]["pg_name"], bot_config["bot"]["pg_user"], bot_config["bot"]["pg_pass"]]:
+                try:
+                    self.con, self.meta = connect(bot_config["bot"]["pg_user"], bot_config["bot"]["pg_pass"],
+                                                  bot_config["bot"]["pg_name"])
+                    self.logging = True
+                    self.logger.info("Connection established, message database configured.")
+                except sqlalchemy.exc.SQLAlchemyError as e:
+                    self.logging = False
+                    self.logger.warn("Could not connect to database: {}".format(e))
+            else:
+                self.logging = False
+                self.logger.warn("Could not connect to database.")
+        else:
+            self.logger.info("Logging disabled for this session.")
+
     def load_modules(self, modules_list: list, load_silent: bool = False):
         """
         Load bot extensions.
@@ -82,7 +104,6 @@ class DiscordBot(Bot):
                     self.load_extension(mod)
                 except Exception as e:
                     self.logger.critical("Could not load extension `{}` -> `{}`".format(mod, e))
-                    self.logger.exception()
                 else:
                     if not load_silent:
                         self.logger.info("Loaded extension {}.".format(mod))
@@ -103,8 +124,11 @@ class DiscordBot(Bot):
 
         self.logger.info("Downloading application info...")
         app_info = await self.application_info()
+        self.owner = app_info.owner
         self.owner_id = app_info.owner.id
         self.logger.info("I am owned by {}, setting owner.".format(str(app_info.owner)))
+
+        self.load_logging()
 
         # Attempt to load Bot modules
         self.load_modules(modules)

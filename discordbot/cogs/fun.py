@@ -9,9 +9,12 @@ from urllib.parse import quote_plus
 
 import aiohttp
 import discord
+import wikipedia
+import wikipedia.exceptions
+from PIL import Image, ImageDraw
 from discord.ext import commands
 from discord.ext.commands import BucketType
-from pyfiglet import figlet_format
+from pyfiglet import figlet_format, FontNotFound
 
 from discordbot.bot import DiscordBot
 from discordbot.cogs.utils import util
@@ -49,6 +52,41 @@ class Fun:
                 await ctx.send(
                     "{1} was shot dead by the mighty {0}!".format(ctx.message.author.name, member.name),
                     file=discord.File(io.BytesIO(gif), filename="gif.gif"))
+
+    @commands.group()
+    async def ascii(self, ctx, text: str, font: str, textcolor='', background=''):
+        """
+        Creates ASCII text.
+        """
+        if ctx.invoked_subcommand is None:
+            if not textcolor:
+                textcolor = "white"
+            if not background:
+                background = "black"
+            if font == "barbwire":
+                text = text.replace("", " ")
+            img = Image.new('RGB', (2000, 1000))
+            d = ImageDraw.Draw(img)
+            try:
+                d.text((20, 20), figlet_format(text, font=font), fill=(255, 0, 0))
+                text_width, text_height = d.textsize(figlet_format(text, font=font))
+                img1 = Image.new('RGB', (text_width + 30, text_height + 30), background)
+                d = ImageDraw.Draw(img1)
+                d.text((20, 20), figlet_format(text, font=font), fill=textcolor, anchor="center")
+                temp = io.BytesIO()
+                img1.save(temp, format="png")
+                temp.seek(0)
+                await ctx.send(file=discord.File(filename="ascii.png", fp=temp))
+            except FontNotFound:
+                await ctx.send("`{}` seems to not be a valid font. Try looking here: "
+                               "http://www.figlet.org/examples.html".format(font))
+
+    @ascii.command(name="fonts")
+    async def ascii_fonts(self, ctx):
+        """
+        Lists available ASCII fonts.
+        """
+        await ctx.send("All available fonts for the command can be found here: http://www.figlet.org/examples.html")
 
     @commands.command()
     async def rr(self, ctx):
@@ -96,7 +134,7 @@ class Fun:
             "https://giphy.com/gifs/reaction-nope-oh-god-why-dqmpS64HsNvb2",
             "https://i.imgur.com/2YeDA.jpg",
             "http://giphy.com/gifs/morning-good-reaction-ihWcaj6R061wc"
-            ]
+        ]
         await ctx.send(random.choice(nopes))
 
     @commands.command()
@@ -107,7 +145,7 @@ class Fun:
         if not remember:
             await ctx.send("{}, you have set a timer for {} seconds!".format(ctx.message.author.mention, seconds))
             end_timer = ctx.send("{}, your timer for {} seconds has expired!".format(ctx.message.author.mention,
-                                 seconds))
+                                                                                     seconds))
 
         else:
             await ctx.send("{}, I will remind you about `{}` in {} seconds!".format(ctx.message.author.mention,
@@ -118,6 +156,7 @@ class Fun:
         def check(m):
             return m.author == ctx.message.author and m.content == "{0.bot.command_prefix}cancel".format(
                 ctx)
+
         try:
             timer = await ctx.bot.wait_for("message", check=check, timeout=seconds)
             if timer:
@@ -209,7 +248,7 @@ class Fun:
             "My sources say no",
             "Outlook not so good",
             "Very doubtful"
-            ]
+        ]
         await ctx.send("{0.author} asked `{1}`, and the magic eight ball replied `{2}`".format(
             ctx.message, question, random.choice(responses)
         ))
@@ -276,6 +315,7 @@ class Fun:
 
         def check(m):
             return m.content == word and m.channel == ctx.message.channel
+
         try:
             msg = await ctx.bot.wait_for("message", check=check, timeout=30)
             if msg:
@@ -333,6 +373,16 @@ class Fun:
         It worked for me ¯\_(ツ)_/¯
         """
         await ctx.send(file=discord.File(fp="discordbot/cogs/utils/files/works.png"))
+
+    @commands.command()
+    async def wiki(self, ctx, query: str):
+        """Searches wikipedia."""
+        try:
+            q = wikipedia.page(query)
+            await ctx.send("{}:\n```\n{}\n```\nFor more information, visit <{}>"
+                           .format(q.title, wikipedia.summary(query, sentences=5), q.url))
+        except wikipedia.exceptions.PageError:
+            await ctx.send("Either the page doesn't exist, or you typed it in wrong. Either way, please try again.")
 
 
 def setup(bot: DiscordBot):

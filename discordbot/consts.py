@@ -24,7 +24,7 @@ async def download_config():
     except FileNotFoundError:
         print("It seems that you did not download the example bot config file! Downloading and copying...")
         try:
-            await util.download("https://github.com/EJH2/ViralBot-Discord/blob/master/config.example.yaml",
+            await util.download("https://github.com/EJH2/DiscordBot/blob/master/config.example.yaml",
                                 "config.example.yaml")
         except util.Borked:
             print("Config could not be cloned automatically, please ask on GitHub or Discord", file=sys.stderr)
