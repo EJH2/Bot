@@ -97,7 +97,7 @@ class DiscordBot(Bot):
                 self.logging = False
                 self.logger.warn("Could not connect to database.")
         else:
-            self.logger.info("Logging disabled for this session.")
+            self.logger.warn("Logging disabled for this session.")
 
     def load_modules(self, modules_list: list, load_silent: bool = False):
         """
