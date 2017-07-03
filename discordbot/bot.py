@@ -10,6 +10,7 @@ from collections import Counter
 import discord
 import sqlalchemy
 import sqlalchemy.exc
+import sqlalchemy.orm
 from discord.ext import commands
 from discord.ext.commands import Bot
 
@@ -30,7 +31,11 @@ def connect(user, password, db, host='localhost', port=5432):
     # We then bind the connection to MetaData()
     meta = sqlalchemy.MetaData(bind=con, reflect=True)
 
-    return con, meta
+    # We then create a session to access data
+    Session = sqlalchemy.orm.sessionmaker(bind=con)
+    session = Session()
+
+    return con, meta, session
 
 
 class DiscordBot(Bot):
@@ -59,7 +64,7 @@ class DiscordBot(Bot):
         self.owner = None
         self.owner_id = None
 
-        self.pm_help = True
+        self.pm_help = None
 
         self.commands_used = Counter()
 
@@ -81,8 +86,8 @@ class DiscordBot(Bot):
             self.logger.info("Attempting to set up message logging...")
             if "None" not in [bot_config["bot"]["pg_name"], bot_config["bot"]["pg_user"], bot_config["bot"]["pg_pass"]]:
                 try:
-                    self.con, self.meta = connect(bot_config["bot"]["pg_user"], bot_config["bot"]["pg_pass"],
-                                                  bot_config["bot"]["pg_name"])
+                    self.con, self.meta, self.sess = connect(bot_config["bot"]["pg_user"], bot_config["bot"]["pg_pass"],
+                                                             bot_config["bot"]["pg_name"])
                     self.logging = True
                     self.logger.info("Connection established, message database configured.")
                 except sqlalchemy.exc.SQLAlchemyError as e:
@@ -181,6 +186,9 @@ class DiscordBot(Bot):
             return
         elif isinstance(e, (commands.errors.BadArgument, commands.errors.MissingRequiredArgument)):
             await ctx.channel.send("\N{CROSS MARK} Bad argument: {}".format(" ".join(e.args)), delete_after=5)
+            formatted_help = await ctx.bot.formatter.format_help_for(ctx, ctx.command)
+            for page in formatted_help:
+                await ctx.channel.send(page, delete_after=20)
             return
         else:
             await ctx.channel.send("\N{NO ENTRY} An error happened. This has been logged and reported.",

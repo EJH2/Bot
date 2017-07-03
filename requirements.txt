@@ -1,3 +1,6 @@
+sqlalchemy
+astral
+pytz
 pillow
 wikipedia
 colorlog
@@ -13,3 +16,4 @@ pyowm
 aiohttp
 beautifulsoup4
 ruamel.yaml
+darkskylib

@@ -2,11 +2,16 @@
 Internet commands.
 """
 import datetime
+import functools
 import io
 
-import aiohttp
+import astral
+import darksky
 import discord
 import geocoder
+import pytz
+import wikipedia
+import wikipedia.exceptions
 import xkcd
 from discord.ext import commands
 
@@ -16,6 +21,31 @@ from discordbot.consts import bot_config
 
 
 # noinspection PyUnboundLocalVariable
+def get_moon_phase(date):
+    """
+    Get Moon Phase.
+    """
+    ast = astral.Astral()
+    phase_int = int(ast.moon_phase(date))
+    if phase_int == 0:
+        phase = "New moon"
+    elif phase_int <= 7:
+        phase = "Waxing crescent"
+    elif phase_int == 7:
+        phase = "First quarter"
+    elif 7 < phase_int > 14:
+        phase = "Waxing gibbous"
+    elif phase_int == 14:
+        phase = "Full moon"
+    elif 14 < phase_int > 21:
+        phase = "Waning gibbous"
+    elif phase_int == 21:
+        phase = "Last quarter"
+    elif 21 < phase_int > 28:
+        phase = "Waning crescent"
+    return phase
+
+
 class Internet:
     def __init__(self, bot: DiscordBot):
         self.bot = bot
@@ -86,33 +116,73 @@ class Internet:
         """
         g = geocoder.google(location)
         lat, lng = g.latlng
-        crippling_depression = bot_config["bot"]["OWMKey"]
-        you_made_me_do_this_forcastio = "https://api.darksky.net/forecast/{}/{},{}".format(crippling_depression,
-                                                                                           lat, lng)
-        with aiohttp.ClientSession() as sess:
-            async with sess.get(you_made_me_do_this_forcastio) as how_could_you:
-                assert isinstance(how_could_you, aiohttp.ClientResponse)
-                oh_the_pain = await how_could_you.json()
-        today = oh_the_pain["daily"]["data"][0]
-        await ctx.send("Location: {}, {}\n"
-                       "Sunrise Time: {}\n"
-                       "Sunset Time: {}\n"
-                       "Weather: {}\n"
-                       "Temperature Min (Apparent): {} Degrees ({} Degrees)\n"
-                       "Temperature Max (Apparent): {} Degrees ({} Degrees)\n".format(g.city, g.state, datetime.
-                                                                                      datetime.fromtimestamp(
-                                                                                        int(today["sunriseTime"])).
-                                                                                      strftime('%Y-%m-%d %H:%M:%S'),
-                                                                                      datetime.datetime.fromtimestamp(
-                                                                                          int(today[
-                                                                                                  "sunsetTime"])).
-                                                                                      strftime(
-                                                                                          '%Y-%m-%d %H:%M:%S'),
-                                                                                      today["summary"],
-                                                                                      today["temperatureMin"],
-                                                                                      today["apparentTemperatureMin"],
-                                                                                      today["temperatureMax"],
-                                                                                      today["apparentTemperatureMax"]))
+        loc = g.address
+        key = bot_config["bot"]["OWMKey"]
+        args = functools.partial(darksky.forecast, key, lat, lng, units="auto")
+        forc = await ctx.bot.loop.run_in_executor(None, args)
+        with forc as forecast:
+            today = forecast.daily.data[0]
+            now = forecast.currently
+            now_time = datetime.datetime.fromtimestamp(int(now.time), tz=pytz.timezone(forecast.timezone)
+                                                       ).strftime('%H:%M:%S')
+            phase = get_moon_phase(datetime.datetime.fromtimestamp(int(today.time), tz=pytz.timezone(
+                forecast.timezone)))
+            try:
+                _alerts = [(i.title, i.uri, i.expires) for i in forecast.alerts]
+                alerts = "[{}]({} 'Click for Full Description'): Expires on {}\n".join(*_alerts)
+            except AttributeError:
+                alerts = "None"
+            unit = forecast.flags.units
+            if unit != "us":
+                temp = "C"
+                if unit == "si":
+                    wind = "Meters/Second"
+                elif unit == "ca":
+                    wind = "Kilometers/Hour"
+                elif unit == "uk2":
+                    wind = "Miles/Hour"
+                else:
+                    wind = "Miles/Hour"
+            else:
+                temp = "F"
+                wind = "Miles/Hour"
+            em = discord.Embed(title="Weather in {} at {}".format(loc, now_time),
+                               description="Here is today's forecast:")
+            em.set_thumbnail(url="https://discord.lol-sa.me/files/weather/{}.png".format(today.icon) if
+            today.icon in ["clear-day", "clear-night", "rain", "snow", "sleet", "wind", "fog",
+                           "cloudy", "partly-cloudy-day", "partly-cloudy-night"] else None)
+            em.set_footer(text="Powered by Dark Sky", icon_url="https://discord.lol-sa.me/files/weather/darksky.png")
+            try:
+                sunrise, sunset = (datetime.datetime.fromtimestamp(int(today.sunriseTime), tz=pytz.timezone(
+                    forecast.timezone)).strftime('%H:%M:%S'),
+                                   datetime.datetime.fromtimestamp(int(today.sunsetTime),
+                                                                   tz=pytz.timezone(forecast.timezone)).strftime
+                                   ('%H:%M:%S'))
+            except AttributeError:
+                sunrise, sunset = "None", "None"
+            em.add_field(name="Today's Weather", value=today.summary)
+            em.add_field(name="Temp Range", value="{} - {}°{}".format(today.temperatureMin, today.temperatureMax, temp))
+            em.add_field(name="Sunrise Time", value=sunrise)
+            em.add_field(name="Sunset Time", value=sunset)
+            em.add_field(name="Humidity", value="{0:.0f}%".format(now.humidity * 100))
+            em.add_field(name="Wind Speed", value="{} {}".format(now.windSpeed, wind))
+            em.add_field(name="Moon Phase", value=phase)
+            em.add_field(name="Cloud Cover", value="{0:.0f}%".format(now.cloudCover * 100))
+            em.add_field(name="Alerts", value=alerts)
+            await ctx.send(embed=em)
+
+    @commands.command()
+    async def wiki(self, ctx, query: str):
+        """
+        Searches Wikipedia.
+        """
+        try:
+            q = await ctx.bot.loop.run_in_executor(None, wikipedia.page, query)
+            summary = await ctx.bot.loop.run_in_executor(None, wikipedia.summary, {"query": query, "sentences": 5})
+            await ctx.send("{}:\n```\n{}\n```\nFor more information, visit <{}>"
+                           .format(q.title, summary, q.url))
+        except wikipedia.exceptions.PageError:
+            await ctx.send("Either the page doesn't exist, or you typed it in wrong. Either way, please try again.")
 
 
 def setup(bot: DiscordBot):

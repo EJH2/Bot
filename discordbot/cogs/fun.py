@@ -9,8 +9,6 @@ from urllib.parse import quote_plus
 
 import aiohttp
 import discord
-import wikipedia
-import wikipedia.exceptions
 from PIL import Image, ImageDraw
 from discord.ext import commands
 from discord.ext.commands import BucketType
@@ -373,16 +371,6 @@ class Fun:
         It worked for me ¯\_(ツ)_/¯
         """
         await ctx.send(file=discord.File(fp="discordbot/cogs/utils/files/works.png"))
-
-    @commands.command()
-    async def wiki(self, ctx, query: str):
-        """Searches wikipedia."""
-        try:
-            q = wikipedia.page(query)
-            await ctx.send("{}:\n```\n{}\n```\nFor more information, visit <{}>"
-                           .format(q.title, wikipedia.summary(query, sentences=5), q.url))
-        except wikipedia.exceptions.PageError:
-            await ctx.send("Either the page doesn't exist, or you typed it in wrong. Either way, please try again.")
 
 
 def setup(bot: DiscordBot):

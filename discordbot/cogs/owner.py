@@ -131,9 +131,11 @@ class Owner:
 
         self.sessions.add(msg.channel.id)
         await ctx.send('Enter code to execute or evaluate. `exit()` or `quit` to exit.')
+
+        def check(m):
+            return m.author == msg.author and m.channel == msg.channel and m.content.startswith('`')
         while True:
-            response = await self.bot.wait_for_message(author=msg.author, channel=msg.channel,
-                                                       check=lambda m: m.content.startswith('`'))
+            response = await self.bot.wait_for("message", check=check)
 
             cleaned = self.cleanup_code(response.content)
 
@@ -351,7 +353,7 @@ class Owner:
 
     @commands.command()
     @commands.is_owner()
-    async def dm(self, ctx, id: int, *, reason: str):
+    async def dm(self, ctx, user_id: int, *, reason: str):
         user = ctx.bot.get_user(id)
         if user is not None:
             await user.send(reason)
