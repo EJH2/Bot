@@ -42,12 +42,13 @@ class YOURLS(YOURLSClient):
 class Logging:
     def __init__(self, bot: DiscordBot):
         self.bot = bot
-        if "Messages" in self.bot.meta.tables:
-            db = self.bot.meta.tables["Messages"]
-        else:
-            Messages.__table__.create(bind=self.bot.con)
-            db = Messages.__table__
-        self.db = db
+        if self.bot.logging:
+            if "Messages" in self.bot.meta.tables:
+                db = self.bot.meta.tables["Messages"]
+            else:
+                Messages.__table__.create(bind=self.bot.con)
+                db = Messages.__table__
+            self.db = db
 
     async def on_message(self, message):
         """
