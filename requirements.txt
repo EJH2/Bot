@@ -17,3 +17,4 @@ aiohttp
 beautifulsoup4
 ruamel.yaml
 darkskylib
+psycopg2
