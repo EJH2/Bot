@@ -5,6 +5,7 @@ import datetime
 import functools
 import io
 
+import aiohttp
 import astral
 import darksky
 import discord
@@ -183,6 +184,32 @@ class Internet:
                            .format(q.title, summary, q.url))
         except wikipedia.exceptions.PageError:
             await ctx.send("Either the page doesn't exist, or you typed it in wrong. Either way, please try again.")
+
+    @commands.command(aliases=["meow"])
+    async def cat(self, ctx):
+        """
+        A random cat!
+        """
+        with aiohttp.ClientSession() as sess:
+            async with sess.get("http://random.cat/meow") as get:
+                assert isinstance(get, aiohttp.ClientResponse)
+                json = await get.json()
+        file = await util.get_file(json["file"])
+        await ctx.send(file=discord.File(filename="cat.{}".format(str(json["file"]).split(".")[-1]),
+                                         fp=io.BytesIO(file)))
+
+    @commands.command(aliases=["woof"])
+    async def dog(self, ctx):
+        """
+        A random dog!
+        """
+        with aiohttp.ClientSession() as sess:
+            async with sess.get("http://random.dog/woof") as get:
+                assert isinstance(get, aiohttp.ClientResponse)
+                _url = (await get.read()).decode("utf-8")
+                url = "http://random.dog/" + str(_url)
+        file = await util.get_file(url)
+        await ctx.send(file=discord.File(filename=_url, fp=io.BytesIO(file)))
 
 
 def setup(bot: DiscordBot):
