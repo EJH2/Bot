@@ -3,6 +3,7 @@ Checks.
 """
 
 import discord
+from discord.ext import commands
 
 from discordbot.cogs.utils import exceptions
 
@@ -76,3 +77,9 @@ def needs_embed(ctx):
     if ctx.message.channel.permissions_for(ctx.message.guild.me).embed_links:
         return True
     raise exceptions.EmbedError
+
+
+def needs_logging(ctx):
+    if not ctx.bot.logging:
+        raise commands.errors.DisabledCommand
+    return True

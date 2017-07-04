@@ -20,7 +20,7 @@ class Salty:
     @commands.check(checks.bot_roles("salty"))
     async def insult(self, ctx, user: discord.Member = None):
         """Insults a user."""
-        name = "{0}".format(user + ": " if user else "")
+        name = "{0}".format(str(user) + ": " if user else "")
         insult_words = {
             'A': ['a confoundedly', 'a conspicuously', 'a cruelly', 'a deucedly', 'a devilishly', 'a dreadfully',
                   'a frightfully', 'a grievously', 'a lamentably', 'a miserably', 'a monstrously', 'a piteously',

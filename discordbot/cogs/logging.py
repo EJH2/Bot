@@ -11,6 +11,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from yourls import YOURLSClient
 
 from discordbot.bot import DiscordBot
+from discordbot.cogs.utils import checks
 from discordbot.consts import bot_config
 
 Base = declarative_base()
@@ -86,6 +87,7 @@ class Logging:
         await yourl.delete(url)
 
     @commands.group(invoke_without_command=True)
+    @commands.check(checks.needs_logging)
     async def logs(self, ctx, limit: int = 100):
         """
         Gets the last `x` server logs.
@@ -126,6 +128,7 @@ class Logging:
             self.bot.loop.create_task(self.handle_delete(54000, res))
 
     @logs.command(name="channel")
+    @commands.check(checks.needs_logging)
     @commands.guild_only()
     async def logs_channel(self, ctx, channel: discord.TextChannel = None, limit: int = 100):
         """
@@ -160,6 +163,7 @@ class Logging:
             self.bot.loop.create_task(self.handle_delete(54000, res))
 
     @logs.command(name="user")
+    @commands.check(checks.needs_logging)
     async def logs_user(self, ctx, user: discord.User = None, limit: int = 100):
         """
         Gets the last `x` user logs.
