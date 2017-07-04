@@ -391,21 +391,23 @@ class Owner:
         Sets a config value.
         """
         configfile = config.Config(configfile)
-        key = configfile.to_dict()
+        config_file = configfile.db
+        keys = keys.split(", ")
         if len(keys) > 1:
-            keys = keys.split(", ")
             for x in keys[:-1]:
-                key = dict.get(key, x)
-        keys = "".join(keys[-1:])
-        key[keys] = value
+                config_file = dict.get(config_file, x)
+        end = "".join(keys[-1:])
+        start = "".join(keys[:-1])
+        config_file[end] = value
+        configfile.db[start] = config_file
         configfile.save()
-        if hasattr(ctx.bot, keys):
+        if hasattr(ctx.bot, end):
             if keys == "command_prefix":
                 ctx.bot.command_prefix = commands.when_mentioned_or(value)
             else:
-                ctx.bot.__dict__[keys] = value
+                setattr(ctx.bot, end, value)
         importlib.reload(consts)
-        await ctx.send("Alright, I changed `{}` to `{}`!".format(keys, value))
+        await ctx.send("Alright, I changed `{}` to `{}`!".format(end, value))
 
     @commands.command()
     @commands.is_owner()
