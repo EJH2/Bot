@@ -6,7 +6,7 @@ import copy
 import random
 import sys
 import time
-from collections import Counter
+from collections import Counter, OrderedDict
 
 import discord
 from discord.ext import commands
@@ -115,8 +115,9 @@ class Information:
         Gives info on how many commands have been used.
         """
         msg = []
-        if dict(self.bot.commands_used):
-            for k, v in dict(ctx.bot.commands_used).items():
+        used = OrderedDict(self.bot.commands_used.most_common())
+        if used:
+            for k, v in used.items():
                 msg.append((str(k), str(v) + " uses"))
         else:
             msg = [("None", "No commands seemed to have been run yet!")]
