@@ -96,6 +96,39 @@ class Fun:
                     "{1} was stabbed to death by the mighty {0}!".format(ctx.message.author.name, member.name),
                     file=discord.File(io.BytesIO(gif), filename="gif.gif"))
 
+    @commands.command()
+    async def punch(self, ctx, *members: discord.Member):
+        """
+        Allows the user to punch a person of choice.
+        """
+        if not members:
+            await ctx.send("You gotta give me someone to work with here!")
+            return
+        for member in members:
+            if member == self.bot.user:
+                gif = await util.get_file("https://media.giphy.com/media/qRdL7w5ddkHDi/giphy.gif")
+                await ctx.send(
+                    "You attempted to punch me, {}, but I dodged it!".format(ctx.message.author.name),
+                    file=discord.File(io.BytesIO(gif), filename="gif.gif"))
+            elif member == ctx.message.author:
+                file = random.choice([
+                    "https://media.giphy.com/media/7G2cxOTQLPeOk/giphy.gif",
+                    "https://media.giphy.com/media/7JjAXbG2mQ3uM/giphy.gif"
+                ])
+                gif = await util.get_file(file)
+                await ctx.send(
+                    "{} punched their self!".format(ctx.message.author.name),
+                    file=discord.File(io.BytesIO(gif), filename="gif.gif"))
+            else:
+                file = random.choice([
+                    "https://media.giphy.com/media/arbHBoiUWUgmc/giphy.gif",
+                    "http://pa1.narvii.com/5758/7c65ad50e958a34baa7f51b6ab1f764506deea50_hq.gif"
+                ])
+                gif = await util.get_file(file)
+                await ctx.send(
+                    "{1} was punched by the mighty {0}!".format(ctx.message.author.name, member.name),
+                    file=discord.File(io.BytesIO(gif), filename="gif.gif"))
+
     @commands.group()
     async def ascii(self, ctx, text: str, font: str, textcolor='', background=''):
         """
