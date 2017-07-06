@@ -36,19 +36,64 @@ class Fun:
             return
         for member in members:
             if member == self.bot.user:
-                gif = await util.get_file("http://i.imgur.com/hPL5TGD.gif")
+                file = random.choice([
+                    "http://static1.comicvine.com/uploads/original/11127/111275532/5288551-9830962548-latest",
+                    "http://i.imgur.com/hPL5TGD.gif"
+                ])
+                gif = await util.get_file(file)
                 await ctx.send(
                     "You attempted to shoot me, {}, but I dodged it!".format(ctx.message.author.name),
                     file=discord.File(io.BytesIO(gif), filename="gif.gif"))
             elif member == ctx.message.author:
                 gif = await util.get_file("https://media.giphy.com/media/5xaOcLAo1Gg0oRgBz0Y/giphy.gif")
                 await ctx.send(
-                    "{} committed suicide!".format(ctx.message.author.name), file=io.BytesIO(gif), filename="gif.gif")
+                    "{} committed suicide!".format(ctx.message.author.name), file=discord.File(io.BytesIO(gif),
+                                                                                               filename="gif.gif"))
             else:
                 gif = await util.get_file("https://s-media-cache-ak0.pinimg.com/originals/2d/fa/a9/"
                                           "2dfaa995a09d81a07cad24d3ce18e011.gif")
                 await ctx.send(
                     "{1} was shot dead by the mighty {0}!".format(ctx.message.author.name, member.name),
+                    file=discord.File(io.BytesIO(gif), filename="gif.gif"))
+
+    @commands.command()
+    async def stab(self, ctx, *members: discord.Member):
+        """
+        Allows the user to stab a person of choice.
+        """
+        if not members:
+            await ctx.send("You gotta give me someone to work with here!")
+            return
+        for member in members:
+            if member == self.bot.user:
+                file = random.choice([
+                    "https://s-media-cache-ak0.pinimg.com/originals/90/21/85/902185dfeec38c7f09102ff6fdaa31ae.gif",
+                    "https://media.giphy.com/media/DFwhlTWNrwDEA/giphy.gif",
+                    "https://s-media-cache-ak0.pinimg.com/originals/d2/54/39/d25439365581a4797a1e351ca030f31d.gif"
+                ])
+                gif = await util.get_file(file)
+                await ctx.send(
+                    "You attempted to stab me, {}, but I dodged it!".format(ctx.message.author.name),
+                    file=discord.File(io.BytesIO(gif), filename="gif.gif"))
+            elif member == ctx.message.author:
+                file = random.choice([
+                    "http://24.media.tumblr.com/tumblr_lyqs1c3ml11qhl4r8o1_400.gif",
+                    "https://66.media.tumblr.com/04dbe8065a66a08fedfab6cad1edada4/tumblr_inline_o43358nVy"
+                    "b1tat2xb_500.gif",
+                    "http://i.imgur.com/6aSNqpO.gif"
+                ])
+                gif = await util.get_file(file)
+                await ctx.send(
+                    "{} died to their own blade!".format(ctx.message.author.name),
+                    file=discord.File(io.BytesIO(gif), filename="gif.gif"))
+            else:
+                file = random.choice([
+                    "https://24.media.tumblr.com/c7eb88eddb09a3fa30b2d69d7c9e0647/tumblr_n0tb9sVhOv1ryx1zoo1_500.gif",
+                    "http://pa1.narvii.com/5844/56df36d19b8df053f46d5be39a5de5303b6b9805_hq.gif"
+                ])
+                gif = await util.get_file(file)
+                await ctx.send(
+                    "{1} was stabbed to death by the mighty {0}!".format(ctx.message.author.name, member.name),
                     file=discord.File(io.BytesIO(gif), filename="gif.gif"))
 
     @commands.group()
