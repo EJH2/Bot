@@ -131,8 +131,16 @@ class Internet:
             phase = get_moon_phase(datetime.datetime.fromtimestamp(int(today.time), tz=pytz.timezone(
                 forecast.timezone)))
             try:
-                _alerts = [(i.title, i.uri, i.expires) for i in forecast.alerts]
-                alerts = "[{}]({} 'Click for Full Description'): Expires on {}\n".join(*_alerts)
+                _alerts = []
+                alerts = "None"
+                for i in forecast.alerts:
+                    i.expires = datetime.datetime.fromtimestamp(int(i.expires)).strftime("%a %B %d %H:%M:%S %Y")
+                    i.regions = ", ".join(i.regions)
+                    _alerts += ["[{} in {}]({} 'Click for Full Description'): Expires on {}\n".format(str(i.title),
+                                                                                                      str(i.regions),
+                                                                                                      str(i.uri),
+                                                                                                      str(i.expires))]
+                    alerts = "\n".join(_alerts)
             except AttributeError:
                 alerts = "None"
             unit = forecast.flags.units
