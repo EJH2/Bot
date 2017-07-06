@@ -478,7 +478,7 @@ class Owner:
         """
         Generates an invite link for the specified server.
         """
-        invite = await ctx.bot.create_invite(destination=discord.utils.find(lambda m: m.name == server, ctx.bot.guilds))
+        invite = await discord.utils.find(lambda m: m.name == server, ctx.bot.guilds).create_invite()
         await ctx.send(invite)
 
 

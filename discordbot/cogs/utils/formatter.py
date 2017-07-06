@@ -154,5 +154,5 @@ old_send = discord.abc.Messageable.send
 
 
 async def send(self, content=None, **kwargs):
-    content = content.replace("@everyone", "@\u200beveryone").replace("@here", "@\u200bhere") if content else None
+    content = str(content).replace("@everyone", "@\u200beveryone").replace("@here", "@\u200bhere") if content else None
     return await old_send(self, content, **kwargs)
