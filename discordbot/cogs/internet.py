@@ -34,16 +34,18 @@ def get_moon_phase(date):
         phase = "Waxing crescent"
     elif phase_int == 7:
         phase = "First quarter"
-    elif 7 < phase_int > 14:
+    elif 7 < phase_int < 14:
         phase = "Waxing gibbous"
     elif phase_int == 14:
         phase = "Full moon"
-    elif 14 < phase_int > 21:
+    elif 14 < phase_int < 21:
         phase = "Waning gibbous"
     elif phase_int == 21:
         phase = "Last quarter"
-    elif 21 < phase_int > 28:
+    elif 21 < phase_int < 28:
         phase = "Waning crescent"
+    else:
+        phase = "New moon"
     return phase
 
 
