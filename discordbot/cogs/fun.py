@@ -129,33 +129,32 @@ class Fun:
                     "{1} was punched by the mighty {0}!".format(ctx.message.author.name, member.name),
                     file=discord.File(io.BytesIO(gif), filename="gif.gif"))
 
-    @commands.group()
+    @commands.group(invoke_without_command=True)
     async def ascii(self, ctx, text: str, font: str, textcolor='', background=''):
         """
         Creates ASCII text.
         """
-        if ctx.invoked_subcommand is None:
-            if not textcolor:
-                textcolor = "white"
-            if not background:
-                background = "black"
-            if font == "barbwire":
-                text = text.replace("", " ")
-            img = Image.new('RGB', (2000, 1000))
-            d = ImageDraw.Draw(img)
-            try:
-                d.text((20, 20), figlet_format(text, font=font), fill=(255, 0, 0))
-                text_width, text_height = d.textsize(figlet_format(text, font=font))
-                img1 = Image.new('RGB', (text_width + 30, text_height + 30), background)
-                d = ImageDraw.Draw(img1)
-                d.text((20, 20), figlet_format(text, font=font), fill=textcolor, anchor="center")
-                temp = io.BytesIO()
-                img1.save(temp, format="png")
-                temp.seek(0)
-                await ctx.send(file=discord.File(filename="ascii.png", fp=temp))
-            except FontNotFound:
-                await ctx.send("`{}` seems to not be a valid font. Try looking here: "
-                               "http://www.figlet.org/examples.html".format(font))
+        if not textcolor:
+            textcolor = "white"
+        if not background:
+            background = "black"
+        if font == "barbwire":
+            text = text.replace("", " ")
+        img = Image.new('RGB', (2000, 1000))
+        d = ImageDraw.Draw(img)
+        try:
+            d.text((20, 20), figlet_format(text, font=font), fill=(255, 0, 0))
+            text_width, text_height = d.textsize(figlet_format(text, font=font))
+            img1 = Image.new('RGB', (text_width + 30, text_height + 30), background)
+            d = ImageDraw.Draw(img1)
+            d.text((20, 20), figlet_format(text, font=font), fill=textcolor, anchor="center")
+            temp = io.BytesIO()
+            img1.save(temp, format="png")
+            temp.seek(0)
+            await ctx.send(file=discord.File(filename="ascii.png", fp=temp))
+        except FontNotFound:
+            await ctx.send("`{}` seems to not be a valid font. Try looking here: "
+                           "http://www.figlet.org/examples.html".format(font))
 
     @ascii.command(name="fonts")
     async def ascii_fonts(self, ctx):
