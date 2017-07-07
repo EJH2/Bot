@@ -136,10 +136,8 @@ class Internet:
                 for i in forecast.alerts:
                     i.expires = datetime.datetime.fromtimestamp(int(i.expires)).strftime("%a %B %d %H:%M:%S %Y")
                     i.regions = ", ".join(i.regions)
-                    _alerts += ["[{} in {}]({} 'Click for Full Description'): Expires on {}\n".format(str(i.title),
-                                                                                                      str(i.regions),
-                                                                                                      str(i.uri),
-                                                                                                      str(i.expires))]
+                    _alerts += ["{}: [{} in {}]({} 'Click for Full Description'): Expires on {}\n".format(
+                        str(i.severity), str(i.title), str(i.regions), str(i.uri), str(i.expires))]
                     alerts = "\n".join(_alerts)
             except AttributeError:
                 alerts = "None"
