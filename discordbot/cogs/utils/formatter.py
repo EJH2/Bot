@@ -2,7 +2,6 @@
 Formatting for various bot utilities.
 """
 
-import datetime
 import logging
 import re
 
@@ -101,14 +100,13 @@ def setup_logger(logger_name: str):
     """
     Setting up logging.
     """
-    datefmt = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
     formatter = colorlog.LevelFormatter(
         fmt={
-            "DEBUG": "{log_color}[" + datefmt + "] [{name}] [{levelname}] {message}",
-            "INFO": "{log_color}[" + datefmt + "] [{name}] [{levelname}] {message}",
-            "WARNING": "{log_color}[" + datefmt + "] [{name}] [{levelname}] {message}",
-            "ERROR": "{log_color}[" + datefmt + "] [{name}] [{levelname}] {message}",
-            "CRITICAL": "{log_color}[" + datefmt + "] [{name}] [{levelname}] {message}"
+            "DEBUG": "{log_color}[{asctime}] [{name}] [{levelname}] {message}",
+            "INFO": "{log_color}[{asctime}] [{name}] [{levelname}] {message}",
+            "WARNING": "{log_color}[{asctime}] [{name}] [{levelname}] {message}",
+            "ERROR": "{log_color}[{asctime}] [{name}] [{levelname}] {message}",
+            "CRITICAL": "{log_color}[{asctime}] [{name}] [{levelname}] {message}",
         },
         log_colors={
             "DEBUG": "cyan",
@@ -118,7 +116,7 @@ def setup_logger(logger_name: str):
             "CRITICAL": "bold_red"
         },
         style="{",
-        datefmt=""
+        datefmt="%Y-%m-%d %H:%M:%S"
     )
     logger = logging.getLogger(logger_name)
     logger.level = getattr(logging, bot_config.get("log_level", "INFO"), logging.INFO)
