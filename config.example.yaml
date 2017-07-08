@@ -4,8 +4,8 @@ bot:
   # The token to use to log in.
   token: <your token>
 
-  # Weather API Key, found at http://openweathermap.org/appid
-  OWMKey: <your key>
+  # Darksky Weather API Key, found by registering at https://darksky.net/dev/register
+  WeatherKey: <your key>
 
   # Command prefix
   command_prefix: <your prefix>

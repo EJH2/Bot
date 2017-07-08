@@ -120,7 +120,7 @@ class Internet:
         g = geocoder.google(location)
         lat, lng = g.latlng
         loc = g.address
-        key = bot_config["bot"]["OWMKey"]
+        key = bot_config["bot"]["WeatherKey"]
         args = functools.partial(darksky.forecast, key, lat, lng, units="auto")
         forc = await ctx.bot.loop.run_in_executor(None, args)
         with forc as forecast:
