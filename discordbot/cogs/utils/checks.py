@@ -16,6 +16,8 @@ def is_owner(ctx):
 def is_server_owner(ctx):
     if is_owner(ctx):
         return True
+    if not ctx.message.guild:
+        return True
     return ctx.message.author.id == ctx.message.guild.owner.id
 
 
