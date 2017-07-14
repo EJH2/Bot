@@ -14,7 +14,7 @@ import sqlalchemy.exc
 import sqlalchemy.orm
 from asyncqlio.db import DatabaseInterface
 from discord.ext import commands
-from discord.ext.commands import Bot
+from discord.ext.commands import AutoShardedBot
 
 from discordbot.cogs.utils import config, exceptions, formatter, tables
 from discordbot.consts import init_modules, modules, bot_config
@@ -33,7 +33,8 @@ async def connect(user, password, db, host='localhost', port=5432):
     return db
 
 
-class DiscordBot(Bot):
+# noinspection PyUnresolvedReferences
+class DiscordBot(AutoShardedBot):
     """
     Bot class.
     """
@@ -84,8 +85,8 @@ class DiscordBot(Bot):
         """
         if self.logging or self.dynamic:
             self.logger.info("Attempting to connect to DB...")
-            creds = [bot_config["postgres"]["pg_user"], bot_config["postgres"]["pg_pass"], bot_config["postgres"]
-            ["pg_name"]]
+            creds = [bot_config["postgres"]["pg_user"], bot_config["postgres"]["pg_pass"], bot_config["postgres"][
+                "pg_name"]]
             if "None" not in creds:
                 try:
                     self.db = await connect(*creds)
@@ -116,14 +117,15 @@ class DiscordBot(Bot):
                     query = await s.select(tables.Dynamic_Rules).where(
                         tables.Dynamic_Rules.guild_id == message.guild.id).first()
                 if not query:
-                    return self.command_prefix_
+                    return commands.when_mentioned_or(*[self.command_prefix_])(bot, message)
                 else:
                     attrs = json.loads(query.attrs)
-                    return attrs.get("command_prefix", self.command_prefix_)
+                    return commands.when_mentioned_or(*[attrs.get("command_prefix", self.command_prefix_)])(bot,
+                                                                                                            message)
             else:
-                return self.command_prefix_
+                return commands.when_mentioned_or(*[self.command_prefix_])(bot, message)
         else:
-            return self.command_prefix_
+            return commands.when_mentioned_or(*[self.command_prefix_])(bot, message)
 
     def load_modules(self, modules_list: list, load_silent: bool = False):
         """
