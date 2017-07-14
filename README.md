@@ -44,7 +44,7 @@ Before you continue, you will need 2 things:
 
     The migration scripts upgrade the database to the latest version. Run this in the terminal.
 
-     `asql-migrate migrate`
+     `PYTHONPATH=. asql-migrate migrate`
      
 5. **Create a config.**
 
