@@ -73,7 +73,7 @@ class Owner:
             'ctx': ctx,
             'channel': ctx.channel,
             'author': ctx.author,
-            'server': ctx.guild,
+            'guild': ctx.guild,
             'message': ctx.message,
             '_': self._last_result
         }
@@ -90,22 +90,32 @@ class Owner:
         except SyntaxError as e:
             return await ctx.send(self.get_syntax_error(e))
 
+        fmt = None
+
         func = env['func']
         try:
             with redirect_stdout(stdout):
                 ret = await func()
         except Exception as e:
             value = stdout.getvalue()
-            await ctx.send('```py\n{}{}\n```'.format(value, traceback.format_exc()))
+            fmt = '```py\n{}{}\n```'.format(value, traceback.format_exc())
         else:
             value = stdout.getvalue()
 
             if ret is None:
                 if value:
-                    await ctx.send('```py\n%s\n```' % value)
+                    fmt = '```py\n%s\n```' % value
             else:
                 self._last_result = ret
-                await ctx.send('```py\n%s%s\n```' % (value, ret))
+                fmt = '```py\n%s%s\n```' % (value, ret)
+
+            if fmt is not None:
+                if len(fmt) > 2000:
+                    gist = await self.create_gist(fmt.replace('``````', '```\n```'), filename='message.md')
+                    await ctx.send('Sorry, that output was too large, so I uploaded it to gist instead.\n'
+                                   '{0}'.format(gist['html_url']))
+                else:
+                    await ctx.send(fmt)
 
     @commands.command()
     @commands.is_owner()
@@ -119,7 +129,7 @@ class Owner:
             'ctx': ctx,
             'bot': ctx.bot,
             'message': ctx.message,
-            'server': ctx.guild,
+            'guild': ctx.guild,
             'channel': ctx.channel,
             'author': ctx.author,
             '_': None,
