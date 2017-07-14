@@ -18,3 +18,8 @@ beautifulsoup4
 ruamel.yaml
 darkskylib
 psycopg2
+alembic
+asyncpg
+click
+tqdm
+git+https://github.com/SunDwarf/asyncqlio

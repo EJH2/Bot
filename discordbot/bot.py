@@ -3,6 +3,7 @@ Main bot file.
 """
 
 import asyncio
+import json
 import sys
 import traceback
 from collections import Counter
@@ -11,31 +12,25 @@ import discord
 import sqlalchemy
 import sqlalchemy.exc
 import sqlalchemy.orm
+from asyncqlio.db import DatabaseInterface
 from discord.ext import commands
 from discord.ext.commands import Bot
 
-from discordbot.cogs.utils import config, exceptions, formatter
+from discordbot.cogs.utils import config, exceptions, formatter, tables
 from discordbot.consts import init_modules, modules, bot_config
 
 
-def connect(user, password, db, host='localhost', port=5432):
+async def connect(user, password, db, host='localhost', port=5432):
     """
-    Returns a connection and a metadata object
+    Returns a Database object
     """
     url = 'postgresql://{}:{}@{}:{}/{}'
     url = url.format(user, password, host, port, db)
 
-    # The return value of create_engine() is our connection object
-    con = sqlalchemy.create_engine(url, client_encoding='utf8')
+    db = DatabaseInterface(url)
+    await db.connect()
 
-    # We then bind the connection to MetaData()
-    meta = sqlalchemy.MetaData(bind=con, reflect=True)
-
-    # We then create a session to access data
-    Session = sqlalchemy.orm.sessionmaker(bind=con)
-    session = Session()
-
-    return con, meta, session
+    return db
 
 
 class DiscordBot(Bot):
@@ -47,6 +42,7 @@ class DiscordBot(Bot):
         super().__init__(*args, **kwargs)
 
         self.bot_config = bot_config
+        self.command_prefix_ = None
 
         # Set up logging
         formatter.setup_logger("discord")
@@ -54,7 +50,8 @@ class DiscordBot(Bot):
         self.command_logger = formatter.setup_logger("Commands")
         self.file_logger = formatter.file_logger
 
-        self.logging = bot_config.get("logging", "True")
+        self.logging = bot_config.get("logging", True)
+        self.dynamic = bot_config.get("dynamicrules", True)
 
         self._loaded = False
 
@@ -65,6 +62,9 @@ class DiscordBot(Bot):
         self.owner_id = None
 
         self.pm_help = None
+
+        # Dev mode
+        self.debug = None
 
         self.commands_used = Counter()
 
@@ -78,26 +78,52 @@ class DiscordBot(Bot):
         # to do this name the file init_whatever.py in the cogs folder
         self.load_modules(init_modules, True)
 
-    def load_logging(self):
+    async def load_db(self):
         """
-        Load DB logging.
+        Load DB for logging/dynamic rules.
         """
-        if self.logging:
-            self.logger.info("Attempting to set up message logging...")
-            if "None" not in [bot_config["bot"]["pg_name"], bot_config["bot"]["pg_user"], bot_config["bot"]["pg_pass"]]:
+        if self.logging or self.dynamic:
+            self.logger.info("Attempting to connect to DB...")
+            creds = [bot_config["postgres"]["pg_user"], bot_config["postgres"]["pg_pass"], bot_config["postgres"]
+            ["pg_name"]]
+            if "None" not in creds:
                 try:
-                    self.con, self.meta, self.sess = connect(bot_config["bot"]["pg_user"], bot_config["bot"]["pg_pass"],
-                                                             bot_config["bot"]["pg_name"])
-                    self.logging = True
-                    self.logger.info("Connection established, message database configured.")
+                    self.db = await connect(*creds)
+                    self.logger.info("Connection established, database configured.")
+                    msg = []
+                    if self.logging:
+                        msg.append("Logging")
+                    if self.dynamic:
+                        msg.append("Dynamic Rules")
+                    self.logger.info("{} enabled for this session.".format("/".join(msg)))
                 except sqlalchemy.exc.SQLAlchemyError as e:
-                    self.logging = False
+                    self.logging, self.dynamic = False
                     self.logger.warn("Could not connect to database: {}".format(e))
             else:
-                self.logging = False
+                self.logging, self.dynamic = False
                 self.logger.warn("Could not connect to database.")
         else:
-            self.logger.warn("Logging disabled for this session.")
+            self.logger.warn("Logging/dynamic rules disabled for this session.")
+        if not self.logging:
+            modules.remove("discordbot.cogs.logging")
+        if not self.dynamic:
+            modules.remove("discordbot.cogs.dynamic")
+
+    async def get_prefix_(self, bot, message):
+        if self.dynamic:
+            if message.guild:
+                async with self.db.get_session() as s:
+                    query = await s.select(tables.Dynamic_Rules).where(
+                        tables.Dynamic_Rules.guild_id == message.guild.id).first()
+                if not query:
+                    return self.command_prefix_
+                else:
+                    attrs = json.loads(query.attrs)
+                    return attrs.get("command_prefix", self.command_prefix_)
+            else:
+                return self.command_prefix_
+        else:
+            return self.command_prefix_
 
     def load_modules(self, modules_list: list, load_silent: bool = False):
         """
@@ -133,7 +159,10 @@ class DiscordBot(Bot):
         self.owner_id = app_info.owner.id
         self.logger.info("I am owned by {}, setting owner.".format(str(app_info.owner)))
 
-        self.load_logging()
+        # Attempt to load the Postgres Database
+        await self.load_db()
+
+        self.command_prefix = self.get_prefix_
 
         # Attempt to load Bot modules
         self.load_modules(modules)
@@ -219,7 +248,17 @@ class DiscordBot(Bot):
         """
         Convenience function to run the bot with the specified token.
         """
+        if self.debug:
+            self.command_prefix = commands.when_mentioned_or(self.bot_config['bot'].get("dev_prefix",
+                                                                                        self.bot_config['bot'][
+                                                                                            'command_prefix']))
+            token = self.bot_config['bot'].get('dev_token', self.bot_config['bot']['token'])
+            self.command_prefix_ = self.bot_config['bot'].get("dev_prefix",
+                                                              self.bot_config['bot']['command_prefix'])
+        else:
+            token = self.bot_config['bot']['token']
+            self.command_prefix_ = self.bot_config['bot']['command_prefix']
         try:
-            super().run(self.bot_config["bot"]["token"])
+            super().run(token)
         except discord.errors.LoginFailure as e:
             self.logger.error("Failed to login to discord: {}".format(e.args[0]))
