@@ -23,7 +23,7 @@ class Information:
     def __global_check(self, ctx):
         self.config = config.Config("ignored.yaml")
 
-        author = ctx.message.author
+        author = ctx.author
         if commands.is_owner():
             return True
 
@@ -35,12 +35,12 @@ class Information:
         if author.id in self.config.get("users"):
             return False
 
-        perms = ctx.message.channel.permissions_for(author)
+        perms = ctx.channel.permissions_for(author)
         perm_list = [perms.administrator, perms.manage_messages, perms.manage_guild]
         un_ignore = any(x for x in perm_list)
 
         # now we can finally realise if we can actually bypass the ignore
-        if not un_ignore and ctx.message.channel.id in self.config.get("channels"):
+        if not un_ignore and ctx.channel.id in self.config.get("channels"):
             raise exceptions.Ignored
 
         return True
@@ -54,9 +54,8 @@ class Information:
         """
         Sends a message to my developer! (Use only to report bugs. Abuse will get you bot banned!)
         """
-        await ctx.bot.owner.send("New message from " + ctx.message.author.name + "#" + ctx.message.author.discriminator
-                                 + " (" + ctx.message.author.id + ") in " + ctx.message.author.server.name +
-                                 ": " + message)
+        await ctx.bot.owner.send("New message from " + ctx.author.name + "#" + ctx.author.discriminator
+                                 + " (" + ctx.author.id + ") in " + ctx.guild.name + ": " + message)
 
     @commands.group(invoke_without_command=True, aliases=["stats"])
     @commands.check(checks.needs_embed)
@@ -98,8 +97,9 @@ class Information:
         em.add_field(name="Library:", value="[Discord.py](https://github.com/Rapptz/discord.py)"
                                             " (Python {0.version_info[0]}.{0.version_info[1]}."
                                             "{0.version_info[2]})".format(sys))
-        em.add_field(name="Bot Version:", value="[{0.bot_config[bot][version]}](!!!! '{0.bot_config[bot][codename]}"
-                                                "')".format(consts))
+        if None not in [consts.bot_config["bot"]["version"], consts.bot_config["bot"]["codename"]]:
+            em.add_field(name="Bot Version:", value="[{0.bot_config[bot][version]}](!!!! '{0.bot_config[bot][codename]}"
+                                                    "')".format(consts))
         em.add_field(name="Servers:", value=str(len(ctx.bot.guilds)))
         em.add_field(name="Up-time:", value="{}w : {}d : {}h : {}m : {}s".format(int(w), int(d), int(h), int(m),
                                                                                  int(s)))
@@ -168,7 +168,7 @@ class Information:
         Gives you player info on a user. If a user isn't passed then the shown info is yours.
         """
         if not user:
-            user = ctx.message.author
+            user = ctx.author
 
         roles = [role.name.replace("@", "@\u200b") for role in user.roles]
         share = sum(1 for m in self.bot.get_all_members() if m.id == user.id)
@@ -200,7 +200,7 @@ class Information:
         """
         Gives information about the current server.
         """
-        server = ctx.message.guild
+        server = ctx.guild
 
         roles = [role.name.replace("@", "@\u200b") for role in server.roles]
 
@@ -246,7 +246,7 @@ class Information:
         Shows a members avatar.
         """
         if not member:
-            member = ctx.message.author
+            member = ctx.author
 
         await ctx.send("The avatar of {} is: {}".format(member.name, member.avatar_url))
 
@@ -256,7 +256,7 @@ class Information:
         Shows other people with your discriminator.
         """
         if not discrim:
-            discrim = int(ctx.message.author.discriminator)
+            discrim = int(ctx.author.discriminator)
         disc = []
         for server in ctx.bot.guilds:
             for member in server.members:

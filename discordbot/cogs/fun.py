@@ -42,18 +42,18 @@ class Fun:
                 ])
                 gif = await util.get_file(file)
                 await ctx.send(
-                    "You attempted to shoot me, {}, but I dodged it!".format(ctx.message.author.name),
+                    "You attempted to shoot me, {}, but I dodged it!".format(ctx.author.name),
                     file=discord.File(io.BytesIO(gif), filename="gif.gif"))
-            elif member == ctx.message.author:
+            elif member == ctx.author:
                 gif = await util.get_file("https://media.giphy.com/media/5xaOcLAo1Gg0oRgBz0Y/giphy.gif")
                 await ctx.send(
-                    "{} committed suicide!".format(ctx.message.author.name), file=discord.File(io.BytesIO(gif),
-                                                                                               filename="gif.gif"))
+                    "{} committed suicide!".format(ctx.author.name), file=discord.File(io.BytesIO(gif),
+                                                                                       filename="gif.gif"))
             else:
                 gif = await util.get_file("https://s-media-cache-ak0.pinimg.com/originals/2d/fa/a9/"
                                           "2dfaa995a09d81a07cad24d3ce18e011.gif")
                 await ctx.send(
-                    "{1} was shot dead by the mighty {0}!".format(ctx.message.author.name, member.name),
+                    "{1} was shot dead by the mighty {0}!".format(ctx.author.name, member.name),
                     file=discord.File(io.BytesIO(gif), filename="gif.gif"))
 
     @commands.command()
@@ -73,9 +73,9 @@ class Fun:
                 ])
                 gif = await util.get_file(file)
                 await ctx.send(
-                    "You attempted to stab me, {}, but I dodged it!".format(ctx.message.author.name),
+                    "You attempted to stab me, {}, but I dodged it!".format(ctx.author.name),
                     file=discord.File(io.BytesIO(gif), filename="gif.gif"))
-            elif member == ctx.message.author:
+            elif member == ctx.author:
                 file = random.choice([
                     "http://24.media.tumblr.com/tumblr_lyqs1c3ml11qhl4r8o1_400.gif",
                     "https://66.media.tumblr.com/04dbe8065a66a08fedfab6cad1edada4/tumblr_inline_o43358nVy"
@@ -84,7 +84,7 @@ class Fun:
                 ])
                 gif = await util.get_file(file)
                 await ctx.send(
-                    "{} died to their own blade!".format(ctx.message.author.name),
+                    "{} died to their own blade!".format(ctx.author.name),
                     file=discord.File(io.BytesIO(gif), filename="gif.gif"))
             else:
                 file = random.choice([
@@ -93,7 +93,7 @@ class Fun:
                 ])
                 gif = await util.get_file(file)
                 await ctx.send(
-                    "{1} was stabbed to death by the mighty {0}!".format(ctx.message.author.name, member.name),
+                    "{1} was stabbed to death by the mighty {0}!".format(ctx.author.name, member.name),
                     file=discord.File(io.BytesIO(gif), filename="gif.gif"))
 
     @commands.command()
@@ -108,16 +108,16 @@ class Fun:
             if member == self.bot.user:
                 gif = await util.get_file("https://media.giphy.com/media/qRdL7w5ddkHDi/giphy.gif")
                 await ctx.send(
-                    "You attempted to punch me, {}, but I dodged it!".format(ctx.message.author.name),
+                    "You attempted to punch me, {}, but I dodged it!".format(ctx.author.name),
                     file=discord.File(io.BytesIO(gif), filename="gif.gif"))
-            elif member == ctx.message.author:
+            elif member == ctx.author:
                 file = random.choice([
                     "https://media.giphy.com/media/7G2cxOTQLPeOk/giphy.gif",
                     "https://media.giphy.com/media/7JjAXbG2mQ3uM/giphy.gif"
                 ])
                 gif = await util.get_file(file)
                 await ctx.send(
-                    "{} punched their self!".format(ctx.message.author.name),
+                    "{} punched their self!".format(ctx.author.name),
                     file=discord.File(io.BytesIO(gif), filename="gif.gif"))
             else:
                 file = random.choice([
@@ -126,7 +126,7 @@ class Fun:
                 ])
                 gif = await util.get_file(file)
                 await ctx.send(
-                    "{1} was punched by the mighty {0}!".format(ctx.message.author.name, member.name),
+                    "{1} was punched by the mighty {0}!".format(ctx.author.name, member.name),
                     file=discord.File(io.BytesIO(gif), filename="gif.gif"))
 
     @commands.group(invoke_without_command=True)
@@ -218,24 +218,24 @@ class Fun:
         Sets a timer for a user with the option of setting a reminder text.
         """
         if not remember:
-            await ctx.send("{}, you have set a timer for {} seconds!".format(ctx.message.author.mention, seconds))
-            end_timer = ctx.send("{}, your timer for {} seconds has expired!".format(ctx.message.author.mention,
+            await ctx.send("{}, you have set a timer for {} seconds!".format(ctx.author.mention, seconds))
+            end_timer = ctx.send("{}, your timer for {} seconds has expired!".format(ctx.author.mention,
                                                                                      seconds))
 
         else:
-            await ctx.send("{}, I will remind you about `{}` in {} seconds!".format(ctx.message.author.mention,
+            await ctx.send("{}, I will remind you about `{}` in {} seconds!".format(ctx.author.mention,
                                                                                     remember, seconds))
             end_timer = ctx.send("{}, your timer for {} seconds has expired! I was instructed to remind you about "
-                                 "`{}`!".format(ctx.message.author.mention, seconds, remember))
+                                 "`{}`!".format(ctx.author.mention, seconds, remember))
 
         def check(m):
-            return m.author == ctx.message.author and m.content == "{0.bot.command_prefix}cancel".format(
+            return m.author == ctx.author and m.content == "{0.bot.command_prefix}cancel".format(
                 ctx)
 
         try:
             timer = await ctx.bot.wait_for("message", check=check, timeout=seconds)
             if timer:
-                await ctx.send("{}, Cancelling your timer...".format(ctx.message.author.mention))
+                await ctx.send("{}, Cancelling your timer...".format(ctx.author.mention))
         except asyncio.TimeoutError:
             await end_timer
             return
@@ -389,7 +389,7 @@ class Fun:
         await ctx.send("The word scramble is: `{}`! You have 30 seconds to solve...".format(scrambled))
 
         def check(m):
-            return m.content == word and m.channel == ctx.message.channel
+            return m.content == word and m.channel == ctx.channel
 
         try:
             msg = await ctx.bot.wait_for("message", check=check, timeout=30)

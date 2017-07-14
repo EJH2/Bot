@@ -428,12 +428,15 @@ class Owner:
         """
         await ctx.send("Restarting...")
         self.bot.restarting.place("restarting", "True")
-        self.bot.restarting.place("restart_channel", ctx.message.channel.id)
+        self.bot.restarting.place("restart_channel", ctx.channel.id)
         ctx.bot.logger.info("\n"
                             "-------------------"
                             "\n")
         await ctx.bot.logout()
-        subprocess.call([sys.executable, ctx.bot.filename])
+        if self.bot.debug:
+            subprocess.call([sys.executable, ctx.bot.filename, "debug"])
+        else:
+            subprocess.call([sys.executable, ctx.bot.filename])
 
     @commands.command()
     @commands.is_owner()

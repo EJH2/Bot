@@ -28,7 +28,7 @@ async def default_help_command(ctx, *commands: str):
     Shows this message.
     """
     bot = ctx.bot
-    destination = ctx.message.author if bot.pm_help else ctx.message.channel
+    destination = ctx.author if bot.pm_help else ctx.channel
 
     def repl(obj):
         return _mentions_transforms.get(obj.group(0), '')
@@ -73,22 +73,22 @@ async def default_help_command(ctx, *commands: str):
         characters = sum(map(lambda l: len(l), pages))
         # modify destination based on length of pages.
         if characters > 1000:
-            destination = ctx.message.author
+            destination = ctx.author
 
     for page in pages:
         await destination.send(page)
 
-    if destination == ctx.message.author:
-        if isinstance(ctx.message.channel, discord.abc.PrivateChannel):
+    if destination == ctx.author:
+        if isinstance(ctx.channel, discord.abc.PrivateChannel):
             pass
         else:
             embeddable = checks.needs_embed(ctx)
             if not embeddable:
-                await ctx.message.channel.send("\N{ENVELOPE WITH DOWNWARDS ARROW ABOVE} Sent to your DMs!")
+                await ctx.channel.send("\N{ENVELOPE WITH DOWNWARDS ARROW ABOVE} Sent to your DMs!")
             else:
                 em = discord.Embed(title="Sent!", description="\N{ENVELOPE WITH DOWNWARDS ARROW ABOVE} "
                                                               "Sent to your DMs!", color=0xFFFFFF)
-                await ctx.message.channel.send(content="", embed=em)
+                await ctx.channel.send(content="", embed=em)
 
 
 # ==============================

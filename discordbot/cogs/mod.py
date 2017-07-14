@@ -8,7 +8,6 @@ import aiohttp
 import discord
 from discord.ext import commands
 
-from discordbot.cogs.utils import config
 from discordbot.cogs.utils.checks import permissions
 
 
@@ -37,7 +36,7 @@ class Moderation:
         Grabs a list of currently ignored channels in the server.
         """
         ignored = self.bot.ignored.get("channels", [])
-        channel_ids = set(c.id for c in ctx.message.guild.channels)
+        channel_ids = set(c.id for c in ctx.guild.channels)
         result = []
         for channel in ignored:
             if channel in channel_ids:
@@ -58,7 +57,7 @@ class Moderation:
         """
 
         if channel is None:
-            channel = ctx.message.channel
+            channel = ctx.channel
 
         ignored = self.bot.ignored.get("channels", [])
         if channel.id in ignored:
@@ -78,7 +77,7 @@ class Moderation:
         """
 
         ignored = self.bot.ignored.get("channels", [])
-        channels = ctx.message.guild.channels
+        channels = ctx.guild.channels
         ignored.extend(c.id for c in channels if c.type == discord.ChannelType.text)
         self.bot.ignored.place("channels", list(set(ignored)))  # make unique
         await ctx.send("I am now ignoring this server.", delete_after=5)
@@ -103,7 +102,7 @@ class Moderation:
         """
 
         if not channel:
-            channel = ctx.message.channel
+            channel = ctx.channel
 
         # a set is the proper data type for the ignore list
         # however, JSON only supports arrays and objects not sets.
@@ -126,7 +125,7 @@ class Moderation:
 
         To use this you need Manage Server.
         """
-        channels = [c for c in ctx.message.guild.channels if c.type is discord.channel.ChannelType.text]
+        channels = [c for c in ctx.guild.channels if c.type is discord.channel.ChannelType.text]
         ignored = self.bot.ignored.get("channels", [])
         for channel in channels:
             try:
@@ -148,7 +147,7 @@ class Moderation:
         """
         Lists the current bans on the server.
         """
-        bans = await ctx.message.guild.bans()
+        bans = await ctx.guild.bans()
         if len(bans) == 0:
             await ctx.send("There are no active bans currently on the server.")
         else:
@@ -163,7 +162,7 @@ class Moderation:
         """
         for member in members:
             try:
-                await ctx.message.guild.kick(member)
+                await ctx.guild.kick(member)
                 await ctx.send(member.name + " was kicked from the server.")
             except discord.errors.Forbidden:
                 await ctx.send("Skipping `{}`, permissions error.".format(member))
@@ -178,8 +177,8 @@ class Moderation:
         softbanned = 0
         for member in members:
             try:
-                await ctx.message.guild.ban(member, delete_message_days=7)
-                await ctx.message.guild.unban(member)
+                await ctx.guild.ban(member, delete_message_days=7)
+                await ctx.guild.unban(member)
                 softbanned += 1
             except discord.errors.DiscordException as e:
                 try:
@@ -199,7 +198,7 @@ class Moderation:
         banned = 0
         for member in members:
             try:
-                await ctx.message.guild.ban(member, delete_message_days=7)
+                await ctx.guild.ban(member, delete_message_days=7)
                 banned += 1
             except discord.errors.DiscordException as e:
                 try:
@@ -215,15 +214,15 @@ class Moderation:
         """
         Unbans a member.
         """
-        bans = await ctx.message.guild.bans()
+        bans = await ctx.guild.bans()
         member = discord.utils.get(bans, user__name=name)
         if member:
-            await ctx.message.guild.unban(member.user)
+            await ctx.guild.unban(member.user)
             await ctx.send("{0.name}#{0.discriminator} has been unbanned from the server!".format(member.user))
             return
         await ctx.send("You can't unban a member that hasn't been banned!")
 
-    @commands.group(invoke_without_command=True)
+    @commands.group()
     @commands.guild_only()
     @commands.check(permissions(ban_members=True))
     async def hackban(self, ctx, *user_ids: int):
@@ -233,7 +232,7 @@ class Moderation:
         banned = 0
         for user_id in user_ids:
             try:
-                await ctx.message.guild.ban(discord.Object(id=user_id))
+                await ctx.guild.ban(discord.Object(id=user_id))
                 banned += 1
             except discord.errors.DiscordException as e:
                 try:
@@ -265,7 +264,7 @@ class Moderation:
         """
         Makes me leave the server.
         """
-        server = ctx.message.guild
+        server = ctx.guild
         await ctx.send("Alright, everyone! I'm off to a new life elsewhere! Until next time! :wave:")
         await server.leave()
 
@@ -279,7 +278,7 @@ class Moderation:
         """
         Deletes x amount of messages in a channel.
         """
-        await ctx.message.channel.purge(limit=messages + 1)
+        await ctx.channel.purge(limit=messages + 1)
         removed = messages + 1
         x = await ctx.send("Removed {} messages".format(removed))
         await asyncio.sleep(5)
@@ -292,7 +291,7 @@ class Moderation:
         Deletes x amount of messages from the bot in a channel.
         """
         removed = 0
-        async for message in ctx.message.channel.history():
+        async for message in ctx.channel.history():
             if message.author == ctx.bot.user and removed <= messages - 1:
                 await message.delete()
                 await asyncio.sleep(.21)
@@ -318,7 +317,7 @@ class Moderation:
         """
         Creates an instant invite.
         """
-        invite = await ctx.message.guild.create_invite()
+        invite = await ctx.guild.create_invite()
         await ctx.send(invite)
 
     @invites.command(name="delete")
@@ -327,7 +326,7 @@ class Moderation:
         """
         Deletes/Deactivates an invite.
         """
-        await ctx.message.guild.delete_invite(invite)
+        await ctx.guild.delete_invite(invite)
         await ctx.send("Successfully deleted the invite!")
 
     @invites.command(name="list")
@@ -336,7 +335,7 @@ class Moderation:
         """
         Lists the currently active invites on the server.
         """
-        invs = await ctx.message.guild.invites()
+        invs = await ctx.guild.invites()
         if len(invs) == 0:
             await ctx.send("There are no active invites currently on the server.")
         else:
@@ -361,7 +360,7 @@ class Moderation:
         """
         Creates a server role.
         """
-        await ctx.message.guild.create_role(name=role)
+        await ctx.guild.create_role(name=role)
         await ctx.send("Alright, I created the role `{}`".format(role))
 
     @roles.command(name="add")
@@ -403,7 +402,7 @@ class Moderation:
         """
         Deletes a role from the server.
         """
-        await ctx.message.guild.delete_role(role)
+        await ctx.guild.delete_role(role)
         await ctx.send("Alright, I deleted the role `{}` from the server.".format(role))
 
     @roles.command(name="color")
@@ -412,7 +411,7 @@ class Moderation:
         """
         Changes the color of a role.
         """
-        await ctx.message.guild.edit_role(role, color=hexcolor)
+        await ctx.guild.edit_role(role, color=hexcolor)
         await ctx.send("Alright, I changed the role `{}` to the hex color `{}`".format(role, hexcolor))
 
     @roles.command(name="move")
@@ -421,7 +420,7 @@ class Moderation:
         """
         Moves a role's position in a server list.
         """
-        await ctx.message.guild.move_role(role, position)
+        await ctx.guild.move_role(role, position)
         await ctx.send("Alright, I moved the role {} to position {}".format(role, position))
 
     # =============================
@@ -450,7 +449,7 @@ class Moderation:
         """
         Mass renames everyone in the server.
         """
-        for member in ctx.message.guild.members:
+        for member in ctx.guild.members:
             try:
                 await member.edit(nick=nickname)
                 await ctx.send("Alright, I changed the nickname of `{}` to `{}`".format(member, nickname))
@@ -465,7 +464,7 @@ class Moderation:
         """
         Mass un-names everyone in the server.
         """
-        for member in ctx.message.guild.members:
+        for member in ctx.guild.members:
             if member.nick:
                 try:
                     await member.edit(nick=None)

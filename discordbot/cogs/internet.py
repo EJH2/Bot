@@ -61,7 +61,7 @@ class Internet:
         if user is not None:
             user = user.display_name
         else:
-            user = ctx.message.author.display_name
+            user = ctx.author.display_name
         await ctx.send("<http://ripme.xyz/{}>".format(user.replace(" ", "%20")))
 
     @commands.command()
@@ -72,7 +72,7 @@ class Internet:
         if user is not None:
             user = user.display_name
         else:
-            user = ctx.message.author.display_name
+            user = ctx.author.display_name
         url = "https://robohash.org/{}.png".format(user.replace(" ", "%20"))
         file = await util.get_file(url)
         await ctx.send(file=discord.File(fp=io.BytesIO(file), filename="robot.png"))
@@ -117,10 +117,14 @@ class Internet:
         """
         Gives the current weather in a city.
         """
+        key = bot_config["bot"].get("WeatherKey", None)
+        if not key:
+            return
         g = geocoder.google(location)
+        if not g.latlng:
+            return await ctx.send("Sorry, I couldn't find that place!")
         lat, lng = g.latlng
         loc = g.address
-        key = bot_config["bot"]["WeatherKey"]
         args = functools.partial(darksky.forecast, key, lat, lng, units="auto")
         forc = await ctx.bot.loop.run_in_executor(None, args)
         with forc as forecast:

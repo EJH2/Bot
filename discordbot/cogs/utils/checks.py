@@ -10,15 +10,15 @@ from discordbot.cogs.utils import exceptions
 
 def is_owner(ctx):
     owner_id = ctx.bot.owner_id
-    return ctx.message.author.id == owner_id
+    return ctx.author.id == owner_id
 
 
 def is_server_owner(ctx):
     if is_owner(ctx):
         return True
-    if not ctx.message.guild:
+    if not ctx.guild:
         return True
-    return ctx.message.author.id == ctx.message.guild.owner.id
+    return ctx.author.id == ctx.guild.owner.id
 
 
 def check_permissions(ctx, perms):
@@ -76,7 +76,7 @@ def user_roles(*role_names):
 def needs_embed(ctx):
     if not isinstance(ctx.channel, discord.abc.GuildChannel):
         return True
-    if ctx.message.channel.permissions_for(ctx.message.guild.me).embed_links:
+    if ctx.channel.permissions_for(ctx.guild.me).embed_links:
         return True
     raise exceptions.EmbedError
 
