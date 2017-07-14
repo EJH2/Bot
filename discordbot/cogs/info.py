@@ -83,7 +83,7 @@ class Information:
             max_value = max(c.values())
             commands_used = [(key, c[key]) for key in c if c[key] == max_value]
             if len(commands_used) > 3:
-                most_used = "See `{}info commands`".format(self.bot.command_prefix)
+                most_used = "See `{}info commands`".format(self.bot.command_prefix_)
             else:
                 most_used = ", ".join([str(x[0]) + " - " + str(x[1]) for x in commands_used])
         except ValueError:
@@ -107,6 +107,8 @@ class Information:
         em.add_field(name="Text Channels:", value=str(text))
         em.add_field(name="Voice Channels:", value=str(voice))
         em.add_field(name="Most Used Commands", value=str(most_used))
+        em.add_field(name="Support Server", value="Click [**here**](https://discord.gg/4fKgwPn 'Gears of Bots') to stay"
+                                                  " updated on all the latest news!", inline=False)
         await ctx.send(embed=em)
 
     @info.command(aliases=["commands"])
