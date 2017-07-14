@@ -20,6 +20,8 @@ class Meme:
     async def meme(self, ctx, meme: str, line1: str, line2: str, style=""):
         """
         Generates a meme.
+        
+        Use the meme templates command to see a list of valid memes.
         """
         rep = [["-", "--"], ["_", "__"], ["?", "~q"], ["%", "~p"], [" ", "%20"], ["''", "\""]]
         for i in rep:
@@ -71,7 +73,11 @@ class Meme:
         """
         Gives users a list of meme templates.
         """
-        await ctx.send("All stock templates can be found here: <{}>".format("http://memegen.link/templates/"))
+        with aiohttp.ClientSession() as sess:
+            async with sess.get("http://memegen.link/templates/") as resp:
+                resp = await resp.json()
+        memes = [resp[key][35:] for key in resp]
+        await ctx.send("All stock templates are: {}".format(", ".join(memes)))
 
     @commands.command(aliases=["illegal"])
     async def trump(self, ctx, *, meme: str):

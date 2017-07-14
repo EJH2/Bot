@@ -205,7 +205,7 @@ class Owner:
         """
         Command for getting/editing bot configs.
         """
-        await ctx.send("Invalid subcommand passed: {0.subcommand_passed}".format(ctx), delete_after=5)
+        raise commands.BadArgument("Invalid subcommand passed: {0.subcommand_passed}".format(ctx))
 
     @appearance.command(name="game")
     @commands.is_owner()
@@ -367,7 +367,7 @@ class Owner:
         """
         Command for getting/editing bot configs.
         """
-        await ctx.send("Invalid subcommand passed: {0.subcommand_passed}".format(ctx), delete_after=5)
+        raise commands.BadArgument("Invalid subcommand passed: {0.subcommand_passed}".format(ctx))
 
     @settings.command()
     async def get(self, ctx, configfile, *, keys: str):

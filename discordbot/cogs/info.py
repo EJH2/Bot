@@ -153,7 +153,7 @@ class Information:
     #   Player related commands
     # ===========================
 
-    @commands.command(aliases=["oauth"])
+    @commands.command(aliases=["oauth", "invite"])
     async def join(self, ctx):
         """
         Gives my OAuth url.

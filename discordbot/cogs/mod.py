@@ -27,7 +27,7 @@ class Moderation:
         """
         Command for ignoring the channel/server.
         """
-        await ctx.send("Invalid subcommand passed: {0.subcommand_passed}".format(ctx), delete_after=5)
+        raise commands.BadArgument("Invalid subcommand passed: {0.subcommand_passed}".format(ctx))
 
     @ignore.command(name="list")
     @commands.guild_only()
@@ -89,7 +89,7 @@ class Moderation:
         """
         Command for un-ignoring channels/the server.
         """
-        await ctx.send("Invalid subcommand passed: {0.subcommand_passed}".format(ctx), delete_after=5)
+        raise commands.BadArgument("Invalid subcommand passed: {0.subcommand_passed}".format(ctx))
 
     @unignore.command(name="channel")
     @commands.guild_only()
@@ -222,7 +222,7 @@ class Moderation:
             return
         await ctx.send("You can't unban a member that hasn't been banned!")
 
-    @commands.group()
+    @commands.group(invoke_without_command=True)
     @commands.guild_only()
     @commands.check(permissions(ban_members=True))
     async def hackban(self, ctx, *user_ids: int):
@@ -310,7 +310,7 @@ class Moderation:
         """
         Command for server invites.
         """
-        await ctx.send("Invalid subcommand passed: {0.subcommand_passed}".format(ctx))
+        raise commands.BadArgument("Invalid subcommand passed: {0.subcommand_passed}".format(ctx))
 
     @invites.command(name="create")
     async def invites_create(self, ctx):
@@ -352,7 +352,7 @@ class Moderation:
         """
         Command for server roles.
         """
-        await ctx.send("Invalid subcommand passed: {0.subcommand_passed}".format(ctx))
+        raise commands.BadArgument("Invalid subcommand passed: {0.subcommand_passed}".format(ctx))
 
     @roles.command(name="create")
     @commands.check(permissions(manage_roles=True))

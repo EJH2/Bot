@@ -8,7 +8,7 @@ import sqlalchemy.exc
 from discord.ext import commands
 
 from discordbot.bot import DiscordBot
-from discordbot.cogs.utils import exceptions, util
+from discordbot.cogs.utils import util
 from discordbot.cogs.utils.tables import Dynamic_Rules, Table
 
 
@@ -18,7 +18,7 @@ async def needs_setup(ctx):
         query = await s.select(Dynamic_Rules).where(Dynamic_Rules.guild_id == server.id).all()
         query = await query.flatten()
     if len(query) == 0:
-        raise exceptions.ClearanceError("You don't have Dynamic Rules set up! Use {}dynamicrules setup".format(
+        await ctx.send("You don't have Dynamic Rules set up! Use {}dynamicrules setup".format(
             ctx.bot.command_prefix_))
     return True
 
@@ -34,7 +34,7 @@ class DynamicRules:
         """
         Base command for Dynamic Rules!
         """
-        await ctx.send("Invalid subcommand passed: {0.subcommand_passed}".format(ctx), delete_after=5)
+        raise commands.BadArgument("Invalid subcommand passed: {0.subcommand_passed}".format(ctx))
 
     @dynamicrules.command(name="setup")
     async def dynamicrules_setup(self, ctx):
@@ -48,7 +48,7 @@ class DynamicRules:
         if len(query) == 0:
             try:
                 async with self.bot.db.get_session() as s:
-                    s.add(Dynamic_Rules(guild_id=server.id, attrs="{}"))
+                    await s.add(Dynamic_Rules(guild_id=server.id, attrs="{}"))
                 await ctx.send("Dynamic Rules entry successfully created for this server!")
             except sqlalchemy.exc.SQLAlchemyError as e:
                 await ctx.send("Could not set up dynamic rules: {}".format(e))

@@ -19,7 +19,7 @@ class API:
 
             Currently available APIs: steam, discord
         """
-        await ctx.send("Invalid subcommand passed: {0.subcommand_passed}".format(ctx))
+        raise commands.BadArgument("Invalid subcommand passed: {0.subcommand_passed}".format(ctx))
 
     @api.command()
     async def steam(self, ctx):
