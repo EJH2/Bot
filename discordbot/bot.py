@@ -179,7 +179,7 @@ class DiscordBot(AutoShardedBot):
         """
         Checks message edit to see if I screwed up a command...
         """
-        await super().on_message(after)
+        await super().process_commands(after)
 
     async def on_command_error(self, ctx, e):
         """
