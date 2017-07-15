@@ -8,6 +8,7 @@ import sqlalchemy.exc
 from discord.ext import commands
 
 from discordbot.bot import DiscordBot
+from discordbot.cogs.utils import checks
 from discordbot.cogs.utils import util
 from discordbot.cogs.utils.tables import Dynamic_Rules, Table
 
@@ -37,6 +38,7 @@ class DynamicRules:
         raise commands.BadArgument("Invalid subcommand passed: {0.subcommand_passed}".format(ctx))
 
     @dynamicrules.command(name="setup")
+    @commands.check(checks.permissions(manage_messages=True))
     async def dynamicrules_setup(self, ctx):
         """
         Sets up the server to use Dynamic Rules. This is to de-clutter the DB.
@@ -56,6 +58,7 @@ class DynamicRules:
             await ctx.send("Dynamic rules is already set up for this server!")
 
     @dynamicrules.group(name="get", invoke_without_command=True)
+    @commands.check(checks.permissions(manage_messages=True))
     @commands.check(needs_setup)
     async def dynamicrules_get(self, ctx, *, entry: str):
         """
@@ -75,6 +78,7 @@ class DynamicRules:
             await ctx.send(attrs.get(entry, "None"))
 
     @dynamicrules_get.command(name="all")
+    @commands.check(checks.permissions(manage_messages=True))
     @commands.check(needs_setup)
     async def dynamicrules_get_all(self, ctx):
         """
@@ -92,6 +96,7 @@ class DynamicRules:
             await ctx.send(util.neatly(attr_list, "autohotkey"))
 
     @dynamicrules.command(name="set")
+    @commands.check(checks.permissions(manage_messages=True))
     @commands.check(needs_setup)
     async def dynamicrules_set(self, ctx, entry: str, *, value: str):
         """
@@ -111,6 +116,7 @@ class DynamicRules:
             await ctx.send("Could not set dynamic rules entry: {}".format(e))
 
     @dynamicrules.group(name="clear", invoke_without_command=True)
+    @commands.check(checks.permissions(manage_messages=True))
     @commands.check(needs_setup)
     async def dynamicrules_clear(self, ctx, *, entry: str):
         """
@@ -135,6 +141,7 @@ class DynamicRules:
             await ctx.send("Could not clear dynamic rules entry: {}".format(e))
 
     @dynamicrules_clear.group(name="all")
+    @commands.check(checks.permissions(manage_messages=True))
     @commands.check(needs_setup)
     async def dynamicrules_clear_all(self, ctx):
         """
