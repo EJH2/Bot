@@ -3,7 +3,7 @@
 ViralBot is yet another Multipurpose Python bot (TM) for Discord. It has many commands that are sure to keep the chat 
 alive. New features are added often, so be on the lookout for the latest commands!
 
-Any questions should be directed to `EJH2#0330` on [this cool Discord Server](https://discord.gg/4fKgwPn 
+Any questions should be directed to `EJH2#0330` on [**this cool Discord server**](https://discord.gg/4fKgwPn 
 "Gears of Bots").
 
 If you want to run your own ViralBot, please follow the installation steps below:
@@ -64,3 +64,9 @@ Before you continue, you will need 2 things:
 7. **Run the bot.**
 
     Congrats!
+    
+## Contributing to ViralBot
+
+Contibutions alre always welcome! A copy of guidelines to follow when contributing to the project can be found 
+[**here**](https://github.com/EJH2/DiscordBot/blob/8806486c46af1a6221c8e3f5366d94ef1acffae8/CONTRIBUTING.md 
+"CONTRIBUTING.md").
