@@ -18,5 +18,3 @@ if __name__ == "__main__":
     if bot.debug:
         init_modules.remove("discordbot.cogs.init_stats")
     bot.run()
-    input("Press any key to continue...")
-    sys.exit(2)

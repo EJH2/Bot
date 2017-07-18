@@ -294,7 +294,7 @@ class Owner:
         else:
             await ctx.send("Unloaded `{}`.".format(extension))
 
-    @commands.command()
+    @commands.group(invoke_without_command=True)
     @commands.is_owner()
     async def reload(self, ctx, *, extension: str):
         """
@@ -310,9 +310,9 @@ class Owner:
         else:
             await ctx.send("Reloaded `{}`.".format(extension))
 
-    @commands.command()
+    @reload.command()
     @commands.is_owner()
-    async def reloadall(self, ctx):
+    async def reload_all(self, ctx):
         """
         Reload all extensions.
         """
@@ -428,7 +428,7 @@ class Owner:
         await ctx.send("Goodbye!")
         self.bot.restarting.delete("restarting")
         await ctx.bot.logout()
-        return
+        return input("Press any key to continue...")
 
     @commands.command()
     @commands.is_owner()
@@ -443,10 +443,10 @@ class Owner:
                             "-------------------"
                             "\n")
         await ctx.bot.logout()
+        exc = [sys.executable, ctx.bot.filename]
         if self.bot.debug:
-            subprocess.call([sys.executable, ctx.bot.filename, "debug"])
-        else:
-            subprocess.call([sys.executable, ctx.bot.filename])
+            exc += ["debug"]
+        subprocess.call(exc)
 
     @commands.command()
     @commands.is_owner()

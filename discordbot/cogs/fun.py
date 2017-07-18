@@ -5,6 +5,7 @@ Fun commands.
 import asyncio
 import io
 import random
+import re
 from urllib.parse import quote_plus
 
 import aiohttp
@@ -413,6 +414,35 @@ class Fun:
         else:
             line = random.choice(data)
         await ctx.send(line)
+
+    @commands.command()
+    async def color(self, ctx, *, color: str):
+        """
+        Returns a picture and a name of the requested color!
+
+        Colors can be either hexadecimal or rgb.
+        """
+        regex = re.compile("#?([\d\w]{6}|[\d\w]{3})$|\(?(\d{1,3}), ?(\d{1,3}), ?(\d{1,3})\)?")
+        match = regex.match(color)
+        attrs = {"format": "json"}
+        if match:
+            # Hex vs. RGB values
+            if match.group(1):
+                attrs["hex"] = match.group()
+            else:
+                attrs["rgb"] = match.group()
+        else:
+            return await ctx.send("Sorry, but that is not a valid rgb or hex color.")
+        color_api = "http://thecolorapi.com/id?"
+        with aiohttp.ClientSession() as sess:
+            async with sess.get(color_api, params=attrs) as get:
+                resp = await get.json()
+        hex_code = str(resp["hex"]["clean"])
+        contrast = str(resp["contrast"]["value"]).strip("#")
+        name = str(resp["name"]["value"])
+        image = "http://placehold.it/300x300.png/{}/{}&text={}".format(hex_code, contrast, name)
+        pic = await util.get_file(image)
+        await ctx.send(file=discord.File(fp=io.BytesIO(pic), filename="color.png"))
 
     @commands.command()
     async def whoosh(self, ctx):

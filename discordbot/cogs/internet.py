@@ -103,12 +103,10 @@ class Internet:
                 return
         else:
             comic = xkcd.getRandomComic()
-        embed = discord.Embed(title=comic.title, colour=discord.Colour(0x586024), url=comic.getExplanation(),
-                              description=comic.altText, timestamp=ctx.message.created_at)
+        embed = discord.Embed(title="xkcd {}: {}".format(comic.number, comic.title), url=comic.link)
 
         embed.set_image(url=comic.imageLink)
-        embed.set_author(name="XKCD #{}".format(comic.number), url=comic.link,
-                         icon_url="https://xkcd.com/s/919f27.ico")
+        embed.set_footer(text=comic.altText)
 
         await ctx.send(embed=embed)
 
