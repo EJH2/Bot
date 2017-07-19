@@ -8,10 +8,8 @@ import sys
 import traceback
 from collections import Counter
 
+import asyncqlio.exc
 import discord
-import sqlalchemy
-import sqlalchemy.exc
-import sqlalchemy.orm
 from asyncqlio.db import DatabaseInterface
 from discord.ext import commands
 from discord.ext.commands import AutoShardedBot
@@ -97,7 +95,7 @@ class DiscordBot(AutoShardedBot):
                     if self.dynamic:
                         msg.append("Dynamic Rules")
                     self.logger.info("{} enabled for this session.".format("/".join(msg)))
-                except sqlalchemy.exc.SQLAlchemyError as e:
+                except asyncqlio.exc.DatabaseException as e:
                     self.logging, self.dynamic = False
                     self.logger.warn("Could not connect to database: {}".format(e))
             else:

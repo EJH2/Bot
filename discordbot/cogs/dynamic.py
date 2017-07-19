@@ -4,7 +4,7 @@ Dynamic Rules!
 import asyncio
 import json
 
-import sqlalchemy.exc
+import asyncqlio.exc
 from discord.ext import commands
 
 from discordbot.bot import DiscordBot
@@ -52,7 +52,7 @@ class DynamicRules:
                 async with self.bot.db.get_session() as s:
                     await s.add(Dynamic_Rules(guild_id=server.id, attrs="{}"))
                 await ctx.send("Dynamic Rules entry successfully created for this server!")
-            except sqlalchemy.exc.SQLAlchemyError as e:
+            except asyncqlio.exc.DatabaseException as e:
                 await ctx.send("Could not set up dynamic rules: {}".format(e))
         else:
             await ctx.send("Dynamic rules is already set up for this server!")
@@ -112,7 +112,7 @@ class DynamicRules:
                 query.attrs = json.dumps(attrs)
                 await s.add(query)
                 await ctx.send("Successfully set `{}` to `{}`!".format(entry, value))
-        except sqlalchemy.exc.SQLAlchemyError as e:
+        except asyncqlio.exc.DatabaseException as e:
             await ctx.send("Could not set dynamic rules entry: {}".format(e))
 
     @dynamicrules.group(name="clear", invoke_without_command=True)
@@ -137,7 +137,7 @@ class DynamicRules:
                 query.attrs = json.dumps(attrs)
                 await s.add(query)
             await ctx.send("Successfully cleared `{}`!".format(entry))
-        except sqlalchemy.exc.SQLAlchemyError as e:
+        except asyncqlio.exc.DatabaseException as e:
             await ctx.send("Could not clear dynamic rules entry: {}".format(e))
 
     @dynamicrules_clear.group(name="all")
@@ -168,7 +168,7 @@ class DynamicRules:
                 query.attrs = json.dumps(attrs)
                 await s.add(query)
                 await ctx.send("Successfully cleared all entries!")
-        except sqlalchemy.exc.SQLAlchemyError as e:
+        except asyncqlio.exc.DatabaseException as e:
             await ctx.send("Could not clear all dynamic rules entries: {}".format(e))
 
 
