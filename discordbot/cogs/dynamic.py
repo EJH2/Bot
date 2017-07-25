@@ -30,6 +30,10 @@ class DynamicRules:
         self.db = bot.db
         self.db.bind_tables(Table)
 
+    # ============================
+    #    Dynamic Rules Commands
+    # ============================
+
     @commands.group(invoke_without_command=True, aliases=["dynrules"])
     async def dynamicrules(self, ctx):
         """
@@ -56,6 +60,10 @@ class DynamicRules:
                 await ctx.send("Could not set up dynamic rules: {}".format(e))
         else:
             await ctx.send("Dynamic rules is already set up for this server!")
+
+    # ================================
+    #    Get Dynamic Rules Settings
+    # ================================
 
     @dynamicrules.group(name="get", invoke_without_command=True)
     @commands.check(checks.permissions(manage_messages=True))
@@ -95,6 +103,10 @@ class DynamicRules:
         else:
             await ctx.send(util.neatly(attr_list, "autohotkey"))
 
+    # ================================
+    #    Set Dynamic Rules Settings
+    # ================================
+
     @dynamicrules.command(name="set")
     @commands.check(checks.permissions(manage_messages=True))
     @commands.check(needs_setup)
@@ -114,6 +126,10 @@ class DynamicRules:
                 await ctx.send("Successfully set `{}` to `{}`!".format(entry, value))
         except asyncqlio.exc.DatabaseException as e:
             await ctx.send("Could not set dynamic rules entry: {}".format(e))
+
+    # ==================================
+    #    Clear Dynamic Rules Settings
+    # ==================================
 
     @dynamicrules.group(name="clear", invoke_without_command=True)
     @commands.check(checks.permissions(manage_messages=True))

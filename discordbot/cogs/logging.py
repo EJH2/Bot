@@ -29,6 +29,10 @@ class Logging:
         self.db = bot.db
         self.db.bind_tables(Table)
 
+    # ======================
+    #    Logging Messages
+    # ======================
+
     async def on_message(self, message):
         """
         Process commands and log.
@@ -54,6 +58,10 @@ class Logging:
                       "content": content, "timestamp": time}
             async with self.bot.db.get_session() as s:
                 await s.add(Messages(**values))
+
+    # =========================
+    #    Retrieving Messages
+    # =========================
 
     @staticmethod
     async def on_handle_delete(timer):
