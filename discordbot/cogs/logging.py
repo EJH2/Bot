@@ -1,7 +1,7 @@
 """
 Logging.
 """
-import asyncio
+import json
 
 import discord
 from discord.ext import commands
@@ -21,15 +21,6 @@ class YOURLS(YOURLSClient):
         """
         data = dict(action='delete', shorturl=short)
         await self._api_request(params=data)
-
-
-async def handle_delete(time: int, url: str):
-    """
-    Deletes a short link.
-    """
-    yourl = YOURLS(bot_config["yourls"]["yourls_base"], signature=bot_config["yourls"]["yourls_signature"])
-    await asyncio.sleep(time)
-    await yourl.delete(url)
 
 
 class Logging:
@@ -64,6 +55,15 @@ class Logging:
             async with self.bot.db.get_session() as s:
                 await s.add(Messages(**values))
 
+    @staticmethod
+    async def on_handle_delete(timer):
+        """
+        Deletes a short link.
+        """
+        url = json.loads(timer.extras)["url"]
+        yourl = YOURLS(bot_config["yourls"]["yourls_base"], signature=bot_config["yourls"]["yourls_signature"])
+        await yourl.delete(url)
+
     async def paste_logs(self, ctx, gb, body):
         res = await gb.paste(body, expire="15m")
         if "None" not in [bot_config["yourls"]["yourls_base"], bot_config["yourls"]["yourls_signature"]]:
@@ -73,7 +73,9 @@ class Logging:
             res, is_yourl, yourl = res, None, None
         await ctx.send("Here is a link to your logs: {}. Hurry, it expires in 15 minutes!".format(res))
         if is_yourl:
-            self.bot.loop.create_task(handle_delete(54000, res))
+            extras = json.dumps({"url": res})
+            self.bot.loop.create_task(self.bot.get_cog("Scheduling").create_timer({"expires": 62, "event":
+                "handle_delete", "extras": extras}))
 
     @commands.group(invoke_without_command=True)
     @commands.check(checks.needs_logging)
@@ -86,7 +88,7 @@ class Logging:
         gb = GhostBin()
         server = ctx.guild.id if ctx.guild else ctx.channel.recipient.id
         async with self.bot.db.get_session() as s:
-            query = await s.select(Messages).where(Messages.guild_id == server).limit(limit)
+            query = await s.select(Messages).where(Messages.guild_id == server).limit(limit).all()
             query = await query.flatten()
         if len(query) == 0:
             return await ctx.send("Doesn't look I have a log for this server, sorry!")
@@ -117,7 +119,7 @@ class Logging:
         gb = GhostBin()
         channel = channel if channel else ctx.channel
         async with self.bot.db.get_session() as s:
-            query = await s.select(Messages).where(Messages.channel_id == channel.id).limit(limit)
+            query = await s.select(Messages).where(Messages.channel_id == channel.id).limit(limit).all()
             query = await query.flatten()
         if len(query) == 0:
             return await ctx.send("Doesn't look I have a log for that channel, sorry!")
@@ -140,7 +142,7 @@ class Logging:
         gb = GhostBin()
         user = user if user else ctx.author
         async with self.bot.db.get_session() as s:
-            query = await s.select(Messages).where(Messages.author == user.id).limit(limit)
+            query = await s.select(Messages).where(Messages.author == user.id).limit(limit).all()
             query = await query.flatten()
         if len(query) == 0:
             return await ctx.send("Doesn't look I have a log for that user, sorry!")
