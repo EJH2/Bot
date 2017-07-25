@@ -189,6 +189,9 @@ class DiscordBot(AutoShardedBot):
         elif isinstance(e, commands.errors.NotOwner):
             await ctx.channel.send("\N{CROSS MARK} {}".format(e), delete_after=5)
             return
+        elif isinstance(e, discord.Forbidden):
+            await ctx.channel.send("\N{NO ENTRY} I don't have permission to perform the action", delete_after=5)
+            return
         elif isinstance(e, exceptions.ClearanceError):
             await ctx.channel.send("\N{NO ENTRY} {}".format(e), delete_after=5)
             return
