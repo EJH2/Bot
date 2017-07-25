@@ -185,22 +185,19 @@ class DiscordBot(AutoShardedBot):
         """
         if isinstance(e, exceptions.Ignored):
             await ctx.channel.send("\N{CROSS MARK} This channel is currently being ignored.", delete_after=5)
-            return
         elif isinstance(e, commands.errors.NotOwner):
             await ctx.channel.send("\N{CROSS MARK} {}".format(e), delete_after=5)
-            return
         elif isinstance(e, discord.Forbidden):
             await ctx.channel.send("\N{NO ENTRY} I don't have permission to perform the action", delete_after=5)
-            return
         elif isinstance(e, exceptions.ClearanceError):
             await ctx.channel.send("\N{NO ENTRY} {}".format(e), delete_after=5)
-            return
         elif isinstance(e, commands.errors.CommandNotFound):
+            return
+        elif isinstance(e, discord.NotFound):
             return
         elif isinstance(e, exceptions.EmbedError):
             await ctx.channel.send("\N{NO ENTRY} This command requires the `Embed Links` "
                                    "permission to execute!", delete_after=5)
-            return
         elif isinstance(e, commands.errors.NoPrivateMessage):
             await ctx.channel.send("\N{NO ENTRY} That command can not be run in PMs!",
                                    delete_after=5)
@@ -208,20 +205,16 @@ class DiscordBot(AutoShardedBot):
         elif isinstance(e, commands.errors.DisabledCommand):
             await ctx.channel.send("\N{NO ENTRY} Sorry, but that command is currently disabled!",
                                    delete_after=5)
-            return
         elif isinstance(e, commands.errors.CheckFailure):
             await ctx.channel.send("\N{CROSS MARK} Check failed. You probably don't have "
                                    "permission to do this.", delete_after=5)
-            return
         elif isinstance(e, commands.errors.CommandOnCooldown):
             await ctx.channel.send("\N{NO ENTRY} {}".format(e), delete_after=5)
-            return
         elif isinstance(e, (commands.errors.BadArgument, commands.errors.MissingRequiredArgument)):
             await ctx.channel.send("\N{CROSS MARK} Bad argument: {}".format(" ".join(e.args)), delete_after=5)
             formatted_help = await ctx.bot.formatter.format_help_for(ctx, ctx.command)
             for page in formatted_help:
                 await ctx.channel.send(page, delete_after=20)
-            return
         else:
             await ctx.channel.send("\N{NO ENTRY} An error happened. This has been logged and reported.",
                                    delete_after=5)

@@ -21,6 +21,7 @@ class Salty:
     async def insult(self, ctx, user: discord.Member = None):
         """Insults a user."""
         name = "{0}".format(str(user) + ": " if user else "")
+        # TODO: Maybe put this in a database
         insult_words = {
             'A': ['a confoundedly', 'a conspicuously', 'a cruelly', 'a deucedly', 'a devilishly', 'a dreadfully',
                   'a frightfully', 'a grievously', 'a lamentably', 'a miserably', 'a monstrously', 'a piteously',
@@ -114,14 +115,11 @@ class Salty:
                   'vulgarity to all and sundry', 'wretched horror to all who encounter you']
         }
 
-        a = random.choice(insult_words['A'])
-        b = random.choice(insult_words['B'])
-        c = random.choice(insult_words['C'])
-        d = random.choice(insult_words['D'])
-        e = random.choice(insult_words['E'])
-        f = random.choice(insult_words['F'])
+        words_list = [insult_words['A'], insult_words['B'], insult_words['C'], insult_words['D'], insult_words['E'],
+                      insult_words['F']]
+        insult = [random.choice(i) for i in words_list]
 
-        await ctx.send("{} You are {} {} {} and a {} {} {}.".format(name, a, b, c, d, e, f))
+        await ctx.send("{} You are {} {} {} and a {} {} {}.".format(name, *insult))
 
     @commands.command()
     @commands.check(checks.bot_roles("salty"))
