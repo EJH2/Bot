@@ -1,16 +1,13 @@
-sqlalchemy
 astral
 pytz
 pillow
 wikipedia
-colorlog
 git+https://github.com/EJH2/yourls@master
 git+https://github.com/EJH2/ghostbin@master
 git+https://github.com/EJH2/urbandictionary-py@master
 xkcd
 geocoder
 git+https://github.com/Rapptz/discord.py@rewrite
-Logbook
 pyfiglet
 pyowm
 aiohttp
