@@ -65,6 +65,19 @@ Before you continue, you will need 2 things:
 
     Congrats!
     
+### Updating Instructions
+
+
+Sometimes I will make bug fixes that were left over from previous commits, in which case you'll need to re-pull the repo
+to your computer and just copy over the config. In a rare case I might need to re-configure the database, in which case
+you will need to issue two commands in a terminal:
+
+1. `PYTHONPATH=. asql-migrate migrate -- -1`
+
+2. `PYTHONPATH=. asql-migrate migrate -- 1`
+
+Done!
+    
 ## Contributing to ViralBot
 
 Contibutions alre always welcome! A copy of guidelines to follow when contributing to the project can be found 
