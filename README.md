@@ -81,5 +81,5 @@ Done!
 ## Contributing to ViralBot
 
 Contibutions alre always welcome! A copy of guidelines to follow when contributing to the project can be found 
-[**here**](https://github.com/EJH2/DiscordBot/blob/8806486c46af1a6221c8e3f5366d94ef1acffae8/CONTRIBUTING.md 
+[**here**](https://github.com/EJH2/ViralBot/blob/8806486c46af1a6221c8e3f5366d94ef1acffae8/CONTRIBUTING.md 
 "CONTRIBUTING.md").
