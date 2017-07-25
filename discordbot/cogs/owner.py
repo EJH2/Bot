@@ -7,7 +7,6 @@ import glob
 import importlib
 import inspect
 import io
-import json
 import os
 import subprocess
 import sys
@@ -15,7 +14,6 @@ import textwrap
 import traceback
 from contextlib import redirect_stdout
 
-import aiohttp
 import discord
 from discord.ext import commands
 
@@ -34,22 +32,12 @@ class Owner:
         self._last_result = None
         self.sessions = set()
 
-    # ====================================================================
-    #   Debugging related commands (Totally not ripped from Liara#0555 &
-    #                             Danny#0007)
-    # ====================================================================
-
-    @staticmethod
-    async def create_gist(content, filename='output.py'):
-        github_file = {'files': {filename: {'content': str(content)}}}
-        async with aiohttp.ClientSession() as session:
-            async with session.post('https://api.github.com/gists', data=json.dumps(github_file)) as response:
-                return await response.json()
+    # ===================================================================
+    #   Debugging related commands (Totally not ripped from Danny#0007)
+    # ===================================================================
 
     def cleanup_code(self, content):
-        """
-        Automatically removes code blocks from the code.
-        """
+        """Automatically removes code blocks from the code."""
         # remove ```py\n```
         if content.startswith('```') and content.endswith('```'):
             return '\n'.join(content.split('\n')[1:-1])
@@ -59,17 +47,16 @@ class Owner:
 
     def get_syntax_error(self, e):
         if e.text is None:
-            return '```py\n{0.__class__.__name__}: {0}\n```'.format(e)
-        return '```py\n{0.text}{1:>{0.offset}}\n{2}: {0}```'.format(e, '^', type(e).__name__)
+            return '```py\n{}: {}\n```'.format(e.__class__.__name__, e)
+        return '```py\n{}{"^":>{}}\n{}: {}```'.format(e.text, e.offset, e.__class__.__name__, e)
 
-    @commands.command()
     @commands.is_owner()
+    @commands.command()
     async def debug(self, ctx, *, body: str):
-        """
-        Evaluate Python code.
-        """
+        """Evaluates a code"""
+
         env = {
-            'bot': ctx.bot,
+            'bot': self.bot,
             'ctx': ctx,
             'channel': ctx.channel,
             'author': ctx.author,
@@ -83,14 +70,12 @@ class Owner:
         body = self.cleanup_code(body)
         stdout = io.StringIO()
 
-        to_compile = 'async def func():\n%s' % textwrap.indent(body, '  ')
+        to_compile = 'async def func():\n{}'.format(textwrap.indent(body, "  "))
 
         try:
             exec(to_compile, env)
-        except SyntaxError as e:
-            return await ctx.send(self.get_syntax_error(e))
-
-        fmt = None
+        except Exception as e:
+            return await ctx.send('```py\n{}: {}\n```'.format(e.__class__.__name__, e))
 
         func = env['func']
         try:
@@ -98,36 +83,26 @@ class Owner:
                 ret = await func()
         except Exception as e:
             value = stdout.getvalue()
-            fmt = '```py\n{}{}\n```'.format(value, traceback.format_exc())
+            await ctx.send('```py\n{}{}\n```'.format(value, traceback.format_exc()))
         else:
             value = stdout.getvalue()
 
             if ret is None:
                 if value:
-                    fmt = '```py\n%s\n```' % value
+                    await ctx.send('```py\n{}\n```'.format(value))
             else:
                 self._last_result = ret
-                fmt = '```py\n%s%s\n```' % (value, ret)
+                await ctx.send('```py\n{}{}\n```'.format(value, ret))
 
-            if fmt is not None:
-                if len(fmt) > 2000:
-                    gist = await self.create_gist(fmt.replace('``````', '```\n```'), filename='message.md')
-                    await ctx.send('Sorry, that output was too large, so I uploaded it to gist instead.\n'
-                                   '{0}'.format(gist['html_url']))
-                else:
-                    await ctx.send(fmt)
-
-    @commands.command()
     @commands.is_owner()
+    @commands.command()
     async def repl(self, ctx):
         """
-        Evaluate a bunch of Python code.
+        Launches an interactive REPL session.
         """
-        msg = ctx.message
-
         variables = {
             'ctx': ctx,
-            'bot': ctx.bot,
+            'bot': self.bot,
             'message': ctx.message,
             'guild': ctx.guild,
             'channel': ctx.channel,
@@ -135,23 +110,31 @@ class Owner:
             '_': None,
         }
 
-        if msg.channel.id in self.sessions:
+        if ctx.channel.id in self.sessions:
             await ctx.send('Already running a REPL session in this channel. Exit it with `quit`.')
             return
 
-        self.sessions.add(msg.channel.id)
+        self.sessions.add(ctx.channel.id)
         await ctx.send('Enter code to execute or evaluate. `exit()` or `quit` to exit.')
 
         def check(m):
-            return m.author == msg.author and m.channel == msg.channel and m.content.startswith('`')
+            return m.author.id == ctx.author.id and \
+                   m.channel.id == ctx.channel.id and \
+                   m.content.startswith('`')
+
         while True:
-            response = await self.bot.wait_for("message", check=check)
+            try:
+                response = await self.bot.wait_for('message', check=check, timeout=10.0 * 60.0)
+            except asyncio.TimeoutError:
+                await ctx.send('Exiting REPL session.')
+                self.sessions.remove(ctx.channel.id)
+                break
 
             cleaned = self.cleanup_code(response.content)
 
             if cleaned in ('quit', 'exit', 'exit()'):
                 await ctx.send('Exiting.')
-                self.sessions.remove(msg.channel.id)
+                self.sessions.remove(ctx.channel.id)
                 return
 
             executor = exec
@@ -195,9 +178,7 @@ class Owner:
             try:
                 if fmt is not None:
                     if len(fmt) > 2000:
-                        gist = await self.create_gist(fmt.replace('``````', '```\n```'), filename='message.md')
-                        await ctx.send('Sorry, that output was too large, so I uploaded it to gist instead.\n'
-                                       '{0}'.format(gist['html_url']))
+                        await ctx.send('Content too big to be printed.')
                     else:
                         await ctx.send(fmt)
             except discord.Forbidden:
