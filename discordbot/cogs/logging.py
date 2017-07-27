@@ -139,37 +139,31 @@ class Logging:
         body = "".join(msgs)
         await self.paste_logs(ctx, gb, body)
 
-        # TODO: Make this not a serious security issue and invasion of privacy
-
-        # @logs.command(name="user")
-        # @commands.check(checks.needs_logging)
-        # async def logs_user(self, ctx, user: discord.User = None, limit: int = 100):
-        #     """
-        #     Gets the last `x` user logs.
-        #     """
-        #     msgs = []
-        #     counter = 0
-        #     gb = GhostBin()
-        #     user = user if user else ctx.author
-        #     async with self.bot.db.get_session() as s:
-        #         query = await s.select(Messages).where(Messages.author == user.id).limit(limit).all()
-        #         query = await query.flatten()
-        #     if len(query) == 0:
-        #         return await ctx.send("Doesn't look I have a log for that user, sorry!")
-        #     for entry in list(reversed(query)):
-        #         user = self.bot.get_user(int(entry.author))
-        #         if not isinstance(ctx.channel, discord.abc.PrivateChannel):
-        #             channel = self.bot.get_channel(int(entry.channel_id)).name
-        #             pm = False
-        #         else:
-        #             channel = "Private Message with {}".format(str(user))
-        #             pm = True
-        #         destination = "{} > {}".format("#" + channel if pm else channel, str(user))
-        #         line = "{} > {}\n".format(destination, entry.content)
-        #         msgs.append(line)
-        #         counter += 1
-        #     body = "".join(msgs)
-        #     await self.paste_logs(ctx, gb, body)
+    @logs.command(name="user")
+    @commands.check(checks.needs_logging)
+    @commands.guild_only()
+    async def logs_user(self, ctx, user: discord.User = None, limit: int = 100):
+        """
+        Gets the last `x` user logs.
+        """
+        msgs = []
+        counter = 0
+        gb = GhostBin()
+        user = user if user else ctx.author
+        async with self.bot.db.get_session() as s:
+            query = await s.select(Messages).where(Messages.author == user.id).limit(limit).all()
+            query = await query.flatten()
+        if len(query) == 0:
+            return await ctx.send("Doesn't look I have a log for that user, sorry!")
+        for entry in list(reversed(query)):
+            user = self.bot.get_user(int(entry.author))
+            channel = self.bot.get_channel(int(entry.channel_id)).name
+            destination = "{} > {}".format("#" + channel, str(user))
+            line = "{} > {}\n".format(destination, entry.content)
+            msgs.append(line)
+            counter += 1
+        body = "".join(msgs)
+        await self.paste_logs(ctx, gb, body)
 
 
 def setup(bot: DiscordBot):
