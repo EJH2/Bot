@@ -79,10 +79,10 @@ class Logging:
             res, is_yourl = (await yourl.shorten(res)).shorturl, True
         else:
             res, is_yourl, yourl = res, None, None
-        await ctx.send("Here is a link to your logs: {}. Hurry, it expires in 15 minutes!".format(res))
+        await ctx.send(f"Here is a link to your logs: {res}. Hurry, it expires in 15 minutes!")
         if is_yourl:
             extras = json.dumps({"url": res})
-            self.bot.loop.create_task(self.bot.get_cog("Scheduling").create_timer({"expires": 62, "event":
+            self.bot.loop.create_task(self.bot.get_cog("Scheduling").create_timer({"expires": 54000, "event":
                 "handle_delete", "extras": extras}))
 
     @commands.group(invoke_without_command=True)
@@ -108,8 +108,8 @@ class Logging:
             else:
                 channel = "Private Message with {}".format(str(user))
                 pm = True
-            destination = "{} > {}".format("#" + channel if pm else channel, str(user))
-            line = "{} > {}\n".format(destination, entry.content)
+            destination = f"{'#' + channel if pm else channel} > {str(user)})"
+            line = f"{destination} > {entry.content}\n"
             msgs.append(line)
             counter += 1
         body = "".join(msgs)
@@ -133,41 +133,43 @@ class Logging:
             return await ctx.send("Doesn't look I have a log for that channel, sorry!")
         for entry in list(reversed(query)):
             user = self.bot.get_user(int(entry.author))
-            line = "{} > {}\n".format(str(user), entry.content)
+            line = f"{str(user)} > {entry.content}\n"
             msgs.append(line)
             counter += 1
         body = "".join(msgs)
         await self.paste_logs(ctx, gb, body)
 
-    @logs.command(name="user")
-    @commands.check(checks.needs_logging)
-    async def logs_user(self, ctx, user: discord.User = None, limit: int = 100):
-        """
-        Gets the last `x` user logs.
-        """
-        msgs = []
-        counter = 0
-        gb = GhostBin()
-        user = user if user else ctx.author
-        async with self.bot.db.get_session() as s:
-            query = await s.select(Messages).where(Messages.author == user.id).limit(limit).all()
-            query = await query.flatten()
-        if len(query) == 0:
-            return await ctx.send("Doesn't look I have a log for that user, sorry!")
-        for entry in list(reversed(query)):
-            user = self.bot.get_user(int(entry.author))
-            if not isinstance(ctx.channel, discord.abc.PrivateChannel):
-                channel = self.bot.get_channel(int(entry.channel_id)).name
-                pm = False
-            else:
-                channel = "Private Message with {}".format(str(user))
-                pm = True
-            destination = "{} > {}".format("#" + channel if pm else channel, str(user))
-            line = "{} > {}\n".format(destination, entry.content)
-            msgs.append(line)
-            counter += 1
-        body = "".join(msgs)
-        await self.paste_logs(ctx, gb, body)
+        # TODO: Make this not a serious security issue and invasion of privacy
+
+        # @logs.command(name="user")
+        # @commands.check(checks.needs_logging)
+        # async def logs_user(self, ctx, user: discord.User = None, limit: int = 100):
+        #     """
+        #     Gets the last `x` user logs.
+        #     """
+        #     msgs = []
+        #     counter = 0
+        #     gb = GhostBin()
+        #     user = user if user else ctx.author
+        #     async with self.bot.db.get_session() as s:
+        #         query = await s.select(Messages).where(Messages.author == user.id).limit(limit).all()
+        #         query = await query.flatten()
+        #     if len(query) == 0:
+        #         return await ctx.send("Doesn't look I have a log for that user, sorry!")
+        #     for entry in list(reversed(query)):
+        #         user = self.bot.get_user(int(entry.author))
+        #         if not isinstance(ctx.channel, discord.abc.PrivateChannel):
+        #             channel = self.bot.get_channel(int(entry.channel_id)).name
+        #             pm = False
+        #         else:
+        #             channel = "Private Message with {}".format(str(user))
+        #             pm = True
+        #         destination = "{} > {}".format("#" + channel if pm else channel, str(user))
+        #         line = "{} > {}\n".format(destination, entry.content)
+        #         msgs.append(line)
+        #         counter += 1
+        #     body = "".join(msgs)
+        #     await self.paste_logs(ctx, gb, body)
 
 
 def setup(bot: DiscordBot):

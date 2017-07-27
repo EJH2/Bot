@@ -19,10 +19,10 @@ class Stats:
 
         session = aiohttp.ClientSession()
 
-        url = 'https://bots.discord.pw/api/bots/{}/stats'.format(self.bot.user.id)
+        url = f'https://bots.discord.pw/api/bots/{self.bot.user.id}/stats'
         headers = {'Authorization': token, 'Content-Type': 'application/json'}
         async with session.post(url, data=stats, headers=headers) as resp:
-            self.bot.logger.info('DBots statistics returned {0.status} for {1}'.format(resp, stats))
+            self.bot.logger.info(f'DBots statistics returned {resp.status} for {stats}')
         await session.close()
 
     async def on_guild_join(self, guild):

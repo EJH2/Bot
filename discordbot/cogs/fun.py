@@ -43,18 +43,17 @@ class Fun:
                 ])
                 gif = await util.get_file(file)
                 await ctx.send(
-                    "You attempted to shoot me, {}, but I dodged it!".format(ctx.author.name),
+                    f"You attempted to shoot me, {ctx.author.name}, but I dodged it!",
                     file=discord.File(io.BytesIO(gif), filename="gif.gif"))
             elif member == ctx.author:
                 gif = await util.get_file("https://media.giphy.com/media/5xaOcLAo1Gg0oRgBz0Y/giphy.gif")
                 await ctx.send(
-                    "{} committed suicide!".format(ctx.author.name), file=discord.File(io.BytesIO(gif),
-                                                                                       filename="gif.gif"))
+                    f"{ctx.author.name} committed suicide!", file=discord.File(io.BytesIO(gif), filename="gif.gif"))
             else:
                 gif = await util.get_file("https://s-media-cache-ak0.pinimg.com/originals/2d/fa/a9/"
                                           "2dfaa995a09d81a07cad24d3ce18e011.gif")
                 await ctx.send(
-                    "{1} was shot dead by the mighty {0}!".format(ctx.author.name, member.name),
+                    "{member.name} was shot dead by the mighty {ctx.author.name}!",
                     file=discord.File(io.BytesIO(gif), filename="gif.gif"))
 
     @commands.command()
@@ -74,7 +73,7 @@ class Fun:
                 ])
                 gif = await util.get_file(file)
                 await ctx.send(
-                    "You attempted to stab me, {}, but I dodged it!".format(ctx.author.name),
+                    f"You attempted to stab me, {ctx.author.name}, but I dodged it!",
                     file=discord.File(io.BytesIO(gif), filename="gif.gif"))
             elif member == ctx.author:
                 file = random.choice([
@@ -85,7 +84,7 @@ class Fun:
                 ])
                 gif = await util.get_file(file)
                 await ctx.send(
-                    "{} died to their own blade!".format(ctx.author.name),
+                    f"{ctx.author.name} died to their own blade!",
                     file=discord.File(io.BytesIO(gif), filename="gif.gif"))
             else:
                 file = random.choice([
@@ -94,7 +93,7 @@ class Fun:
                 ])
                 gif = await util.get_file(file)
                 await ctx.send(
-                    "{1} was stabbed to death by the mighty {0}!".format(ctx.author.name, member.name),
+                    f"{member.name} was stabbed to death by the mighty {ctx.author.name}!",
                     file=discord.File(io.BytesIO(gif), filename="gif.gif"))
 
     @commands.command()
@@ -109,7 +108,7 @@ class Fun:
             if member == self.bot.user:
                 gif = await util.get_file("https://media.giphy.com/media/qRdL7w5ddkHDi/giphy.gif")
                 await ctx.send(
-                    "You attempted to punch me, {}, but I dodged it!".format(ctx.author.name),
+                    f"You attempted to punch me, {ctx.author.name}, but I dodged it!",
                     file=discord.File(io.BytesIO(gif), filename="gif.gif"))
             elif member == ctx.author:
                 file = random.choice([
@@ -118,7 +117,7 @@ class Fun:
                 ])
                 gif = await util.get_file(file)
                 await ctx.send(
-                    "{} punched their self!".format(ctx.author.name),
+                    f"{ctx.author.name} punched their self!",
                     file=discord.File(io.BytesIO(gif), filename="gif.gif"))
             else:
                 file = random.choice([
@@ -127,7 +126,7 @@ class Fun:
                 ])
                 gif = await util.get_file(file)
                 await ctx.send(
-                    "{1} was punched by the mighty {0}!".format(ctx.author.name, member.name),
+                    f"{member.name} was punched by the mighty {ctx.author.name}!",
                     file=discord.File(io.BytesIO(gif), filename="gif.gif"))
 
     @commands.group(invoke_without_command=True)
@@ -154,8 +153,8 @@ class Fun:
             temp.seek(0)
             await ctx.send(file=discord.File(filename="ascii.png", fp=temp))
         except FontNotFound:
-            await ctx.send("`{}` seems to not be a valid font. Try looking here: "
-                           "http://www.figlet.org/examples.html".format(font))
+            await ctx.send(f"`{font}` seems to not be a valid font. Try looking here: "
+                           "http://www.figlet.org/examples.html")
 
     @ascii.command(name="fonts")
     async def ascii_fonts(self, ctx):
@@ -187,14 +186,7 @@ class Fun:
         """
         Gives the user a "Let Me Google That For You" link.
         """
-        await ctx.send("http://lmgtfy.com/?q={}".format(quote_plus(query)))
-
-    @commands.command()
-    async def meh(self, ctx):
-        """
-        Meh.
-        """
-        await ctx.send("¯\_(ツ)_/¯")
+        await ctx.send(f"http://lmgtfy.com/?q={quote_plus(query)}")
 
     @commands.command()
     async def say(self, ctx, *, message: str):
@@ -219,24 +211,21 @@ class Fun:
         Sets a timer for a user with the option of setting a reminder text.
         """
         if not remember:
-            await ctx.send("{}, you have set a timer for {} seconds!".format(ctx.author.mention, seconds))
-            end_timer = ctx.send("{}, your timer for {} seconds has expired!".format(ctx.author.mention,
-                                                                                     seconds))
+            await ctx.send(f"{ctx.author.mention}, you have set a timer for {seconds} seconds!")
+            end_timer = ctx.send(f"{ctx.author.mention}, your timer for {seconds} seconds has expired!")
 
         else:
-            await ctx.send("{}, I will remind you about `{}` in {} seconds!".format(ctx.author.mention,
-                                                                                    remember, seconds))
-            end_timer = ctx.send("{}, your timer for {} seconds has expired! I was instructed to remind you about "
-                                 "`{}`!".format(ctx.author.mention, seconds, remember))
+            await ctx.send(f"{ctx.author.mention}, I will remind you about `{remember}` in {seconds} seconds!")
+            end_timer = ctx.send(f"{ctx.author.mention}, your timer for {seconds} seconds has expired! I was instructed"
+                                 f" to remind you about `{remember}`!")
 
         def check(m):
-            return m.author == ctx.author and m.content == "{0.bot.command_prefix}cancel".format(
-                ctx)
+            return m.author == ctx.author and m.content == f"{ctx.bot.command_prefix_}cancel"
 
         try:
             timer = await ctx.bot.wait_for("message", check=check, timeout=seconds)
             if timer:
-                await ctx.send("{}, Cancelling your timer...".format(ctx.author.mention))
+                await ctx.send(f"{ctx.author.mention}, Cancelling your timer...")
         except asyncio.TimeoutError:
             await end_timer
             return
@@ -325,9 +314,8 @@ class Fun:
             "Outlook not so good",
             "Very doubtful"
         ]
-        await ctx.send("{0.author} asked `{1}`, and the magic eight ball replied `{2}`".format(
-            ctx.message, question, random.choice(responses)
-        ))
+        await ctx.send(f"{ctx.message.author} asked `{question}`, and the magic eight ball replied "
+                       f"`{random.choice(responses)}`")
 
     @commands.command()
     async def copypasta(self, ctx, query: int = None):
@@ -339,7 +327,7 @@ class Fun:
             data = f.readlines()
         if query:
             query_req = 1 <= query <= len(data)
-            line = "Query must be from 1 to {}!".format(len(data))
+            line = f"Query must be from 1 to {len(data)}!"
             if query_req:
                 line = data[query - 1]
         else:
@@ -373,7 +361,7 @@ class Fun:
             if word_length:
                 word_length_req = 3 <= word_length <= 20
                 if word_length_req:
-                    async with sess.get("http://www.setgetgo.com/randomword/get.php?len={}".format(word_length)) as get:
+                    async with sess.get(f"http://www.setgetgo.com/randomword/get.php?len={word_length}") as get:
                         assert isinstance(get, aiohttp.ClientResponse)
                         word = await get.read()
                 else:
@@ -387,7 +375,7 @@ class Fun:
         print(word)
         scrambled = random.sample(word, len(word))
         scrambled = ''.join(scrambled)
-        await ctx.send("The word scramble is: `{}`! You have 30 seconds to solve...".format(scrambled))
+        await ctx.send(f"The word scramble is: `{scrambled}`! You have 30 seconds to solve...")
 
         def check(m):
             return m.content == word and m.channel == ctx.channel
@@ -395,9 +383,9 @@ class Fun:
         try:
             msg = await ctx.bot.wait_for("message", check=check, timeout=30)
             if msg:
-                await ctx.send("Nice job! {} solved the scramble! The word was `{}`!".format(msg.author.name, word))
+                await ctx.send(f"Nice job! {msg.author.name} solved the scramble! The word was `{word}`!")
         except asyncio.TimeoutError:
-            await ctx.send("Oops! Nobody solved it. The word was `{}`!".format(word))
+            await ctx.send(f"Oops! Nobody solved it. The word was `{word}`!")
 
     @commands.command()
     async def roti(self, ctx, *, number: int = None):
@@ -408,7 +396,7 @@ class Fun:
             data = f.readlines()
         if number:
             query_req = 1 <= number <= len(data)
-            line = "Number must be from 1 to {}!".format(len(data))
+            line = f"Number must be from 1 to {len(data)}!"
             if query_req:
                 line = data[number - 1]
         else:
@@ -440,7 +428,7 @@ class Fun:
         hex_code = str(resp["hex"]["clean"])
         contrast = str(resp["contrast"]["value"]).strip("#")
         name = str(resp["name"]["value"])
-        image = "http://placehold.it/300x300.png/{}/{}&text={}".format(hex_code, contrast, name)
+        image = f"http://placehold.it/300x300.png/{hex_code}/{contrast}&text={name}"
         pic = await util.get_file(image)
         await ctx.send(file=discord.File(fp=io.BytesIO(pic), filename="color.png"))
 

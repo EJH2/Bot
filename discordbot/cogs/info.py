@@ -11,9 +11,9 @@ from collections import Counter, OrderedDict
 import discord
 from discord.ext import commands
 
-from discordbot import consts
 from discordbot.bot import DiscordBot
 from discordbot.cogs.utils import checks, config, util, exceptions
+from discordbot.consts import bot_config, start
 
 
 class Information:
@@ -54,8 +54,8 @@ class Information:
         """
         Sends a message to my developer! (Use only to report bugs. Abuse will get you bot banned!)
         """
-        await ctx.bot.owner.send("New message from " + ctx.author.name + "#" + ctx.author.discriminator
-                                 + " (" + ctx.author.id + ") in " + ctx.guild.name + ": " + message)
+        await ctx.bot.owner.send(f"New message from {ctx.author.name}#{ctx.author.discriminator}"
+                                 f" ({ctx.author.id}) in {ctx.guild.name}: {message}")
 
     @commands.group(invoke_without_command=True, aliases=["stats"])
     @commands.check(checks.needs_embed)
@@ -65,7 +65,7 @@ class Information:
         """
         app_info = await self.bot.application_info()
         owner = ctx.bot.owner
-        seconds = time.time() - consts.start
+        seconds = time.time() - start
         m, s = divmod(seconds, 60)
         h, m = divmod(m, 60)
         d, h = divmod(h, 24)
@@ -83,7 +83,7 @@ class Information:
             max_value = max(c.values())
             commands_used = [(key, c[key]) for key in c if c[key] == max_value]
             if len(commands_used) > 3:
-                most_used = "See `{}info commands`".format(self.bot.command_prefix_)
+                most_used = f"See `{self.bot.command_prefix_}info commands`"
             else:
                 most_used = ", ".join([str(x[0]) + " - " + str(x[1]) for x in commands_used])
         except ValueError:
@@ -95,15 +95,14 @@ class Information:
         em.set_thumbnail(url=self.bot.user.avatar_url)
         em.set_author(name="Owned by: " + str(owner), icon_url=owner.avatar_url)
         em.add_field(name="Library:", value="[Discord.py](https://github.com/Rapptz/discord.py)"
-                                            " (Python {0.version_info[0]}.{0.version_info[1]}."
-                                            "{0.version_info[2]})".format(sys))
-        if None not in [consts.bot_config["bot"]["version"], consts.bot_config["bot"]["codename"]]:
-            em.add_field(name="Bot Version:", value="[{0.bot_config[bot][version]}](!!!! '{0.bot_config[bot][codename]}"
-                                                    "')".format(consts))
+                                            f" (Python {sys.version_info[0]}.{sys.version_info[1]}."
+                                            f"{sys.version_info[2]})")
+        if None not in [bot_config["bot"]["version"], bot_config["bot"]["codename"]]:
+            em.add_field(name="Bot Version:", value=f"[{bot_config['bot']['version']}]"
+                                                    f"(!!!! '{bot_config['bot']['codename']}')")
         em.add_field(name="Servers:", value=str(len(ctx.bot.guilds)))
-        em.add_field(name="Up-time:", value="{}w : {}d : {}h : {}m : {}s".format(int(w), int(d), int(h), int(m),
-                                                                                 int(s)))
-        em.add_field(name="Total Unique Users:", value="{} ({} online)".format(len(unique_members), unique_online))
+        em.add_field(name="Up-time:", value=f"{int(w)}w : {int(d)}d : {int(h)}h : {int(m)}m : {int(s)}s")
+        em.add_field(name="Total Unique Users:", value=f"{len(unique_members)} ({unique_online} online)")
         em.add_field(name="Text Channels:", value=str(text))
         em.add_field(name="Voice Channels:", value=str(voice))
         em.add_field(name="Most Used Commands", value=str(most_used))
@@ -147,7 +146,7 @@ class Information:
         ping_msg = await ctx.send("Pinging Server...")
         after = time.monotonic()
         ping = (after - before) * 1000
-        await ping_msg.edit(content=joke + " // ***{0:.0f}ms***".format(ping))
+        await ping_msg.edit(content=joke + f" // ***{ping:.0f}ms***")
 
     # ===========================
     #   Player related commands
@@ -250,7 +249,7 @@ class Information:
         if not member:
             member = ctx.author
 
-        await ctx.send("The avatar of {} is: {}".format(member.name, member.avatar_url))
+        await ctx.send(f"The avatar of {member.name} is: {member.avatar_url_as('png')}")
 
     @commands.command()
     async def discrim(self, ctx, discrim: int = None):
@@ -265,7 +264,7 @@ class Information:
                 if int(member.discriminator) == discrim:
                     if member.name not in disc:
                         disc.append(member.name)
-        await ctx.send("```\n{}\n```".format(", ".join(disc)))
+        await ctx.send(f"```\n{', '.join(disc)}\n```")
 
 
 def setup(bot: DiscordBot):

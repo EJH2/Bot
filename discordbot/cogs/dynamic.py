@@ -19,8 +19,7 @@ async def needs_setup(ctx):
         query = await s.select(Dynamic_Rules).where(Dynamic_Rules.guild_id == server.id).all()
         query = await query.flatten()
     if len(query) == 0:
-        await ctx.send("You don't have Dynamic Rules set up! Use {}dynamicrules setup".format(
-            ctx.bot.command_prefix_))
+        await ctx.send(f"You don't have Dynamic Rules set up! Use {ctx.bot.command_prefix_}dynamicrules setup")
     return True
 
 
@@ -39,7 +38,7 @@ class DynamicRules:
         """
         Base command for Dynamic Rules!
         """
-        raise commands.BadArgument("Invalid subcommand passed: {0.subcommand_passed}".format(ctx))
+        raise commands.BadArgument(f"Invalid subcommand passed: {ctx.subcommand_passed}")
 
     @dynamicrules.command(name="setup")
     @commands.check(checks.permissions(manage_messages=True))
@@ -57,7 +56,7 @@ class DynamicRules:
                     await s.add(Dynamic_Rules(guild_id=server.id, attrs="{}"))
                 await ctx.send("Dynamic Rules entry successfully created for this server!")
             except asyncqlio.exc.DatabaseException as e:
-                await ctx.send("Could not set up dynamic rules: {}".format(e))
+                await ctx.send(f"Could not set up dynamic rules: {e}")
         else:
             await ctx.send("Dynamic rules is already set up for this server!")
 
@@ -123,9 +122,9 @@ class DynamicRules:
                 attrs[entry] = value
                 query.attrs = json.dumps(attrs)
                 await s.add(query)
-                await ctx.send("Successfully set `{}` to `{}`!".format(entry, value))
+                await ctx.send(f"Successfully set `{entry}` to `{value}`!")
         except asyncqlio.exc.DatabaseException as e:
-            await ctx.send("Could not set dynamic rules entry: {}".format(e))
+            await ctx.send(f"Could not set dynamic rules entry: {e}")
 
     # ==================================
     #    Clear Dynamic Rules Settings
@@ -149,12 +148,12 @@ class DynamicRules:
                 try:
                     del attrs[entry]
                 except KeyError:
-                    return await ctx.send("You have no entry named `{}`!".format(entry))
+                    return await ctx.send(f"You have no entry named `{entry}`!")
                 query.attrs = json.dumps(attrs)
                 await s.add(query)
-            await ctx.send("Successfully cleared `{}`!".format(entry))
+            await ctx.send(f"Successfully cleared `{entry}`!")
         except asyncqlio.exc.DatabaseException as e:
-            await ctx.send("Could not clear dynamic rules entry: {}".format(e))
+            await ctx.send(f"Could not clear dynamic rules entry: {e}")
 
     @dynamicrules_clear.group(name="all")
     @commands.check(checks.permissions(manage_messages=True))
@@ -185,7 +184,7 @@ class DynamicRules:
                 await s.add(query)
                 await ctx.send("Successfully cleared all entries!")
         except asyncqlio.exc.DatabaseException as e:
-            await ctx.send("Could not clear all dynamic rules entries: {}".format(e))
+            await ctx.send(f"Could not clear all dynamic rules entries: {e}")
 
 
 def setup(bot: DiscordBot):

@@ -25,7 +25,7 @@ def neatly(entries, colors=""):
     Neatly order text.
     """
     width = max(map(lambda t: len(t[0]), entries))
-    output = ["```{}".format(colors)]
+    output = [f"```{colors}"]
     fmt = "\u200b{0:>{width}}: {1}"
     for name, entry in entries:
         output.append(fmt.format(name, entry, width=width))

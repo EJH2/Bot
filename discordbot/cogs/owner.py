@@ -47,13 +47,15 @@ class Owner:
 
     def get_syntax_error(self, e):
         if e.text is None:
-            return '```py\n{}: {}\n```'.format(e.__class__.__name__, e)
-        return '```py\n{}{"^":>{}}\n{}: {}```'.format(e.text, e.offset, e.__class__.__name__, e)
+            return f'```py\n{e.__class__.__name__}: {e}\n```'
+        return f'```py\n{e.text}{"^":>{e.offset}}\n{e.__class__.__name__}: {e}```'
 
     @commands.is_owner()
     @commands.command()
     async def debug(self, ctx, *, body: str):
-        """Evaluates a code"""
+        """
+        Evaluates code.
+        """
 
         env = {
             'bot': self.bot,
@@ -70,12 +72,12 @@ class Owner:
         body = self.cleanup_code(body)
         stdout = io.StringIO()
 
-        to_compile = 'async def func():\n{}'.format(textwrap.indent(body, "  "))
+        to_compile = f'async def func():\n{textwrap.indent(body, "  ")}'
 
         try:
             exec(to_compile, env)
         except Exception as e:
-            return await ctx.send('```py\n{}: {}\n```'.format(e.__class__.__name__, e))
+            return await ctx.send(f'```py\n{e.__class__.__name__}: {e}\n```')
 
         func = env['func']
         try:
@@ -83,16 +85,20 @@ class Owner:
                 ret = await func()
         except Exception as e:
             value = stdout.getvalue()
-            await ctx.send('```py\n{}{}\n```'.format(value, traceback.format_exc()))
+            await ctx.send(f'```py\n{value}{traceback.format_exc()}\n```')
         else:
             value = stdout.getvalue()
+            try:
+                await ctx.message.add_reaction('\u2705')
+            except:
+                pass
 
             if ret is None:
                 if value:
-                    await ctx.send('```py\n{}\n```'.format(value))
+                    await ctx.send(f'```py\n{value}\n```')
             else:
                 self._last_result = ret
-                await ctx.send('```py\n{}{}\n```'.format(value, ret))
+                await ctx.send(f'```py\n{value}{ret}\n```')
 
     @commands.is_owner()
     @commands.command()
@@ -166,14 +172,14 @@ class Owner:
                         result = await result
             except Exception as e:
                 value = stdout.getvalue()
-                fmt = '```py\n{}{}\n```'.format(value, traceback.format_exc())
+                fmt = f'```py\n{value}{traceback.format_exc()}\n```'
             else:
                 value = stdout.getvalue()
                 if result is not None:
-                    fmt = '```py\n{}{}\n```'.format(value, result)
+                    fmt = f'```py\n{value}{result}\n```'
                     variables['_'] = result
                 elif value:
-                    fmt = '```py\n{}\n```'.format(value)
+                    fmt = f'```py\n{value}\n```'
 
             try:
                 if fmt is not None:
@@ -184,7 +190,7 @@ class Owner:
             except discord.Forbidden:
                 pass
             except discord.HTTPException as e:
-                await ctx.send('Unexpected error: `{}`'.format(e))
+                await ctx.send(f'Unexpected error: `{e}`')
 
     # ========================
     #   Bot related commands
@@ -196,7 +202,7 @@ class Owner:
         """
         Command for getting/editing bot configs.
         """
-        raise commands.BadArgument("Invalid subcommand passed: {0.subcommand_passed}".format(ctx))
+        raise commands.BadArgument(f"Invalid subcommand passed: {ctx.subcommand_passed}")
 
     @appearance.command(name="game")
     @commands.is_owner()
@@ -210,7 +216,7 @@ class Owner:
             status = discord.Game(name=game, url=url, type=1)
 
         await ctx.bot.change_presence(game=status)
-        await ctx.send("Changed game to {}{}.".format(game, " on " + url if url else ""))
+        await ctx.send(f"Changed game to {game}{' on ' + url if url else ''}.")
 
     @appearance.command(name="status")
     @commands.is_owner()
@@ -227,7 +233,7 @@ class Owner:
         Change the bot name.
         """
         await ctx.bot.user.edit(username=name)
-        await ctx.send("Changed name to {}.".format(name))
+        await ctx.send(f"Changed name to {name}.")
 
     @appearance.command(name="avatar")
     @commands.is_owner()
@@ -250,15 +256,15 @@ class Owner:
         Load an extension.
         """
         extension = extension.lower()
-        extent = "discordbot.cogs.{}".format(extension) in self.bot.extensions
+        extent = f"discordbot.cogs.{extension}" in self.bot.extensions
         if extent:
-            return await ctx.send("Could not load `{}` -> `It's already loaded!`".format(extension))
+            return await ctx.send(f"Could not load `{extension}` -> `It's already loaded!`")
         try:
-            ext = ctx.bot.load_extension("discordbot.cogs.{}".format(extension))
-            await ctx.send("Loaded cog `discordbot.cogs.{}`.".format(extension))
+            ext = ctx.bot.load_extension(f"discordbot.cogs.{extension}")
+            await ctx.send(f"Loaded cog `discordbot.cogs.{extension}`.")
         except Exception as e:
             traceback.print_exc()
-            await ctx.send("Could not load `{}` -> `{}`".format(extension, e))
+            await ctx.send(f"Could not load `{extension}` -> `{e}`")
 
     @commands.command()
     @commands.is_owner()
@@ -267,13 +273,12 @@ class Owner:
         Unload an extension.
         """
         extension = extension.lower()
-        ext = "discordbot.cogs.{}".format(extension) in self.bot.extensions
-        ctx.bot.unload_extension("discordbot.cogs.{}".format(extension))
+        ext = f"discordbot.cogs.{extension}" in self.bot.extensions
+        ctx.bot.unload_extension(f"discordbot.cogs.{extension}")
         if ext is False:
-            await ctx.send("Could not unload `{}` -> `Either it doesn't exist or it's already unloaded!`".format(
-                extension))
+            await ctx.send(f"Could not unload `{extension}` -> `Either it doesn't exist or it's already unloaded!`")
         else:
-            await ctx.send("Unloaded `{}`.".format(extension))
+            await ctx.send(f"Unloaded `{extension}`.")
 
     @commands.group(invoke_without_command=True)
     @commands.is_owner()
@@ -283,13 +288,13 @@ class Owner:
         """
         extension = extension.lower()
         try:
-            ctx.bot.unload_extension("discordbot.cogs.{}".format(extension))
-            ctx.bot.load_extension("discordbot.cogs.{}".format(extension))
+            ctx.bot.unload_extension(f"discordbot.cogs.{extension}")
+            ctx.bot.load_extension(f"discordbot.cogs.{extension}")
         except Exception as e:
             traceback.print_exc()
-            await ctx.send("Could not reload `{}` -> `{}`".format(extension, e))
+            await ctx.send(f"Could not reload `{extension}` -> `{e}`")
         else:
-            await ctx.send("Reloaded `{}`.".format(extension))
+            await ctx.send(f"Reloaded `{extension}`.")
 
     @reload.command()
     @commands.is_owner()
@@ -303,7 +308,7 @@ class Owner:
                 ctx.bot.load_extension(extension)
                 await asyncio.sleep(1)
             except Exception as e:
-                await ctx.send("Could not reload `{}` -> `{}`".format(extension, e))
+                await ctx.send(f"Could not reload `{extension}` -> `{e}`")
                 await asyncio.sleep(1)
 
         await ctx.send("Reloaded all.")
@@ -317,8 +322,8 @@ class Owner:
         await ctx.send("Please wait...")
 
         for extension in consts.modules:
-            ctx.bot.unload_extension("discordbot.cogs.{}".format(extension))
-            await ctx.send("Unloaded `{}`.".format(extension))
+            ctx.bot.unload_extension(f"discordbot.cogs.{extension}")
+            await ctx.send(f"Unloaded `{extension}`.")
 
         consts.modules = []
 
@@ -330,10 +335,10 @@ class Owner:
             try:
                 ctx.load_extension(extension)
             except Exception as e:
-                ctx.send("Could not load module `{}` -> `{}`".format(extension, e))
+                ctx.send(f"Could not load module `{extension}` -> `{e}`")
                 await asyncio.sleep(1)
             else:
-                ctx.bot.logger.info("Loaded extension `{}`.".format(extension))
+                ctx.bot.logger.info(f"Loaded extension `{extension}`.")
                 await asyncio.sleep(1)
 
         await ctx.send("Refreshed all modules!")
@@ -345,7 +350,7 @@ class Owner:
     @commands.command()
     @commands.is_owner()
     async def dm(self, ctx, user_id: int, *, reason: str):
-        user = ctx.bot.get_user(id)
+        user = ctx.bot.get_user(user_id)
         if user is not None:
             await user.send(reason)
             await ctx.send("The message has been sent!")
@@ -358,7 +363,7 @@ class Owner:
         """
         Command for getting/editing bot configs.
         """
-        raise commands.BadArgument("Invalid subcommand passed: {0.subcommand_passed}".format(ctx))
+        raise commands.BadArgument(f"Invalid subcommand passed: {ctx.subcommand_passed}")
 
     @settings.command()
     async def get(self, ctx, configfile, *, keys: str):
@@ -398,7 +403,7 @@ class Owner:
             else:
                 setattr(ctx.bot, end, value)
         importlib.reload(consts)
-        await ctx.send("Alright, I changed `{}` to `{}`!".format(end, value))
+        await ctx.send(f"Alright, I changed `{end}` to `{value}`!")
 
     @commands.command()
     @commands.is_owner()
@@ -446,7 +451,7 @@ class Owner:
 
         plonks.append(member.id)
         self.bot.ignored.place("users", plonks)
-        await ctx.send("{0.name} has been banned from using the bot.".format(member))
+        await ctx.send(f"{member.name} has been banned from using the bot.")
 
     @commands.command()
     @commands.is_owner()
@@ -455,7 +460,7 @@ class Owner:
         Unbans a user from using the bot.
         """
         if member.id == ctx.bot.owner_id:
-            await ctx.send("You can't un-bot ban the owner, because he can't be banned!")
+            await ctx.send("You can't un-bot ban the owner, because they can't be banned!")
             return
 
         plonks = self.bot.ignored.get("users", [])
@@ -464,7 +469,7 @@ class Owner:
             return
 
         self.bot.ignored.remove("users", member.id)
-        await ctx.send("{0.name} has been unbanned from using the bot.".format(member))
+        await ctx.send(f"{member.name} has been unbanned from using the bot.")
 
     @commands.command()
     @commands.is_owner()

@@ -27,7 +27,7 @@ class Moderation:
         """
         Command for ignoring the channel/server.
         """
-        raise commands.BadArgument("Invalid subcommand passed: {0.subcommand_passed}".format(ctx))
+        raise commands.BadArgument(f"Invalid subcommand passed: {ctx.subcommand_passed}")
 
     @ignore.command(name="list")
     @commands.guild_only()
@@ -40,10 +40,10 @@ class Moderation:
         result = []
         for channel in ignored:
             if channel in channel_ids:
-                result.append("<#{}>".format(channel))
+                result.append(f"<#{channel}>")
 
         if result:
-            await ctx.send("The following channels are ignored:\n\n{}".format(", ".join(result)), delete_after=5)
+            await ctx.send(f"The following channels are ignored:\n\n{', '.join(result)}", delete_after=5)
         else:
             await ctx.send("I am not ignoring any channels here.", delete_after=5)
 
@@ -89,7 +89,7 @@ class Moderation:
         """
         Command for un-ignoring channels/the server.
         """
-        raise commands.BadArgument("Invalid subcommand passed: {0.subcommand_passed}".format(ctx))
+        raise commands.BadArgument(f"Invalid subcommand passed: {ctx.subcommand_passed}")
 
     @unignore.command(name="channel")
     @commands.guild_only()
@@ -151,7 +151,7 @@ class Moderation:
         if len(bans) == 0:
             await ctx.send("There are no active bans currently on the server.")
         else:
-            await ctx.send("The currently active bans for this server are: " + ", ".join(map(str, bans)))
+            await ctx.send(f"The currently active bans for this server are: {', '.join(map(str, bans))}")
 
     @commands.command()
     @commands.guild_only()
@@ -163,9 +163,9 @@ class Moderation:
         for member in members:
             try:
                 await ctx.guild.kick(member)
-                await ctx.send(member.name + " was kicked from the server.")
+                await ctx.send(f"{member.name} was kicked from the server.")
             except discord.errors.Forbidden:
-                await ctx.send("Skipping `{}`, permissions error.".format(member))
+                await ctx.send(f"Skipping `{member}`, permissions error.")
 
     @commands.command()
     @commands.guild_only()
@@ -182,11 +182,10 @@ class Moderation:
                 softbanned += 1
             except discord.errors.DiscordException as e:
                 try:
-                    await ctx.send("User `{}` (ID: `{}`) could not be softbanned: `{}`".format(str(member), member.id,
-                                                                                               e))
+                    await ctx.send(f"User `{str(member)}` (ID: `{member.id}`) could not be softbanned: `{e}`")
                 except discord.errors.DiscordException as err:
-                    await ctx.send("User `{}` could not be softbanned: `{}`".format(member, err))
-        await ctx.send("Successfully softbanned {}/{} users".format(softbanned, len(members)))
+                    await ctx.send(f"User `{member}` could not be softbanned: `{err}`")
+        await ctx.send(f"Successfully softbanned {softbanned}/{len(members)} users")
 
     @commands.command()
     @commands.guild_only()
@@ -202,10 +201,10 @@ class Moderation:
                 banned += 1
             except discord.errors.DiscordException as e:
                 try:
-                    await ctx.send("User `{}` (ID: `{}`) could not be banned: `{}`".format(str(member), member.id, e))
+                    await ctx.send(f"User `{str(member)}` (ID: `{member.id}`) could not be banned: `{e}`")
                 except discord.errors.DiscordException as err:
-                    await ctx.send("User `{}` could not be banned: `{}`".format(member, err))
-        await ctx.send("Successfully banned {}/{} users".format(banned, len(members)))
+                    await ctx.send(f"User `{member}` could not be banned: `{err}`")
+        await ctx.send(f"Successfully banned {banned}/{len(members)} users")
 
     @commands.command()
     @commands.guild_only()
@@ -218,7 +217,7 @@ class Moderation:
         member = discord.utils.get(bans, user__name=name)
         if member:
             await ctx.guild.unban(member.user)
-            await ctx.send("{0.name}#{0.discriminator} has been unbanned from the server!".format(member.user))
+            await ctx.send(f"{str(member.user)} has been unbanned from the server!")
             return
         await ctx.send("You can't unban a member that hasn't been banned!")
 
@@ -237,10 +236,10 @@ class Moderation:
             except discord.errors.DiscordException as e:
                 try:
                     user = await ctx.bot.get_user_info(user_id)
-                    await ctx.send("User `{}` (ID: `{}`) could not be banned: `{}`".format(str(user), user.id, e))
+                    await ctx.send(f"User `{str(user)}` (ID: `{user.id}`) could not be banned: `{e}`")
                 except discord.errors.DiscordException as err:
-                    await ctx.send("User `{}` could not be banned: `{}`".format(user_id, err))
-        await ctx.send("Successfully banned {}/{} users".format(banned, len(user_ids)))
+                    await ctx.send(f"User `{user_id}` could not be banned: `{err}`")
+        await ctx.send(f"Successfully banned {banned}/{len(user_ids)} users")
 
     @hackban.command()
     @commands.guild_only()
@@ -280,7 +279,7 @@ class Moderation:
         """
         await ctx.channel.purge(limit=messages + 1)
         removed = messages + 1
-        x = await ctx.send("Removed {} messages".format(removed))
+        x = await ctx.send(f"Removed {removed} messages")
         await asyncio.sleep(5)
         await x.delete()
 
@@ -296,7 +295,7 @@ class Moderation:
                 await message.delete()
                 await asyncio.sleep(.21)
                 removed += 1
-        x = await ctx.send("Removed {} messages".format(removed))
+        x = await ctx.send(f"Removed {removed} messages")
         await asyncio.sleep(5)
         await x.delete()
 
@@ -310,7 +309,7 @@ class Moderation:
         """
         Command for server invites.
         """
-        raise commands.BadArgument("Invalid subcommand passed: {0.subcommand_passed}".format(ctx))
+        raise commands.BadArgument(f"Invalid subcommand passed: {ctx.subcommand_passed}")
 
     @invites.command(name="create")
     async def invites_create(self, ctx):
@@ -339,7 +338,7 @@ class Moderation:
         if len(invs) == 0:
             await ctx.send("There are no active invites currently on the server.")
         else:
-            await ctx.send("The currently active invites for this server are: " + ", ".join(map(str, invs)))
+            await ctx.send(f"The currently active invites for this server are: {', '.join(map(str, invs))}")
 
     # =========================
     #   Role related commands
@@ -352,7 +351,7 @@ class Moderation:
         """
         Command for server roles.
         """
-        raise commands.BadArgument("Invalid subcommand passed: {0.subcommand_passed}".format(ctx))
+        raise commands.BadArgument(f"Invalid subcommand passed: {ctx.subcommand_passed}")
 
     @roles.command(name="create")
     @commands.check(permissions(manage_roles=True))
@@ -361,7 +360,7 @@ class Moderation:
         Creates a server role.
         """
         await ctx.guild.create_role(name=role)
-        await ctx.send("Alright, I created the role `{}`".format(role))
+        await ctx.send(f"Alright, I created the role `{role}`")
 
     @roles.command(name="add")
     @commands.check(permissions(manage_roles=True))
@@ -376,8 +375,8 @@ class Moderation:
                 await member.add_roles(role)
                 await asyncio.sleep(1)
             except discord.errors.Forbidden:
-                await ctx.send("Skipping `{}`, permissions error.".format(member))
-        await ctx.send("Giving " + ", ".join(map(str, members)) + " the role {}".format(role))
+                await ctx.send(f"Skipping `{member}`, permissions error.")
+        await ctx.send(f"Giving {', '.join(map(str, members))} the role {member}")
 
     @roles.command(name="remove")
     @commands.check(permissions(manage_roles=True))
@@ -387,13 +386,13 @@ class Moderation:
         """
         if len(members) == 0:
             await ctx.send("You need to add a person to remove the role from!")
-        await ctx.send("Removing  the role {} from ".format(role) + ", ".join(map(str, members)))
+        await ctx.send(f"Removing  the role `{role}` from {', '.join(map(str, members))}")
         for member in members:
             try:
                 await member.remove_roles(role)
                 await asyncio.sleep(.21)
             except discord.errors.Forbidden:
-                await ctx.send("Skipping `{}`, permissions error.".format(member))
+                await ctx.send(f"Skipping `{member}`, permissions error.")
         await ctx.send("Roles removed!")
 
     @roles.command(name="delete")
@@ -403,7 +402,7 @@ class Moderation:
         Deletes a role from the server.
         """
         await ctx.guild.delete_role(role)
-        await ctx.send("Alright, I deleted the role `{}` from the server.".format(role))
+        await ctx.send(f"Alright, I deleted the role `{role}` from the server.")
 
     @roles.command(name="color")
     @commands.check(permissions(manage_roles=True))
@@ -412,7 +411,7 @@ class Moderation:
         Changes the color of a role.
         """
         await ctx.guild.edit_role(role, color=hexcolor)
-        await ctx.send("Alright, I changed the role `{}` to the hex color `{}`".format(role, hexcolor))
+        await ctx.send(f"Alright, I changed the role `{role}` to the hex color `{hexcolor}`")
 
     @roles.command(name="move")
     @commands.check(permissions(manage_roles=True))
@@ -421,7 +420,7 @@ class Moderation:
         Moves a role's position in a server list.
         """
         await ctx.guild.move_role(role, position)
-        await ctx.send("Alright, I moved the role {} to position {}".format(role, position))
+        await ctx.send(f"Alright, I moved the role {role} to position {position}")
 
     # =============================
     #   Nickname related commands
@@ -437,10 +436,10 @@ class Moderation:
         for member in members:
             try:
                 await member.edit(nick=nickname)
-                await ctx.send("Alright, I changed the nickname of `{}` to `{}`".format(member, nickname))
+                await ctx.send(f"Alright, I changed the nickname of `{member}` to `{nickname}`")
                 await asyncio.sleep(.21)
             except discord.errors.Forbidden:
-                await ctx.send("Skipping `{}`, permissions error.".format(member))
+                await ctx.send(f"Skipping `{member}`, permissions error.")
 
     @commands.command()
     @commands.guild_only()
@@ -452,10 +451,10 @@ class Moderation:
         for member in ctx.guild.members:
             try:
                 await member.edit(nick=nickname)
-                await ctx.send("Alright, I changed the nickname of `{}` to `{}`".format(member, nickname))
+                await ctx.send(f"Alright, I changed the nickname of `{member}` to `{nickname}`")
                 await asyncio.sleep(.21)
             except discord.errors.Forbidden:
-                await ctx.send("Skipping `{}`, permissions error.".format(member))
+                await ctx.send(f"Skipping `{member}`, permissions error.")
 
     @commands.command()
     @commands.guild_only()
@@ -468,10 +467,10 @@ class Moderation:
             if member.nick:
                 try:
                     await member.edit(nick=None)
-                    await ctx.send("Alright, I reset the nickname of `{}`".format(member))
+                    await ctx.send(f"Alright, I reset the nickname of `{member}`")
                     await asyncio.sleep(.21)
                 except discord.errors.Forbidden:
-                    await ctx.send("Skipping `{}`, permissions error.".format(member))
+                    await ctx.send(f"Skipping `{member}`, permissions error.")
 
 
 def setup(bot):

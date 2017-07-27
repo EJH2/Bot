@@ -11,7 +11,7 @@ class Dynamic_Rules(Table):
     attrs = Column(Text)
 
     def __repr__(self):
-        return "<dynamic_rules(guild_id='%s', attrs='%s')>" % (self.guild_id, self.attrs)
+        return f"<dynamic_rules(guild_id='{self.guild_id}', attrs='{self.attrs}')>"
 
 
 class Messages(Table):
@@ -24,9 +24,8 @@ class Messages(Table):
     timestamp = Column(Text)
 
     def __repr__(self):
-        return "<messages(guild_id='%s', channel_id='%s', message_id='%s', author='%s', content='%s', " \
-               "timestamp='%s')>" \
-               % (self.guild_id, self.channel_id, self.message_id, self.author, self.content, self.timestamp)
+        return f"<messages(guild_id='{self.guild_id}', channel_id='{self.channel_id}', message_id='{self.message_id}'" \
+               f", author='{self.author}', content='{self.content}', timestamp='{self.timestamp}')>"
 
 
 class Schedule(Table):
@@ -36,8 +35,7 @@ class Schedule(Table):
     extras = Column(Text)
 
     def __repr__(self):
-        return "<schedule(id='%s', expires='%s', event='%s', extras='%s')>" % (self.id, self.expires, self.event,
-                                                                               self.extras)
+        return f"<schedule(id='{self.id}', expires='{self.expires}', event='{self.event}', extras='{self.extras}')>"
 
     def __eq__(self, other):
         try:

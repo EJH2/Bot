@@ -20,7 +20,7 @@ class Salty:
     @commands.check(checks.bot_roles("salty"))
     async def insult(self, ctx, user: discord.Member = None):
         """Insults a user."""
-        name = "{0}".format(str(user) + ": " if user else "")
+        name = f"{str(user) + ': ' if user else ''}"
         # TODO: Maybe put this in a database
         insult_words = {
             'A': ['a confoundedly', 'a conspicuously', 'a cruelly', 'a deucedly', 'a devilishly', 'a dreadfully',
@@ -119,6 +119,7 @@ class Salty:
                       insult_words['F']]
         insult = [random.choice(i) for i in words_list]
 
+        # The one case where using .format is better and shorter than a format string
         await ctx.send("{} You are {} {} {} and a {} {} {}.".format(name, *insult))
 
     @commands.command()

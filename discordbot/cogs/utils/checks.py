@@ -44,9 +44,9 @@ def check_bot_roles(ctx, role_names):
     _roles = any(name in role_list for name in role_names)
     if _roles:
         return True
-    raise exceptions.ClearanceError("Bot requires role{} \"{}\" to run that command.".format("s" if len(role_names) > 1
-                                                                                             else "", ", ".join(
-        [role_name.title() for role_name in role_names])))
+    raise exceptions.ClearanceError(f"Bot requires role{'s' if len(role_names) > 1 else ''} \""
+                                    f"{', '.join([role_name.title() for role_name in role_names])}\" to run that "
+                                    f"command.")
 
 
 def bot_roles(*role_names):
@@ -64,9 +64,9 @@ def check_user_roles(ctx, role_names):
     _roles = any(name in role_list for name in role_names)
     if _roles:
         return True
-    raise exceptions.ClearanceError("You need role{} \"{}\" to run that command.".format("s" if len(role_names) > 1
-                                                                                         else "", ", ".join(
-        [role_name.title() for role_name in role_names])))
+    raise exceptions.ClearanceError(f"You need role{'s' if len(role_names) > 1 else ''} \""
+                                    f"{', '.join([role_name.title() for role_name in role_names])}\" to run that "
+                                    f"command.")
 
 
 def user_roles(*role_names):

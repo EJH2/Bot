@@ -28,9 +28,9 @@ class Meme:
             line1 = line1.replace(i[0], i[1])
             line2 = line2.replace(i[0], i[1])
         if not style:
-            link = "http://memegen.link/{0}/{1}/{2}.jpg".format(meme, line1, line2)
+            link = f"http://memegen.link/{meme}/{line1}/{line2}.jpg"
         else:
-            link = "http://memegen.link/{0}/{1}/{2}.jpg?alt={3}".format(meme, line1, line2, style)
+            link = f"http://memegen.link/{meme}/{line1}/{line2}.jpg?alt={style}"
         file = await util.get_file(link)
         await ctx.send(file=discord.File(fp=io.BytesIO(file), filename="meme.png"))
 
@@ -49,7 +49,7 @@ class Meme:
                     for i in rep:
                         line1 = line1.replace(i[0], i[1])
                         line2 = line2.replace(i[0], i[1])
-                    link = "http://memegen.link/custom/{0}/{1}.jpg?alt={2}".format(line1, line2, link)
+                    link = f"http://memegen.link/custom/{line1}/{line2}.jpg?alt={link}"
                     file = await util.get_file(link)
                     await ctx.send(file=discord.File(fp=io.BytesIO(file), filename="meme.png"))
                 else:
@@ -64,7 +64,7 @@ class Meme:
         for i in rep:
             line1 = line1.replace(i[0], i[1])
             line2 = line2.replace(i[0], i[1])
-        link = "http://memegen.link/custom/{0}/{1}.jpg?alt={2}".format(line1, line2, user.avatar_url)
+        link = f"http://memegen.link/custom/{line1}/{line2}.jpg?alt={user.avatar_url}"
         file = await util.get_file(link)
         await ctx.send(file=discord.File(fp=io.BytesIO(file), filename="meme.gif"))
 
@@ -77,7 +77,7 @@ class Meme:
             async with sess.get("http://memegen.link/templates/") as resp:
                 resp = await resp.json()
         memes = [resp[key][35:] for key in resp]
-        await ctx.send("All stock templates are: {}".format(", ".join(memes)))
+        await ctx.send(f"All stock templates are: {', '.join(memes)}")
 
     @commands.command(aliases=["illegal"])
     async def trump(self, ctx, *, meme: str):
@@ -85,7 +85,7 @@ class Meme:
         Generates an extra spicy trump meme.
         """
         meme = urllib.parse.quote_plus(meme)
-        link = "http://martmists.com/api/v1/illegal?query={}".format(meme)
+        link = f"http://martmists.com/api/v1/illegal?query={meme}"
         file = await util.get_file(link)
         await ctx.send(file=discord.File(fp=io.BytesIO(file), filename="meme.gif"))
 

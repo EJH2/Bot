@@ -62,7 +62,7 @@ class Internet:
             user = user.display_name
         else:
             user = ctx.author.display_name
-        await ctx.send("<http://ripme.xyz/{}>".format(user.replace(" ", "%20")))
+        await ctx.send(f"<http://ripme.xyz/{user.replace(' ', '%20')}>")
 
     @commands.command()
     async def robohash(self, ctx, user: discord.User = None):
@@ -73,7 +73,7 @@ class Internet:
             user = user.display_name
         else:
             user = ctx.author.display_name
-        url = "https://robohash.org/{}.png".format(user.replace(" ", "%20"))
+        url = f"https://robohash.org/{user.replace(' ', '%20')}.png"
         file = await util.get_file(url)
         await ctx.send(file=discord.File(fp=io.BytesIO(file), filename="robot.png"))
 
@@ -98,12 +98,12 @@ class Internet:
             else:
                 em = discord.Embed(color=discord.Color.red())
                 em.title = "\N{CROSS MARK} Error"
-                em.description = "It has to be between 1 and {}!".format(str(latest_comic))
+                em.description = f"It has to be between 1 and {str(latest_comic)}!"
                 await ctx.send(embed=em)
                 return
         else:
             comic = xkcd.getRandomComic()
-        embed = discord.Embed(title="xkcd {}: {}".format(comic.number, comic.title), url=comic.link)
+        embed = discord.Embed(title=f"xkcd {comic.number}: {comic.title}", url=comic.link)
 
         embed.set_image(url=comic.imageLink)
         embed.set_footer(text=comic.altText)
@@ -139,8 +139,8 @@ class Internet:
                     i.expires = datetime.datetime.fromtimestamp(int(i.expires)).strftime("%A, %B %d at %H:%M:%S")
                     i.regions = ", ".join(i.regions)
                     i.severity = i.severity.title()
-                    _alerts += ["[{}: {} in {}]({} 'Click for Full Description'): Expires on {}\n".format(
-                        str(i.severity), str(i.title), str(i.regions), str(i.uri), str(i.expires))]
+                    _alerts += [f"[{str(i.severity)}: {str(i.title)} in {str(i.regions)}]({str(i.uri)} "
+                                f"'Click for Full Description'): Expires on {str(i.expires)}\n"]
                     alerts = "\n".join(_alerts)
             except AttributeError:
                 alerts = "None"
@@ -158,9 +158,9 @@ class Internet:
             else:
                 temp = "F"
                 wind = "Miles/Hour"
-            em = discord.Embed(title="Weather in {} at {}".format(loc, now_time),
+            em = discord.Embed(title=f"Weather in {loc} at {now_time}",
                                description="Here is today's forecast:")
-            em.set_thumbnail(url="https://discord.lol-sa.me/files/weather/{}.png".format(today.icon) if
+            em.set_thumbnail(url=f"https://discord.lol-sa.me/files/weather/{today.icon}.png" if
             today.icon in ["clear-day", "clear-night", "rain", "snow", "sleet", "wind", "fog",
                            "cloudy", "partly-cloudy-day", "partly-cloudy-night"] else None)
             em.set_footer(text="Powered by Dark Sky", icon_url="https://discord.lol-sa.me/files/weather/darksky.png")
@@ -173,13 +173,13 @@ class Internet:
             except AttributeError:
                 sunrise, sunset = "None", "None"
             em.add_field(name="Today's Weather", value=today.summary)
-            em.add_field(name="Temp Range", value="{} - {}°{}".format(today.temperatureMin, today.temperatureMax, temp))
+            em.add_field(name="Temp Range", value=f"{today.temperatureMin} - {today.temperatureMax}°{temp}")
             em.add_field(name="Sunrise Time", value=sunrise)
             em.add_field(name="Sunset Time", value=sunset)
-            em.add_field(name="Humidity", value="{0:.0f}%".format(now.humidity * 100))
-            em.add_field(name="Wind Speed", value="{} {}".format(now.windSpeed, wind))
+            em.add_field(name="Humidity", value=f"{now.humidity * 100:.0f}%")
+            em.add_field(name="Wind Speed", value=f"{now.windSpeed} {wind}")
             em.add_field(name="Moon Phase", value=phase)
-            em.add_field(name="Cloud Cover", value="{0:.0f}%".format(now.cloudCover * 100))
+            em.add_field(name="Cloud Cover", value=f"{now.cloudCover * 100:.0f}%")
             em.add_field(name="Alerts", value=alerts)
             await ctx.send(embed=em)
 
@@ -191,8 +191,7 @@ class Internet:
         try:
             q = await ctx.bot.loop.run_in_executor(None, wikipedia.page, query)
             summary = await ctx.bot.loop.run_in_executor(None, wikipedia.summary, {"query": query, "sentences": 5})
-            await ctx.send("{}:\n```\n{}\n```\nFor more information, visit <{}>"
-                           .format(q.title, summary, q.url))
+            await ctx.send(f"{q.title}:\n```\n{summary}\n```\nFor more information, visit <{q.url}>")
         except wikipedia.exceptions.PageError:
             await ctx.send("Either the page doesn't exist, or you typed it in wrong. Either way, please try again.")
 
@@ -206,8 +205,8 @@ class Internet:
                 assert isinstance(get, aiohttp.ClientResponse)
                 json = await get.json()
         file = await util.get_file(json["file"])
-        await ctx.send(file=discord.File(filename="cat.{}".format(str(json["file"]).split(".")[-1]),
-                                         fp=io.BytesIO(file)))
+        ext = str(json["file"]).split(".")[-1]
+        await ctx.send(file=discord.File(filename=f"cat.{ext}", fp=io.BytesIO(file)))
 
     @commands.command(aliases=["woof"])
     async def dog(self, ctx):
@@ -218,7 +217,7 @@ class Internet:
             async with sess.get("http://random.dog/woof") as get:
                 assert isinstance(get, aiohttp.ClientResponse)
                 _url = (await get.read()).decode("utf-8")
-                url = "http://random.dog/" + str(_url)
+                url = f"http://random.dog/{str(_url)}"
         file = await util.get_file(url)
         await ctx.send(file=discord.File(filename=_url, fp=io.BytesIO(file)))
 

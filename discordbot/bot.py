@@ -22,8 +22,7 @@ async def connect(user, password, db, host='localhost', port=5432):
     """
     Returns a Database object
     """
-    url = 'postgresql://{}:{}@{}:{}/{}'
-    url = url.format(user, password, host, port, db)
+    url = f'postgresql://{user}:{password}@{host}:{port}/{db}'
 
     db = DatabaseInterface(url)
     await db.connect()
@@ -94,7 +93,7 @@ class DiscordBot(AutoShardedBot):
                         msg.append("Logging")
                     if self.dynamic:
                         msg.append("Dynamic Rules")
-                    self.logger.info("{} enabled for this session.".format("/".join(msg)))
+                    self.logger.info(f"{'/'.join(msg)} enabled for this session.")
                 except asyncqlio.exc.DatabaseException as e:
                     self.logging, self.dynamic = False
                     self.logger.warn("Could not connect to database: {}".format(e))
@@ -134,10 +133,10 @@ class DiscordBot(AutoShardedBot):
                 try:
                     self.load_extension(mod)
                 except Exception as e:
-                    self.logger.critical("Could not load extension `{}` -> `{}`".format(mod, e))
+                    self.logger.critical(f"Could not load extension `{mod}` -> `{e}`")
                 else:
                     if not load_silent:
-                        self.logger.info("Loaded extension {}.".format(mod))
+                        self.logger.info(f"Loaded extension {mod}.")
 
     def __del__(self):
         # Silence aiohttp.
@@ -149,15 +148,15 @@ class DiscordBot(AutoShardedBot):
             return
 
         self.logger.info("Loaded Bot:")
-        self.logger.info("Logged in as {0.user.name}#{0.user.discriminator}".format(self))
+        self.logger.info(f"Logged in as {self.user.name}#{self.user.discriminator}")
         self.logger.info("ID is {0.user.id}".format(self))
-        self.description = "Hello, this is the help menu for {0.user.name}!".format(self)
+        self.description = f"Hello, this is the help menu for {self.user.name}!"
 
         self.logger.info("Downloading application info...")
         app_info = await self.application_info()
         self.owner = app_info.owner
         self.owner_id = app_info.owner.id
-        self.logger.info("I am owned by {}, setting owner.".format(str(app_info.owner)))
+        self.logger.info(f"I am owned by {str(app_info.owner)}, setting owner.")
 
         # Attempt to load the Postgres Database
         await self.load_db()
@@ -186,14 +185,14 @@ class DiscordBot(AutoShardedBot):
         if isinstance(e, exceptions.Ignored):
             await ctx.channel.send("\N{CROSS MARK} This channel is currently being ignored.", delete_after=5)
         elif isinstance(e, commands.errors.NotOwner):
-            await ctx.channel.send("\N{CROSS MARK} {}".format(e), delete_after=5)
-        elif isinstance(e, discord.Forbidden):
+            await ctx.channel.send(f"\N{CROSS MARK} {e}", delete_after=5)
+        elif isinstance(e, discord.errors.Forbidden):
             await ctx.channel.send("\N{NO ENTRY} I don't have permission to perform the action", delete_after=5)
         elif isinstance(e, exceptions.ClearanceError):
-            await ctx.channel.send("\N{NO ENTRY} {}".format(e), delete_after=5)
+            await ctx.channel.send(f"\N{NO ENTRY} {e}", delete_after=5)
         elif isinstance(e, commands.errors.CommandNotFound):
             return
-        elif isinstance(e, discord.NotFound):
+        elif isinstance(e, discord.errors.NotFound):
             return
         elif isinstance(e, exceptions.EmbedError):
             await ctx.channel.send("\N{NO ENTRY} This command requires the `Embed Links` "
@@ -209,9 +208,9 @@ class DiscordBot(AutoShardedBot):
             await ctx.channel.send("\N{CROSS MARK} Check failed. You probably don't have "
                                    "permission to do this.", delete_after=5)
         elif isinstance(e, commands.errors.CommandOnCooldown):
-            await ctx.channel.send("\N{NO ENTRY} {}".format(e), delete_after=5)
+            await ctx.channel.send(f"\N{NO ENTRY} {e}", delete_after=5)
         elif isinstance(e, (commands.errors.BadArgument, commands.errors.MissingRequiredArgument)):
-            await ctx.channel.send("\N{CROSS MARK} Bad argument: {}".format(" ".join(e.args)), delete_after=5)
+            await ctx.channel.send(f"\N{CROSS MARK} Bad argument: {' '.join(e.args)}", delete_after=5)
             formatted_help = await ctx.bot.formatter.format_help_for(ctx, ctx.command)
             for page in formatted_help:
                 await ctx.channel.send(page, delete_after=20)
@@ -226,11 +225,10 @@ class DiscordBot(AutoShardedBot):
     async def on_command(self, ctx):
         author = str(ctx.author)
         if ctx.guild is not None:
-            self.command_logger.info("{0.guild.name} (ID: {0.guild.id}) > {author} (ID: {0.author.id}): {0.message"
-                                     ".clean_content}".format(ctx, author=author))
+            self.command_logger.info(f"{ctx.guild.name} (ID: {ctx.guild.id}) > {author} (ID: {ctx.author.id}): "
+                                     f"{ctx.message.clean_content}")
         else:
-            self.command_logger.info("Private Messages > {author} (ID: {0.author.id}): {0.message.clean_content}"
-                                     .format(ctx, author=author))
+            self.command_logger.info(f"Private Messages > {author} (ID: {ctx.author.id}): {ctx.message.clean_content}")
 
     async def on_command_completion(self, ctx):
         self.commands_used[ctx.command.name] += 1
@@ -257,4 +255,4 @@ class DiscordBot(AutoShardedBot):
         try:
             super().run(token)
         except discord.errors.LoginFailure as e:
-            self.logger.error("Failed to login to discord: {}".format(e.args[0]))
+            self.logger.error(f"Failed to login to discord: {e.args[0]}")
