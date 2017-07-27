@@ -95,10 +95,10 @@ class DiscordBot(AutoShardedBot):
                         msg.append("Dynamic Rules")
                     self.logger.info(f"{'/'.join(msg)} enabled for this session.")
                 except (asyncqlio.exc.DatabaseException, OSError) as e:
-                    self.logging, self.dynamic = False
+                    self.logging, self.dynamic = False, False
                     self.logger.warn("Could not connect to database: {}".format(e))
             else:
-                self.logging, self.dynamic = False
+                self.logging, self.dynamic = False, False
                 self.logger.warn("Could not connect to database.")
         else:
             self.logger.warn("Logging/dynamic rules disabled for this session.")
