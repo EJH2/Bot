@@ -249,7 +249,7 @@ class Information:
         if not member:
             member = ctx.author
 
-        await ctx.send(f"The avatar of {member.name} is: {member.avatar_url_as('png')}")
+        await ctx.send(f"The avatar of {member.name} is: {member.avatar_url_as(static_format='png')}")
 
     @commands.command()
     async def discrim(self, ctx, discrim: int = None):
