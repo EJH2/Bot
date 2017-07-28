@@ -162,7 +162,7 @@ class DiscordBot(AutoShardedBot):
         if self.shard_count > 1:
             for x in range(0, self.shard_count):
                 await self.change_presence(game=discord.Game(name=f'Use {self.command_prefix_}help for help | Shard '
-                                                                  f'{x + 1}/{self.shard_count}'))
+                                                                  f'{x + 1}/{self.shard_count}'), shard_id=x)
         else:
             await self.change_presence(game=discord.Game(name=f'Use {self.command_prefix_}help for help'))
 
