@@ -53,7 +53,7 @@ class Fun:
                 gif = await util.get_file("https://s-media-cache-ak0.pinimg.com/originals/2d/fa/a9/"
                                           "2dfaa995a09d81a07cad24d3ce18e011.gif")
                 await ctx.send(
-                    "{member.name} was shot dead by the mighty {ctx.author.name}!",
+                    f"{member.name} was shot dead by the mighty {ctx.author.name}!",
                     file=discord.File(io.BytesIO(gif), filename="gif.gif"))
 
     @commands.command()
