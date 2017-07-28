@@ -158,6 +158,14 @@ class DiscordBot(AutoShardedBot):
         self.owner_id = app_info.owner.id
         self.logger.info(f"I am owned by {str(app_info.owner)}, setting owner.")
 
+        # Set the playing statuses
+        if self.shard_count > 1:
+            for x in range(0, self.shard_count):
+                await self.change_presence(game=discord.Game(name=f'Use {self.command_prefix_}help for help | Shard '
+                                                                  f'{x + 1}/{self.shard_count}'))
+        else:
+            await self.change_presence(game=discord.Game(name=f'Use {self.command_prefix_}help for help'))
+
         # Attempt to load the Postgres Database
         await self.load_db()
 
