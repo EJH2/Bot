@@ -43,10 +43,10 @@ class DiscordBot(AutoShardedBot):
         self.command_prefix_ = None
 
         # Set up logging
-        formatter.setup_logger("discord")
+        discord_logger = formatter.setup_logger("discord")
         self.logger = formatter.setup_logger("Bot")
         self.command_logger = formatter.setup_logger("Commands")
-        self.file_logger = formatter.file_logger
+        self.loggers = [discord_logger, self.logger, self.command_logger]
 
         self.logging = bot_config.get("logging", True)
         self.dynamic = bot_config.get("dynamicrules", True)
@@ -138,10 +138,20 @@ class DiscordBot(AutoShardedBot):
                     if not load_silent:
                         self.logger.info(f"Loaded extension {mod}.")
 
+    async def close(self):
+        if not self.restarting.get('restarting', False):
+            # Silence asyncqlio
+            if self.db.connected:
+                await self.db.close()
+        for logger in self.loggers:
+            logger.handlers = []
+        await super().close()
+
     def __del__(self):
-        # Silence aiohttp.
-        if not self.http.session.closed:
-            self.http.session.close()
+        if not self.restarting.get('restarting', False):
+            # Silence aiohttp.
+            if not self.http._session.closed:
+                self.http._session.close()
 
     async def on_ready(self):
         if self._loaded:

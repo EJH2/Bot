@@ -8,8 +8,6 @@ import importlib
 import inspect
 import io
 import os
-import subprocess
-import sys
 import textwrap
 import traceback
 from contextlib import redirect_stdout
@@ -410,7 +408,6 @@ class Owner:
         await ctx.send("Goodbye!")
         self.bot.restarting.delete("restarting")
         await ctx.bot.logout()
-        return input("Press any key to continue...")
 
     @commands.command()
     @commands.is_owner()
@@ -422,21 +419,6 @@ class Owner:
         self.bot.restarting.place("restarting", "True")
         self.bot.restarting.place("restart_channel", ctx.channel.id)
         await ctx.bot.logout()
-        for x in asyncio.Task.all_tasks(loop=self.bot.loop):
-            try:
-                x.cancel()
-                self.bot.logger.info(f'Cancelled {x}\n')
-            except Exception as e:
-                self.bot.logger.critical(e)
-            finally:
-                self.bot.logger.warn('Attempting to restart...')
-                self.bot.logger.info("\n"
-                                     "-------------------"
-                                     "\n")
-                exc = [sys.executable, ctx.bot.filename]
-                if self.bot.debug:
-                    exc += ["debug"]
-                subprocess.call(exc)
 
     @commands.command()
     @commands.is_owner()
