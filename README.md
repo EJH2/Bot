@@ -12,7 +12,7 @@ If you want to run your own ViralBot, please follow the installation steps below
 
 Before you continue, you will need 2 things:
 
- - Python 3.6.2+ 
+ - Python 3.6+ 
  - PostgreSQL 9.6 or higher
 
 ### Installation Instructions
