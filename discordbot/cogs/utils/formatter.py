@@ -131,18 +131,6 @@ def setup_logger(logger_name: str):
     return logger
 
 
-def file_logger(path):
-    """
-    File logging™.
-    """
-    log = logging.getLogger("Messages")
-    log.handlers = []
-    handler = logging.FileHandler(filename=path, encoding='utf-8', mode='a')
-    log.addHandler(handler)
-
-    return log
-
-
 # ==============================
 #   Message related formatting
 # ==============================
