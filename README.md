@@ -13,7 +13,7 @@ If you want to run your own ViralBot, please follow the installation steps below
 Before you continue, you will need 2 things:
 
  - Python 3.6.2+ 
- - PostgreSQL 9.x or higher
+ - PostgreSQL 9.6 or higher
 
 ### Installation Instructions
 
@@ -24,7 +24,8 @@ Before you continue, you will need 2 things:
     
 2. **Install the requirements.**
 
-    Open up a terminal, navigate to the folder you put your bot in, and run `python3 -m pip install -r requirements.txt`
+    Open up a terminal, navigate to the folder you put your bot in, and run 
+    `python3.6 -m pip install -r requirements.txt`
     
     *Note: Make sure to keep this terminal open, we'll need it later.*
     
@@ -49,7 +50,7 @@ Before you continue, you will need 2 things:
 5. **Create a config.**
 
     On startup for the first time, if the bot doesn't detect a `config.yaml`, it'll auto create one. So just run the
-    bot and it'll create a config for you.
+    bot and it'll create a config for you. See step 7 on how to start the bot.
     
 6. **Edit the config.**
 
@@ -63,7 +64,8 @@ Before you continue, you will need 2 things:
     
 7. **Run the bot.**
 
-    Congrats!
+    You can start the bot by doing `python3.6 bot.py`. If you want to start it in debug mode, you can do
+    `python3.6 bot.py debug`
     
 ### Updating Instructions
 
