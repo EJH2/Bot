@@ -1,5 +1,9 @@
 # ViralBot
 
+![](https://img.shields.io/badge/fuyu-approved-brightgreen.png) 
+![](https://img.shields.io/badge/version-stable-brightgreen.png)
+![](https://img.shields.io/badge/python_version-3.6-brightgreen.png)
+
 ViralBot is yet another Multipurpose Python bot (TM) for Discord. It has many commands that are sure to keep the chat 
 alive. New features are added often, so be on the lookout for the latest commands!
 
