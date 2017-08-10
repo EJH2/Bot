@@ -11,7 +11,7 @@ from discord.ext.commands import when_mentioned_or
 from discordbot.bot import DiscordBot
 from discordbot.consts import bot_config, init_modules
 
-kwargs = {"command_prefix": when_mentioned_or(bot_config["bot"]["command_prefix"]), "description": "", "shard_count": 2}
+kwargs = {"command_prefix": when_mentioned_or(bot_config["bot"]["command_prefix"]), "description": ""}
 
 
 def init():
