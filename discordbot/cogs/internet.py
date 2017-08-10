@@ -221,6 +221,19 @@ class Internet:
         file = await util.get_file(url)
         await ctx.send(file=discord.File(filename=_url, fp=io.BytesIO(file)))
 
+    @commands.command(aliases=["birb", "tweet"])
+    async def bird(self, ctx):
+        """
+        A random bird!
+        """
+        with aiohttp.ClientSession() as sess:
+            async with sess.get("http://random.birb.pw/tweet/") as get:
+                assert isinstance(get, aiohttp.ClientResponse)
+                _url = (await get.read()).decode("utf-8")
+                url = f"http://random.birb.pw/img/{str(_url)}"
+        file = await util.get_file(url)
+        await ctx.send(file=discord.File(filename=_url, fp=io.BytesIO(file)))
+
 
 def setup(bot: DiscordBot):
     bot.add_cog(Internet(bot))
