@@ -3,6 +3,7 @@ Informative commands.
 """
 
 import copy
+import os
 import random
 import sys
 import time
@@ -63,6 +64,14 @@ class Information:
         """
         Gives information about the bot.
         """
+        # More Danny Code
+        cmd = r'git show -s HEAD~3..HEAD --format="[{}](https://github.com/EJH2/ViralBot/commit/%H) %s (%cr)"'
+        if os.name == 'posix':
+            cmd = cmd.format(r'\`%h\`')
+        else:
+            cmd = cmd.format(r'`%h`')
+
+        revision = os.popen(cmd).read().strip()
         app_info = await self.bot.application_info()
         owner = ctx.bot.owner
         seconds = time.time() - start
@@ -89,7 +98,7 @@ class Information:
         except ValueError:
             most_used = "None"
 
-        em = discord.Embed(description="Bot Stats:")
+        em = discord.Embed(description='Latest Changes:\n' + revision)
         em.title = "Bot Invite Link"
         em.url = url
         em.set_thumbnail(url=self.bot.user.avatar_url)
