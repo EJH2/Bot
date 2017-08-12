@@ -107,22 +107,18 @@ class DiscordBot(AutoShardedBot):
         if not self.dynamic:
             modules.remove("discordbot.cogs.dynamic")
 
-    async def get_prefix_(self, bot, message):
-        if self.dynamic:
+    async def get_prefix(self, message):
+        bot_id = self.user.id
+        prefixes = [f'<@!{bot_id}> ', f'<@{bot_id}> ', self.command_prefix_]
+        if self.dynamic and self._loaded:
             if message.guild:
                 async with self.db.get_session() as s:
                     query = await s.select(tables.Dynamic_Rules).where(
                         tables.Dynamic_Rules.guild_id == message.guild.id).first()
-                if not query:
-                    return commands.when_mentioned_or(*[self.command_prefix_])(bot, message)
-                else:
+                if query:
                     attrs = json.loads(query.attrs)
-                    return commands.when_mentioned_or(*[attrs.get("command_prefix", self.command_prefix_)])(bot,
-                                                                                                            message)
-            else:
-                return commands.when_mentioned_or(*[self.command_prefix_])(bot, message)
-        else:
-            return commands.when_mentioned_or(*[self.command_prefix_])(bot, message)
+                    prefixes.append(attrs.get("command_prefix"))
+        return prefixes
 
     def load_modules(self, modules_list: list, load_silent: bool = False):
         """
@@ -178,8 +174,6 @@ class DiscordBot(AutoShardedBot):
 
         # Attempt to load the Postgres Database
         await self.load_db()
-
-        self.command_prefix = self.get_prefix_
 
         # Attempt to load Bot modules
         self.load_modules(modules)
