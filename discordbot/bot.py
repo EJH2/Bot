@@ -117,7 +117,8 @@ class DiscordBot(AutoShardedBot):
                         tables.Dynamic_Rules.guild_id == message.guild.id).first()
                 if query:
                     attrs = json.loads(query.attrs)
-                    prefixes.append(attrs.get("command_prefix"))
+                    if attrs.get("command_prefix"):
+                        prefixes.append(attrs.get("command_prefix"))
         return prefixes
 
     def load_modules(self, modules_list: list, load_silent: bool = False):
