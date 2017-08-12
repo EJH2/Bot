@@ -9,7 +9,7 @@ from discord.ext import commands
 
 from discordbot.bot import DiscordBot
 from discordbot.cogs.utils import checks
-from discordbot.cogs.utils import util
+from discordbot.cogs.utils import util, exceptions
 from discordbot.cogs.utils.tables import Dynamic_Rules, Table
 
 
@@ -19,7 +19,8 @@ async def needs_setup(ctx):
         query = await s.select(Dynamic_Rules).where(Dynamic_Rules.guild_id == server.id).all()
         query = await query.flatten()
     if len(query) == 0:
-        await ctx.send(f"You don't have Dynamic Rules set up! Use {ctx.bot.command_prefix_}dynamicrules setup")
+        msg = f"You don't have Dynamic Rules set up! Use {ctx.bot.command_prefix_}dynamicrules setup"
+        raise exceptions.ClearanceError(msg)
     return True
 
 
@@ -28,6 +29,8 @@ class DynamicRules:
         self.bot = bot
         self.db = bot.db
         self.db.bind_tables(Table)
+
+        self.valid_settings = {"command_prefix": str, "announce_joins": bool, "announce_leaves": bool}
 
     # ============================
     #    Dynamic Rules Commands
@@ -106,6 +109,27 @@ class DynamicRules:
     #    Set Dynamic Rules Settings
     # ================================
 
+    def handle_typing(self, entry, value):  # Look, I know this is god awful, but it just works™
+        valid_dict = self.valid_settings
+        valid = [k for k in valid_dict]
+        if entry not in valid:
+            valid = ", ".join(valid)
+            return None, f"Sorry, but the only valid settings are: {valid}"
+        value_type = valid_dict[entry]
+        if valid_dict[entry] == bool:
+            if value.lower() not in ["true", "false"]:
+                return None, f"Sorry, but that setting needs to be either `True` or `False`."
+            if value.lower() == "true":
+                value = True
+            else:
+                value = False
+        else:
+            try:
+                value = value_type(value)
+            except ValueError:
+                return None, f"Sorry, but that setting needs to be of type `{str(valid_dict[entry].__name__)}`."
+        return value, None
+
     @dynamicrules.command(name="set")
     @commands.check(checks.permissions(manage_messages=True))
     @commands.check(needs_setup)
@@ -115,10 +139,14 @@ class DynamicRules:
         """
         server = ctx.guild
         try:
+            value, error = self.handle_typing(entry, value)
+            if error is not None:
+                return await ctx.send(error)
             async with self.bot.db.get_session() as s:
                 query = await s.select(Dynamic_Rules).where(Dynamic_Rules.guild_id == server.id).first()
                 assert isinstance(query, Dynamic_Rules)
                 attrs = json.loads(query.attrs)
+                value = str(value)
                 attrs[entry] = value
                 query.attrs = json.dumps(attrs)
                 await s.add(query)

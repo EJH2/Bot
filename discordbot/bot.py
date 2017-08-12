@@ -184,6 +184,46 @@ class DiscordBot(AutoShardedBot):
 
         self._loaded = True
 
+    async def on_member_join(self, member: discord.Member):
+        """
+        Gives a message when a user joins the server. It's opt-in though!
+        """
+        if self.dynamic and self._loaded:
+            if member.guild:
+                async with self.db.get_session() as s:
+                    query = await s.select(tables.Dynamic_Rules).where(
+                        tables.Dynamic_Rules.guild_id == member.guild.id).first()
+                if query:
+                    attrs = json.loads(query.attrs)
+                    if attrs.get("announce_joins", False) == "True":
+                        assert isinstance(member.guild, discord.Guild)
+                        bot = discord.utils.get(member.guild.members, id=self.user.id)
+                        for chan in member.guild.channels:
+                            assert isinstance(chan, discord.abc.GuildChannel)
+                            if chan.permissions_for(bot).send_messages is True:
+                                await chan.send(f"Welcome, {member.mention}, to the server!")
+                                break
+
+    async def on_member_remove(self, member: discord.Member):
+        """
+        Gives a message when a user leaves the server. It's opt-in though!
+        """
+        if self.dynamic and self._loaded:
+            if member.guild:
+                async with self.db.get_session() as s:
+                    query = await s.select(tables.Dynamic_Rules).where(
+                        tables.Dynamic_Rules.guild_id == member.guild.id).first()
+                if query:
+                    attrs = json.loads(query.attrs)
+                    if attrs.get("announce_leaves", False) == "True":
+                        assert isinstance(member.guild, discord.Guild)
+                        bot = discord.utils.get(member.guild.members, id=self.user.id)
+                        for chan in member.guild.channels:
+                            assert isinstance(chan, discord.abc.GuildChannel)
+                            if chan.permissions_for(bot).send_messages is True:
+                                await chan.send(f"Goodbye, {member.mention}!")
+                                break
+
     async def on_message_edit(self, before, after):
         """
         Checks message edit to see if I screwed up a command...
