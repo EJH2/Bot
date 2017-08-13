@@ -1,6 +1,7 @@
 """
 Logging.
 """
+import asyncio
 import json
 
 import discord
@@ -64,13 +65,17 @@ class Logging:
     # =========================
 
     @staticmethod
-    async def on_handle_delete(timer):
+    async def on_handle_delete(timer, seconds=None, url=None):
         """
         Deletes a short link.
         """
-        url = json.loads(timer.extras)["url"]
         yourl = YOURLS(bot_config["yourls"]["yourls_base"], signature=bot_config["yourls"]["yourls_signature"])
-        await yourl.delete(url)
+        if not seconds and not url:
+            url = json.loads(timer.extras)["url"]
+            await yourl.delete(url)
+        else:
+            await asyncio.sleep(seconds)
+            await yourl.delete(url)
 
     async def paste_logs(self, ctx, gb, body):
         res = await gb.paste(body, expire="15m")
@@ -81,9 +86,12 @@ class Logging:
             res, is_yourl, yourl = res, None, None
         await ctx.send(f"Here is a link to your logs: {res}. Hurry, it expires in 15 minutes!")
         if is_yourl:
-            extras = json.dumps({"url": res})
-            self.bot.loop.create_task(self.bot.get_cog("Scheduling").create_timer({"expires": 54000, "event":
-                "handle_delete", "extras": extras}))
+            if self.db:
+                extras = json.dumps({"url": res})
+                self.bot.loop.create_task(self.bot.get_cog("Scheduling").create_timer({"expires": 54000, "event":
+                    "handle_delete", "extras": extras}))
+            else:
+                await self.on_handle_delete(None, 54000, res)
 
     @commands.group(invoke_without_command=True)
     @commands.check(checks.needs_logging)

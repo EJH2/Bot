@@ -41,6 +41,7 @@ class DiscordBot(AutoShardedBot):
 
         self.bot_config = bot_config
         self.command_prefix_ = None
+        self.db = None
 
         # Set up logging
         discord_logger = formatter.setup_logger("discord")
@@ -106,6 +107,8 @@ class DiscordBot(AutoShardedBot):
             modules.remove("discordbot.cogs.logging")
         if not self.dynamic:
             modules.remove("discordbot.cogs.dynamic")
+        if not self.db:
+            modules.remove("discordbot.cogs.scheduling")
 
     async def get_prefix(self, message):
         bot_id = self.user.id
