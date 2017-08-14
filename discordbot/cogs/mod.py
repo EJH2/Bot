@@ -250,12 +250,11 @@ class Moderation:
         """
         if "https://pastebin.com/raw/" not in url:
             return await ctx.send("The link should look like https://pastebin.com/raw/{Random String}")
-        with aiohttp.ClientSession() as sess:
-            async with sess.get(url) as get:
-                assert isinstance(get, aiohttp.ClientResponse)
-                data = await get.read()
-                data = data.decode("utf-8").split()
-                await ctx.invoke(self.hackban, *data)
+        async with self.bot.session.get(url) as get:
+            assert isinstance(get, aiohttp.ClientResponse)
+            data = await get.read()
+            data = data.decode("utf-8").split()
+            await ctx.invoke(self.hackban, *data)
 
     @commands.command()
     @commands.check(permissions(manage_guild=True, kick_members=True, ban_members=True))

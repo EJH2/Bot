@@ -235,7 +235,7 @@ class Owner:
         """
         Change the bot's avatar.
         """
-        avatar = await util.get_file(url)
+        avatar = await util.get_file(self.bot, url)
         await ctx.bot.user.edit(avatar=avatar)
         await ctx.send("Changed avatar.")
 

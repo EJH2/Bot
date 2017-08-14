@@ -41,16 +41,16 @@ class Fun:
                     "http://static1.comicvine.com/uploads/original/11127/111275532/5288551-9830962548-latest",
                     "http://i.imgur.com/hPL5TGD.gif"
                 ])
-                gif = await util.get_file(file)
+                gif = await util.get_file(self.bot, file)
                 await ctx.send(
                     f"You attempted to shoot me, {ctx.author.name}, but I dodged it!",
                     file=discord.File(io.BytesIO(gif), filename="gif.gif"))
             elif member == ctx.author:
-                gif = await util.get_file("https://media.giphy.com/media/5xaOcLAo1Gg0oRgBz0Y/giphy.gif")
+                gif = await util.get_file(self.bot, "https://media.giphy.com/media/5xaOcLAo1Gg0oRgBz0Y/giphy.gif")
                 await ctx.send(
                     f"{ctx.author.name} committed suicide!", file=discord.File(io.BytesIO(gif), filename="gif.gif"))
             else:
-                gif = await util.get_file("https://s-media-cache-ak0.pinimg.com/originals/2d/fa/a9/"
+                gif = await util.get_file(self.bot, "https://s-media-cache-ak0.pinimg.com/originals/2d/fa/a9/"
                                           "2dfaa995a09d81a07cad24d3ce18e011.gif")
                 await ctx.send(
                     f"{member.name} was shot dead by the mighty {ctx.author.name}!",
@@ -71,7 +71,7 @@ class Fun:
                     "https://media.giphy.com/media/DFwhlTWNrwDEA/giphy.gif",
                     "https://s-media-cache-ak0.pinimg.com/originals/d2/54/39/d25439365581a4797a1e351ca030f31d.gif"
                 ])
-                gif = await util.get_file(file)
+                gif = await util.get_file(self.bot, file)
                 await ctx.send(
                     f"You attempted to stab me, {ctx.author.name}, but I dodged it!",
                     file=discord.File(io.BytesIO(gif), filename="gif.gif"))
@@ -82,7 +82,7 @@ class Fun:
                     "b1tat2xb_500.gif",
                     "http://i.imgur.com/6aSNqpO.gif"
                 ])
-                gif = await util.get_file(file)
+                gif = await util.get_file(self.bot, file)
                 await ctx.send(
                     f"{ctx.author.name} died to their own blade!",
                     file=discord.File(io.BytesIO(gif), filename="gif.gif"))
@@ -91,7 +91,7 @@ class Fun:
                     "https://24.media.tumblr.com/c7eb88eddb09a3fa30b2d69d7c9e0647/tumblr_n0tb9sVhOv1ryx1zoo1_500.gif",
                     "http://pa1.narvii.com/5844/56df36d19b8df053f46d5be39a5de5303b6b9805_hq.gif"
                 ])
-                gif = await util.get_file(file)
+                gif = await util.get_file(self.bot, file)
                 await ctx.send(
                     f"{member.name} was stabbed to death by the mighty {ctx.author.name}!",
                     file=discord.File(io.BytesIO(gif), filename="gif.gif"))
@@ -106,7 +106,7 @@ class Fun:
             return
         for member in members:
             if member == self.bot.user:
-                gif = await util.get_file("https://media.giphy.com/media/qRdL7w5ddkHDi/giphy.gif")
+                gif = await util.get_file(self.bot, "https://media.giphy.com/media/qRdL7w5ddkHDi/giphy.gif")
                 await ctx.send(
                     f"You attempted to punch me, {ctx.author.name}, but I dodged it!",
                     file=discord.File(io.BytesIO(gif), filename="gif.gif"))
@@ -115,7 +115,7 @@ class Fun:
                     "https://media.giphy.com/media/7G2cxOTQLPeOk/giphy.gif",
                     "https://media.giphy.com/media/7JjAXbG2mQ3uM/giphy.gif"
                 ])
-                gif = await util.get_file(file)
+                gif = await util.get_file(self.bot, file)
                 await ctx.send(
                     f"{ctx.author.name} punched their self!",
                     file=discord.File(io.BytesIO(gif), filename="gif.gif"))
@@ -124,7 +124,7 @@ class Fun:
                     "https://media.giphy.com/media/arbHBoiUWUgmc/giphy.gif",
                     "http://pa1.narvii.com/5758/7c65ad50e958a34baa7f51b6ab1f764506deea50_hq.gif"
                 ])
-                gif = await util.get_file(file)
+                gif = await util.get_file(self.bot, file)
                 await ctx.send(
                     f"{member.name} was punched by the mighty {ctx.author.name}!",
                     file=discord.File(io.BytesIO(gif), filename="gif.gif"))
@@ -339,11 +339,10 @@ class Fun:
         """
         Lenny faces!
         """
-        with aiohttp.ClientSession() as sess:
-            async with sess.get("http://lenny.today/api/v1/random") as get:
-                assert isinstance(get, aiohttp.ClientResponse)
-                lenny = await get.json()
-                await ctx.send(lenny[0]["face"])
+        async with self.bot.session.get("http://lenny.today/api/v1/random") as get:
+            assert isinstance(get, aiohttp.ClientResponse)
+            lenny = await get.json()
+            await ctx.send(lenny[0]["face"])
 
     @commands.command(aliases=["shrug"])
     async def meh(self, ctx):
@@ -357,20 +356,19 @@ class Fun:
         """
         Allows the user to play a word scramble with the bot.
         """
-        with aiohttp.ClientSession() as sess:
-            if word_length:
-                word_length_req = 3 <= word_length <= 20
-                if word_length_req:
-                    async with sess.get(f"http://www.setgetgo.com/randomword/get.php?len={word_length}") as get:
-                        assert isinstance(get, aiohttp.ClientResponse)
-                        word = await get.read()
-                else:
-                    await ctx.send("Word length must be within 3 and 20!")
-                    return
-            else:
-                async with sess.get("http://www.setgetgo.com/randomword/get.php") as get:
+        if word_length:
+            word_length_req = 3 <= word_length <= 20
+            if word_length_req:
+                async with self.bot.session.get(f"http://www.setgetgo.com/randomword/get.php?len={word_length}") as get:
                     assert isinstance(get, aiohttp.ClientResponse)
                     word = await get.read()
+            else:
+                await ctx.send("Word length must be within 3 and 20!")
+                return
+        else:
+            async with self.bot.session.get("http://www.setgetgo.com/randomword/get.php") as get:
+                assert isinstance(get, aiohttp.ClientResponse)
+                word = await get.read()
         word = word.decode()
         print(word)
         scrambled = random.sample(word, len(word))
@@ -422,14 +420,13 @@ class Fun:
         else:
             return await ctx.send("Sorry, but that is not a valid rgb or hex color.")
         color_api = "http://thecolorapi.com/id?"
-        with aiohttp.ClientSession() as sess:
-            async with sess.get(color_api, params=attrs) as get:
-                resp = await get.json()
+        async with self.bot.session.get(color_api, params=attrs) as get:
+            resp = await get.json()
         hex_code = str(resp["hex"]["clean"])
         contrast = str(resp["contrast"]["value"]).strip("#")
         name = str(resp["name"]["value"])
         image = f"http://placehold.it/300x300.png/{hex_code}/{contrast}&text={name}"
-        pic = await util.get_file(image)
+        pic = await util.get_file(self.bot, image)
         await ctx.send(file=discord.File(fp=io.BytesIO(pic), filename="color.png"))
 
     @commands.command()

@@ -8,6 +8,7 @@ import sys
 import traceback
 from collections import Counter
 
+import aiohttp
 import asyncqlio.exc
 import discord
 from asyncqlio.db import DatabaseInterface
@@ -42,6 +43,7 @@ class DiscordBot(AutoShardedBot):
         self.bot_config = bot_config
         self.command_prefix_ = None
         self.db = None
+        self.session = aiohttp.ClientSession(loop=self.loop, headers={"User-Agent": self.http.user_agent})
 
         # Set up logging
         discord_logger = formatter.setup_logger("discord")
@@ -152,6 +154,8 @@ class DiscordBot(AutoShardedBot):
             # Silence aiohttp.
             if not self.http._session.closed:
                 self.http._session.close()
+            if not self.session.closed:
+                self.session.close()
 
     async def on_ready(self):
         if self._loaded:

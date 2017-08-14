@@ -9,15 +9,14 @@ class Borked(Exception):
     pass
 
 
-async def get_file(url):
+async def get_file(bot, url):
     """
     Get a file from the web using aiohttp.
     """
-    with aiohttp.ClientSession() as sess:
-        async with sess.get(url) as get:
-            assert isinstance(get, aiohttp.ClientResponse)
-            data = await get.read()
-            return data
+    async with bot.session.get(url) as get:
+        assert isinstance(get, aiohttp.ClientResponse)
+        data = await get.read()
+        return data
 
 
 def neatly(entries, colors=""):
@@ -33,13 +32,12 @@ def neatly(entries, colors=""):
     return "\n".join(output)
 
 
-async def download(url, path):
+async def download(bot, url, path):
     """
     Download a file to a specified path.
     """
-    with aiohttp.ClientSession() as sess:
-        async with sess.get(url) as get:
-            assert isinstance(get, aiohttp.ClientResponse)
-            data = await get.read()
-            with open(path, "wb") as f:
-                f.write(data)
+    async with bot.session.get(url) as get:
+        assert isinstance(get, aiohttp.ClientResponse)
+        data = await get.read()
+        with open(path, "wb") as f:
+            f.write(data)

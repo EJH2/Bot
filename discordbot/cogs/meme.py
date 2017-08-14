@@ -31,7 +31,7 @@ class Meme:
             link = f"http://memegen.link/{meme}/{line1}/{line2}.jpg"
         else:
             link = f"http://memegen.link/{meme}/{line1}/{line2}.jpg?alt={style}"
-        file = await util.get_file(link)
+        file = await util.get_file(self.bot, link)
         await ctx.send(file=discord.File(fp=io.BytesIO(file), filename="meme.png"))
 
     @meme.command(name="custom")
@@ -39,21 +39,20 @@ class Meme:
         """
         Generates a meme using a custom picture.
         """
-        with aiohttp.ClientSession() as sess:
-            async with sess.get(link) as get:
-                assert isinstance(get, aiohttp.ClientResponse)
-                content = get.headers['Content-Type']
-                type_split = content.split("/")
-                if type_split[0] == "image" and type_split[1] in ["png", "jpeg", "bmp"]:
-                    rep = [["-", "--"], ["_", "__"], ["?", "~q"], ["%", "~p"], [" ", "%20"], ["''", "\""]]
-                    for i in rep:
-                        line1 = line1.replace(i[0], i[1])
-                        line2 = line2.replace(i[0], i[1])
-                    link = f"http://memegen.link/custom/{line1}/{line2}.jpg?alt={link}"
-                    file = await util.get_file(link)
-                    await ctx.send(file=discord.File(fp=io.BytesIO(file), filename="meme.png"))
-                else:
-                    await ctx.send("Only jpeg, png, or bmp images please!")
+        async with self.bot.session.get(link) as get:
+            assert isinstance(get, aiohttp.ClientResponse)
+            content = get.headers['Content-Type']
+            type_split = content.split("/")
+            if type_split[0] == "image" and type_split[1] in ["png", "jpeg", "bmp"]:
+                rep = [["-", "--"], ["_", "__"], ["?", "~q"], ["%", "~p"], [" ", "%20"], ["''", "\""]]
+                for i in rep:
+                    line1 = line1.replace(i[0], i[1])
+                    line2 = line2.replace(i[0], i[1])
+                link = f"http://memegen.link/custom/{line1}/{line2}.jpg?alt={link}"
+                file = await util.get_file(self.bot, link)
+                await ctx.send(file=discord.File(fp=io.BytesIO(file), filename="meme.png"))
+            else:
+                await ctx.send("Only jpeg, png, or bmp images please!")
 
     @meme.command(name="user")
     async def meme_user(self, ctx, user: discord.User, line1: str, line2: str):
@@ -65,7 +64,7 @@ class Meme:
             line1 = line1.replace(i[0], i[1])
             line2 = line2.replace(i[0], i[1])
         link = f"http://memegen.link/custom/{line1}/{line2}.jpg?alt={user.avatar_url}"
-        file = await util.get_file(link)
+        file = await util.get_file(self.bot, link)
         await ctx.send(file=discord.File(fp=io.BytesIO(file), filename="meme.gif"))
 
     @meme.group(name="templates", invoke_without_command=True)
@@ -73,9 +72,8 @@ class Meme:
         """
         Gives users a list of meme templates.
         """
-        with aiohttp.ClientSession() as sess:
-            async with sess.get("http://memegen.link/templates/") as resp:
-                resp = await resp.json()
+        async with self.bot.session.get("http://memegen.link/templates/") as resp:
+            resp = await resp.json()
         memes = [resp[key][35:] for key in resp]
         await ctx.send(f"All stock templates are: {', '.join(memes)}")
 
@@ -86,7 +84,7 @@ class Meme:
         """
         meme = urllib.parse.quote_plus(meme)
         link = f"http://martmists.com/api/v1/illegal?query={meme}"
-        file = await util.get_file(link)
+        file = await util.get_file(self.bot, link)
         await ctx.send(file=discord.File(fp=io.BytesIO(file), filename="meme.gif"))
 
 

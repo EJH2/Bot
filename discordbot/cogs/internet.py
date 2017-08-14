@@ -14,6 +14,7 @@ import pytz
 import wikipedia
 import wikipedia.exceptions
 import xkcd
+from bs4 import BeautifulSoup as BSoup
 from discord.ext import commands
 
 from discordbot.bot import DiscordBot
@@ -74,7 +75,7 @@ class Internet:
         else:
             user = ctx.author.display_name
         url = f"https://robohash.org/{user.replace(' ', '%20')}.png"
-        file = await util.get_file(url)
+        file = await util.get_file(self.bot, url)
         await ctx.send(file=discord.File(fp=io.BytesIO(file), filename="robot.png"))
 
     @commands.command()
@@ -200,11 +201,10 @@ class Internet:
         """
         A random cat!
         """
-        with aiohttp.ClientSession() as sess:
-            async with sess.get("http://random.cat/meow") as get:
-                assert isinstance(get, aiohttp.ClientResponse)
-                json = await get.json()
-        file = await util.get_file(json["file"])
+        async with self.bot.session.get("http://random.cat/meow") as get:
+            assert isinstance(get, aiohttp.ClientResponse)
+            json = await get.json()
+        file = await util.get_file(self.bot, json["file"])
         ext = str(json["file"]).split(".")[-1]
         await ctx.send(file=discord.File(filename=f"cat.{ext}", fp=io.BytesIO(file)))
 
@@ -213,12 +213,11 @@ class Internet:
         """
         A random dog!
         """
-        with aiohttp.ClientSession() as sess:
-            async with sess.get("http://random.dog/woof") as get:
-                assert isinstance(get, aiohttp.ClientResponse)
-                _url = (await get.read()).decode("utf-8")
-                url = f"http://random.dog/{str(_url)}"
-        file = await util.get_file(url)
+        async with self.bot.session.get("http://random.dog/woof") as get:
+            assert isinstance(get, aiohttp.ClientResponse)
+            _url = (await get.read()).decode("utf-8")
+            url = f"http://random.dog/{str(_url)}"
+        file = await util.get_file(self.bot, url)
         await ctx.send(file=discord.File(filename=_url, fp=io.BytesIO(file)))
 
     @commands.command(aliases=["birb", "tweet"])
@@ -226,13 +225,26 @@ class Internet:
         """
         A random bird!
         """
-        with aiohttp.ClientSession() as sess:
-            async with sess.get("http://random.birb.pw/tweet/") as get:
-                assert isinstance(get, aiohttp.ClientResponse)
-                _url = (await get.read()).decode("utf-8")
-                url = f"http://random.birb.pw/img/{str(_url)}"
-        file = await util.get_file(url)
+        async with self.bot.session.get("http://random.birb.pw/tweet/") as get:
+            assert isinstance(get, aiohttp.ClientResponse)
+            _url = (await get.read()).decode("utf-8")
+            url = f"http://random.birb.pw/img/{str(_url)}"
+        file = await util.get_file(self.bot, url)
         await ctx.send(file=discord.File(filename=_url, fp=io.BytesIO(file)))
+
+    @commands.command(aliases=["facts"])
+    async def randomfacts(self, ctx):
+        """
+        Gives 3 random facts!
+        """
+        async with self.bot.session.get("http://randomfactgenerator.net/") as get:
+            assert isinstance(get, aiohttp.ClientResponse)
+            _html = await get.read()
+        html = BSoup(_html, 'html.parser')
+        # for fact in html.find_all("a"):
+        #     print(fact.get("data-text"))
+        for fact in html.find_all(id="z"):
+            print(fact.contents[0])
 
 
 def setup(bot: DiscordBot):
