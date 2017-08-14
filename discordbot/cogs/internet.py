@@ -241,10 +241,13 @@ class Internet:
             assert isinstance(get, aiohttp.ClientResponse)
             _html = await get.read()
         html = BSoup(_html, 'html.parser')
-        # for fact in html.find_all("a"):
-        #     print(fact.get("data-text"))
+        facts = []
         for fact in html.find_all(id="z"):
-            print(fact.contents[0])
+            facts.append(fact.contents[0])
+        await ctx.send(f"Did you know?\n"
+                       f"\t1. {facts[0]}\n"
+                       f"\t2. {facts[1]}\n"
+                       f"\t3. {facts[2]}")
 
 
 def setup(bot: DiscordBot):
