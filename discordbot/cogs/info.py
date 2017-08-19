@@ -1,14 +1,15 @@
 """
 Informative commands.
 """
-
 import copy
-import os
+import datetime
 import random
 import sys
 import time
 from collections import Counter, OrderedDict
 
+import babel.dates
+import dateutil.parser
 import discord
 from discord.ext import commands
 
@@ -64,14 +65,18 @@ class Information:
         """
         Gives information about the bot.
         """
-        # More Danny Code
-        cmd = r'git show -s HEAD~3..HEAD --format="[{}](https://github.com/EJH2/ViralBot/commit/%H) %s (%cr)"'
-        if os.name == 'posix':
-            cmd = cmd.format(r'\`%h\`')
-        else:
-            cmd = cmd.format(r'`%h`')
-
-        revision = os.popen(cmd).read().strip()
+        commit_list = []
+        async with self.bot.session.get("https://api.github.com/repos/EJH2/ViralBot/commits") as get:
+            commits = await get.json()
+        for i in range(0, 3):
+            tag = commits[i]['sha'][:7]
+            message = commits[i]['commit']['message']
+            _commit_time = commits[i]['commit']['author']['date']
+            delta = dateutil.parser.parse(_commit_time).replace(tzinfo=None) - datetime.datetime.utcnow()
+            commit_time = babel.dates.format_timedelta(delta, locale='en_US', add_direction=True)
+            commit = f"[`{tag}`](https://github.com/EJH2/ViralBot/commit/{tag}) {message} ({commit_time})"
+            commit_list.append(commit)
+        revision = '\n'.join(commit_list)
         app_info = await self.bot.application_info()
         owner = ctx.bot.owner
         seconds = time.time() - start
