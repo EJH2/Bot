@@ -1,18 +1,20 @@
-aiohttp>=2.0.0,<2.3.0
-astral=1.4
-asyncpg=0.12.0
-beautifulsoup4=4.6.0
-click=6.7
-darkskylib=0.3.6
-geocoder=1.23.2
-pillow=4.2.1
-psycopg2=2.7.3
-pyfiglet=0.7.5
-pytz=2017.2
-ruamel.yaml=0.15.21
-tqdm=4.15.0
-wikipedia=1.4.0
-xkcd=2.4.2
+aiohttp         >= 2.0.0,<2.3.0
+astral          == 1.4
+asyncpg         == 0.12.0
+babel           == 2.5.0
+beautifulsoup4  == 4.6.0
+click           == 6.7
+darkskylib      == 0.3.6
+geocoder        == 1.23.2
+pillow          == 4.2.1
+psycopg2        == 2.7.3
+pyfiglet        == 0.7.5
+python-dateutil == 2.6.1
+pytz            == 2017.2
+ruamel.yaml     == 0.15.21
+tqdm            == 4.15.0
+wikipedia       == 1.4.0
+xkcd            == 2.4.2
 git+https://github.com/EJH2/ghostbin@master
 git+https://github.com/EJH2/urbandictionary-py@master
 git+https://github.com/EJH2/yourls@master
