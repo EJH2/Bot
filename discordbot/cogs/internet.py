@@ -249,6 +249,17 @@ class Internet:
                        f"\t2. {facts[1]}\n"
                        f"\t3. {facts[2]}")
 
+    @commands.command(aliases=["dadjoke"])
+    async def joke(self, ctx):
+        """
+        Sends a Dad Joke!
+        """
+        headers = {"Accept": "application/json"}
+        async with self.bot.session.get("https://icanhazdadjoke.com", headers=headers) as get:
+            assert isinstance(get, aiohttp.ClientResponse)
+            resp = await get.json()
+            await ctx.send(resp["joke"])
+
 
 def setup(bot: DiscordBot):
     bot.add_cog(Internet(bot))
