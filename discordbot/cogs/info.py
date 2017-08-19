@@ -84,8 +84,7 @@ class Information:
         channel_types = Counter(type(c) for c in self.bot.get_all_channels())
         voice = channel_types[discord.channel.VoiceChannel]
         text = channel_types[discord.channel.TextChannel]
-        perms = discord.Permissions.none()
-        perms.administrator = True
+        perms = discord.Permissions(470083623)
         url = discord.utils.oauth_url(app_info.id, perms)
         try:
             c = self.bot.commands_used
