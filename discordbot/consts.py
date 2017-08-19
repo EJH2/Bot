@@ -5,6 +5,7 @@ import shutil
 import sys
 import time
 
+import aiohttp
 from ruamel import yaml
 
 from discordbot.cogs.utils import util
@@ -24,8 +25,12 @@ async def download_config():
     except FileNotFoundError:
         print("It seems that you did not download the example bot config file! Downloading and copying...")
         try:
-            await util.download("https://github.com/EJH2/ViralBot/blob/master/config.example.yaml",
-                                "config.example.yaml")
+            with aiohttp.ClientSession as sess:
+                async with sess.get("https://github.com/EJH2/ViralBot/blob/master/config.example.yaml") as get:
+                    assert isinstance(get, aiohttp.ClientResponse)
+                    data = await get.read()
+                    with open("config.example.yaml", "wb") as f:
+                        f.write(data)
         except util.Borked:
             print("Config could not be cloned automatically, please ask on GitHub or Discord", file=sys.stderr)
             input("Press any key to continue...")
