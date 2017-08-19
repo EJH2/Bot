@@ -6,12 +6,13 @@ import os
 import sys
 import time
 
-from discord.ext.commands import when_mentioned_or
+from discord.ext import commands
 
 from discordbot.bot import DiscordBot
 from discordbot.consts import bot_config, init_modules
 
-kwargs = {"command_prefix": when_mentioned_or(bot_config["bot"]["command_prefix"]), "description": ""}
+kwargs = {"command_prefix": commands.when_mentioned_or(bot_config["bot"]["command_prefix"]), "description": "",
+          "formatter": commands.HelpFormatter(show_check_failure=True)}
 
 
 def init():
