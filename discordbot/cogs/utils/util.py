@@ -30,14 +30,3 @@ def neatly(entries, colors=""):
         output.append(fmt.format(name, entry, width=width))
     output.append("```")
     return "\n".join(output)
-
-
-async def download(bot, url, path):
-    """
-    Download a file to a specified path.
-    """
-    async with bot.session.get(url) as get:
-        assert isinstance(get, aiohttp.ClientResponse)
-        data = await get.read()
-        with open(path, "wb") as f:
-            f.write(data)
