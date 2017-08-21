@@ -286,7 +286,7 @@ class DiscordBot(AutoShardedBot):
             self.command_logger.info(f"[Shard {ctx.guild.shard_id}] {ctx.guild.name} (ID: {ctx.guild.id}) > {author} "
                                      f"(ID: {ctx.author.id}): {ctx.message.clean_content}")
         else:
-            self.command_logger.info(f"[Shard {ctx.guild.shard_id}] Private Messages > {author} (ID: {ctx.author.id}):"
+            self.command_logger.info(f"[Shard 0] Private Messages > {author} (ID: {ctx.author.id}):"
                                      f" {ctx.message.clean_content}")
 
     async def on_command_completion(self, ctx):
