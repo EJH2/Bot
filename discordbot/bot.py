@@ -141,21 +141,19 @@ class DiscordBot(AutoShardedBot):
                         self.logger.info(f"Loaded extension {mod}.")
 
     async def close(self):
-        if not self.restarting.get('restarting', False):
-            # Silence asyncqlio
-            if self.db.connected:
-                await self.db.close()
+        # Silence asyncqlio
+        if self.db.connected:
+            await self.db.close()
         for logger in self.loggers:
             logger.handlers = []
         await super().close()
 
     def __del__(self):
-        if not self.restarting.get('restarting', False):
-            # Silence aiohttp.
-            if not self.http._session.closed:
-                self.http._session.close()
-            if not self.session.closed:
-                self.session.close()
+        # Silence aiohttp.
+        if not self.http._session.closed:
+            self.http._session.close()
+        if not self.session.closed:
+            self.session.close()
 
     async def on_ready(self):
         if self._loaded:
@@ -285,10 +283,11 @@ class DiscordBot(AutoShardedBot):
     async def on_command(self, ctx):
         author = str(ctx.author)
         if ctx.guild is not None:
-            self.command_logger.info(f"{ctx.guild.name} (ID: {ctx.guild.id}) > {author} (ID: {ctx.author.id}): "
-                                     f"{ctx.message.clean_content}")
+            self.command_logger.info(f"[Shard {ctx.guild.shard_id}] {ctx.guild.name} (ID: {ctx.guild.id}) > {author} "
+                                     f"(ID: {ctx.author.id}): {ctx.message.clean_content}")
         else:
-            self.command_logger.info(f"Private Messages > {author} (ID: {ctx.author.id}): {ctx.message.clean_content}")
+            self.command_logger.info(f"[Shard {ctx.guild.shard_id}] Private Messages > {author} (ID: {ctx.author.id}):"
+                                     f" {ctx.message.clean_content}")
 
     async def on_command_completion(self, ctx):
         self.commands_used[ctx.command.name] += 1
