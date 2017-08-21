@@ -56,8 +56,11 @@ class Information:
         """
         Sends a message to my developer! (Use only to report bugs. Abuse will get you bot banned!)
         """
+        guild = "Private Messages"
+        if ctx.guild:
+            guild = ctx.guild.name
         await ctx.bot.owner.send(f"New message from {ctx.author.name}#{ctx.author.discriminator}"
-                                 f" ({ctx.author.id}) in {ctx.guild.name}: {message}")
+                                 f" ({ctx.author.id}) in {guild}: {message}")
 
     @commands.group(invoke_without_command=True, aliases=["stats"])
     @commands.check(checks.needs_embed)
