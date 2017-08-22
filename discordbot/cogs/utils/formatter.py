@@ -75,8 +75,18 @@ async def default_help_command(ctx, *commands: str):
         if characters > 1000:
             destination = ctx.author
 
-    for page in pages:
-        await destination.send(page)
+    # Make it so if the help menu fails to PM, it sends it in chat
+    try:
+        for page in pages:
+            await destination.send(page)
+    except discord.errors.Forbidden:
+        if destination == ctx.author:
+            destination = ctx.channel
+            try:
+                for page in pages:
+                    await destination.send(page)
+            except:
+                pass
 
     if destination == ctx.author:
         if isinstance(ctx.channel, discord.abc.PrivateChannel):
