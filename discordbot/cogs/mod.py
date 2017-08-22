@@ -257,6 +257,7 @@ class Moderation:
             await ctx.invoke(self.hackban, *data)
 
     @commands.command()
+    @commands.guild_only()
     @commands.check(permissions(manage_guild=True, kick_members=True, ban_members=True))
     async def leave(self, ctx):
         """
@@ -271,6 +272,7 @@ class Moderation:
     # =========================
 
     @commands.command()
+    @commands.guild_only()
     @commands.check(permissions(manage_messages=True))
     async def prune(self, ctx, messages: int = 100):
         """
@@ -311,6 +313,7 @@ class Moderation:
         raise commands.BadArgument(f"Invalid subcommand passed: {ctx.subcommand_passed}")
 
     @invites.command(name="create")
+    @commands.guild_only()
     async def invites_create(self, ctx):
         """
         Creates an instant invite.
@@ -319,6 +322,7 @@ class Moderation:
         await ctx.send(invite)
 
     @invites.command(name="delete")
+    @commands.guild_only()
     @commands.check(permissions(manage_server=True))
     async def invites_delete(self, ctx, invite: str):
         """
@@ -328,6 +332,7 @@ class Moderation:
         await ctx.send("Successfully deleted the invite!")
 
     @invites.command(name="list")
+    @commands.guild_only()
     @commands.check(permissions(manage_server=True))
     async def invites_list(self, ctx):
         """
@@ -353,6 +358,7 @@ class Moderation:
         raise commands.BadArgument(f"Invalid subcommand passed: {ctx.subcommand_passed}")
 
     @roles.command(name="create")
+    @commands.guild_only()
     @commands.check(permissions(manage_roles=True))
     async def roles_create(self, ctx, *, role):
         """
@@ -362,6 +368,7 @@ class Moderation:
         await ctx.send(f"Alright, I created the role `{role}`")
 
     @roles.command(name="add")
+    @commands.guild_only()
     @commands.check(permissions(manage_roles=True))
     async def roles_add(self, ctx, role: discord.Role, *members: discord.Member):
         """
@@ -378,6 +385,7 @@ class Moderation:
         await ctx.send(f"Giving {', '.join(map(str, members))} the role {member}")
 
     @roles.command(name="remove")
+    @commands.guild_only()
     @commands.check(permissions(manage_roles=True))
     async def roles_remove(self, ctx, role: discord.Role, *members: discord.Member):
         """
@@ -395,6 +403,7 @@ class Moderation:
         await ctx.send("Roles removed!")
 
     @roles.command(name="delete")
+    @commands.guild_only()
     @commands.check(permissions(manage_roles=True))
     async def roles_delete(self, ctx, *, role: discord.Role):
         """
@@ -404,6 +413,7 @@ class Moderation:
         await ctx.send(f"Alright, I deleted the role `{role}` from the server.")
 
     @roles.command(name="color")
+    @commands.guild_only()
     @commands.check(permissions(manage_roles=True))
     async def roles_color(self, ctx, role: discord.Role, hexcolor: discord.Color):
         """
@@ -413,6 +423,7 @@ class Moderation:
         await ctx.send(f"Alright, I changed the role `{role}` to the hex color `{hexcolor}`")
 
     @roles.command(name="move")
+    @commands.guild_only()
     @commands.check(permissions(manage_roles=True))
     async def roles_move(self, ctx, role: discord.Role, position: int):
         """
