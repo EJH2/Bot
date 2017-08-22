@@ -1,8 +1,9 @@
 """
 Main bot file.
 """
-
+import ast
 import asyncio
+import importlib
 import json
 import sys
 import traceback
@@ -11,12 +12,15 @@ from collections import Counter
 import aiohttp
 import asyncqlio.exc
 import discord
+import nacl.secret
+import nacl.utils
 from asyncqlio.db import DatabaseInterface
 from discord.ext import commands
 from discord.ext.commands import AutoShardedBot
 
+from discordbot import consts
 from discordbot.cogs.utils import config, exceptions, formatter, tables
-from discordbot.consts import init_modules, modules, bot_config
+from discordbot.consts import init_modules, modules
 
 
 async def connect(user, password, db, host='localhost', port=5432):
@@ -40,9 +44,10 @@ class DiscordBot(AutoShardedBot):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.bot_config = bot_config
+        self.bot_config = consts.bot_config
         self.command_prefix_ = None
         self.db = None
+        self.cipher = None
         self.session = aiohttp.ClientSession(loop=self.loop, headers={"User-Agent": self.http.user_agent})
 
         # Set up logging
@@ -51,8 +56,8 @@ class DiscordBot(AutoShardedBot):
         self.command_logger = formatter.setup_logger("Commands")
         self.loggers = [discord_logger, self.logger, self.command_logger]
 
-        self.logging = bot_config.get("logging", True)
-        self.dynamic = bot_config.get("dynamicrules", True)
+        self.logging = self.bot_config.get("logging", True)
+        self.dynamic = self.bot_config.get("dynamicrules", True)
 
         self._loaded = False
 
@@ -85,13 +90,22 @@ class DiscordBot(AutoShardedBot):
         """
         if self.logging or self.dynamic:
             self.logger.info("Attempting to connect to DB...")
-            creds = [bot_config["postgres"]["pg_user"], bot_config["postgres"]["pg_pass"], bot_config["postgres"][
-                "pg_name"]]
+            creds = [self.bot_config["postgres"]["pg_user"], self.bot_config["postgres"]["pg_pass"],
+                     self.bot_config["postgres"]["pg_name"]]
             if "None" not in creds:
                 try:
                     self.db = await connect(*creds)
                     self.logger.info("Connection established, database configured.")
                     msg = []
+                    if self.bot_config["postgres"]["crypt_key"] == "None":
+                        key = nacl.utils.random(nacl.secret.SecretBox.KEY_SIZE)
+                        conf = config.Config("config.yaml")
+                        conf.db.get("postgres")["crypt_key"] = str(key)
+                        conf.save()
+                        importlib.reload(consts)
+                        self.bot_config = consts.bot_config
+                    key = ast.literal_eval(self.bot_config["postgres"]["crypt_key"])
+                    self.cipher = nacl.secret.SecretBox(key)
                     if self.logging:
                         msg.append("Logging")
                     if self.dynamic:

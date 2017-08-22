@@ -1,6 +1,7 @@
 """
 Logging.
 """
+import ast
 import asyncio
 import json
 
@@ -51,12 +52,13 @@ class Logging:
             else:
                 guild = message.guild.id
                 channel = message.channel.id
-            content = message.clean_content + attachment
+            content = bytes(message.clean_content + attachment, "utf-8")
+            encrypted = str(self.bot.cipher.encrypt(content))
             author = message.author.id
             message_id = message.id
             time = message.created_at.strftime("%a %B %d %H:%M:%S %Y")
             values = {"guild_id": guild, "channel_id": channel, "message_id": message_id, "author": author,
-                      "content": content, "timestamp": time}
+                      "content": encrypted, "timestamp": time}
             async with self.bot.db.get_session() as s:
                 await s.add(Messages(**values))
 
@@ -116,8 +118,10 @@ class Logging:
             else:
                 channel = "Private Message with {}".format(str(user))
                 pm = True
-            destination = f"{'#' + channel if pm else channel} > {str(user)})"
-            line = f"{destination} > {entry.content}\n"
+            destination = f"{'#' + channel if not pm else channel} > {str(user)}"
+            content = ast.literal_eval(entry.content)
+            decrypted = (self.bot.cipher.decrypt(content)).decode("utf-8")
+            line = f"{destination} > {decrypted}\n"
             msgs.append(line)
             counter += 1
         body = "".join(msgs)
@@ -141,7 +145,9 @@ class Logging:
             return await ctx.send("Doesn't look I have a log for that channel, sorry!")
         for entry in list(reversed(query)):
             user = self.bot.get_user(int(entry.author))
-            line = f"{str(user)} > {entry.content}\n"
+            content = ast.literal_eval(entry.content)
+            decrypted = (self.bot.cipher.decrypt(content)).decode("utf-8")
+            line = f"{str(user)} > {decrypted}\n"
             msgs.append(line)
             counter += 1
         body = "".join(msgs)
@@ -167,7 +173,9 @@ class Logging:
             user = self.bot.get_user(int(entry.author))
             channel = self.bot.get_channel(int(entry.channel_id)).name
             destination = "{} > {}".format("#" + channel, str(user))
-            line = "{} > {}\n".format(destination, entry.content)
+            content = ast.literal_eval(entry.content)
+            decrypted = (self.bot.cipher.decrypt(content)).decode("utf-8")
+            line = "{} > {}\n".format(destination, decrypted)
             msgs.append(line)
             counter += 1
         body = "".join(msgs)

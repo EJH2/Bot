@@ -38,6 +38,10 @@ postgres:
   # Postgres DB password
   pg_pass: None
 
+  # Encryption Key. Leave this to None, as the bot will fill this in later.
+  # Once filled, DO NOT ALTER IT! If you do, you risk breaking the bot.
+  crypt_key: None
+
 ## YOURLS API things, leave these None since you won't have these
 yourls:
 
