@@ -9,6 +9,7 @@ geocoder        == 1.23.2
 pillow          == 4.2.1
 psycopg2        == 2.7.3
 pyfiglet        == 0.7.5
+pynacl          == 1.1.2
 python-dateutil == 2.6.1
 pytz            == 2017.2
 ruamel.yaml     == 0.15.21

@@ -10,6 +10,7 @@ import traceback
 from collections import Counter
 
 import aiohttp
+import asyncpg
 import asyncqlio.exc
 import discord
 import nacl.secret
@@ -74,6 +75,8 @@ class DiscordBot(AutoShardedBot):
 
         self.commands_used = Counter()
 
+        self.start_time = None
+
         # As the great Danny once said: "pay no mind to this ugliness."
         self.remove_command("help")
         self.command(**self.help_attrs)(formatter.default_help_command)
@@ -129,8 +132,8 @@ class DiscordBot(AutoShardedBot):
     async def get_prefix(self, message):
         bot_id = self.user.id
         prefixes = [f'<@!{bot_id}> ', f'<@{bot_id}> ', self.command_prefix_]
-        if self.dynamic and self._loaded:
-            if message.guild:
+        if self.dynamic and self._loaded and message.guild:
+            try:
                 async with self.db.get_session() as s:
                     query = await s.select(tables.Dynamic_Rules).where(
                         tables.Dynamic_Rules.guild_id == message.guild.id).first()
@@ -138,6 +141,8 @@ class DiscordBot(AutoShardedBot):
                     attrs = json.loads(query.attrs)
                     if attrs.get("command_prefix"):
                         prefixes.append(attrs.get("command_prefix"))
+            except asyncpg.exceptions.InterfaceError:
+                pass
         return prefixes
 
     def load_modules(self, modules_list: list, load_silent: bool = False):
@@ -200,7 +205,6 @@ class DiscordBot(AutoShardedBot):
 
         if self.restarting.get("restarting"):
             await self.get_channel(int(self.restarting.get("restart_channel"))).send("Finished! Hello again ;)")
-            self.restarting.delete("restarting")
 
         self._loaded = True
 

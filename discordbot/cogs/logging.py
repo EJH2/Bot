@@ -5,6 +5,7 @@ import ast
 import asyncio
 import json
 
+import asyncpg
 import discord
 from discord.ext import commands
 from ghostbin import GhostBin
@@ -39,28 +40,31 @@ class Logging:
         """
         Process commands and log.
         """
-        if message.channel.id not in self.bot.ignored.get("channels"):
-            if message.attachments:
-                attachment = " ".join([message.attachments[i].url for i in range(0, len(message.attachments))])
-                if message.clean_content:
-                    attachment = " " + attachment
-            else:
-                attachment = ""
-            if isinstance(message.channel, discord.abc.PrivateChannel):
-                guild = message.channel.recipient.id
-                channel = message.channel.recipient.id
-            else:
-                guild = message.guild.id
-                channel = message.channel.id
-            content = bytes(message.clean_content + attachment, "utf-8")
-            encrypted = str(self.bot.cipher.encrypt(content))
-            author = message.author.id
-            message_id = message.id
-            time = message.created_at.strftime("%a %B %d %H:%M:%S %Y")
-            values = {"guild_id": guild, "channel_id": channel, "message_id": message_id, "author": author,
-                      "content": encrypted, "timestamp": time}
-            async with self.bot.db.get_session() as s:
-                await s.add(Messages(**values))
+        try:
+            if message.channel.id not in self.bot.ignored.get("channels"):
+                if message.attachments:
+                    attachment = " ".join([message.attachments[i].url for i in range(0, len(message.attachments))])
+                    if message.clean_content:
+                        attachment = " " + attachment
+                else:
+                    attachment = ""
+                if isinstance(message.channel, discord.abc.PrivateChannel):
+                    guild = message.channel.recipient.id
+                    channel = message.channel.recipient.id
+                else:
+                    guild = message.guild.id
+                    channel = message.channel.id
+                content = bytes(message.clean_content + attachment, "utf-8")
+                encrypted = str(self.bot.cipher.encrypt(content))
+                author = message.author.id
+                message_id = message.id
+                time = message.created_at.strftime("%a %B %d %H:%M:%S %Y")
+                values = {"guild_id": guild, "channel_id": channel, "message_id": message_id, "author": author,
+                          "content": encrypted, "timestamp": time}
+                async with self.bot.db.get_session() as s:
+                    await s.add(Messages(**values))
+        except asyncpg.exceptions.InterfaceError:
+            pass
 
     # =========================
     #    Retrieving Messages
