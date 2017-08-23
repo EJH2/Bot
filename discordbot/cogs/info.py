@@ -15,7 +15,7 @@ from discord.ext import commands
 
 from discordbot.bot import DiscordBot
 from discordbot.cogs.utils import checks, config, util, exceptions
-from discordbot.consts import bot_config, start
+from discordbot.consts import bot_config
 
 
 class Information:
@@ -62,6 +62,18 @@ class Information:
         await ctx.bot.owner.send(f"New message from {ctx.author.name}#{ctx.author.discriminator}"
                                  f" ({ctx.author.id}) in {guild}: {message}")
 
+    @commands.command()
+    async def uptime(self, ctx):
+        """
+        Gives the bot's uptime.
+        """
+        seconds = time.time() - self.bot.start_time
+        m, s = divmod(seconds, 60)
+        h, m = divmod(m, 60)
+        d, h = divmod(h, 24)
+        w, d = divmod(d, 7)
+        await ctx.send(f"I've been online for `{int(w)}w : {int(d)}d : {int(h)}h : {int(m)}m : {int(s)}s`")
+
     @commands.group(invoke_without_command=True, aliases=["stats"])
     @commands.check(checks.needs_embed)
     async def info(self, ctx):
@@ -82,7 +94,7 @@ class Information:
         revision = '\n'.join(commit_list)
         app_info = await self.bot.application_info()
         owner = ctx.bot.owner
-        seconds = time.time() - start
+        seconds = time.time() - self.bot.start_time
         m, s = divmod(seconds, 60)
         h, m = divmod(m, 60)
         d, h = divmod(h, 24)

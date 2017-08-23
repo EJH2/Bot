@@ -3,7 +3,6 @@ import glob
 import os
 import shutil
 import sys
-import time
 
 import aiohttp
 from ruamel import yaml
@@ -49,11 +48,6 @@ if not os.path.exists(config_file):
 
 with open(config_file) as f:
     bot_config = yaml.safe_load(f)
-
-# Bot Up-time Calculation things
-start2 = time.ctime(int(time.time()))
-
-start = time.time()
 
 # Bot Module Loading things
 modules = []
