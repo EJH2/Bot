@@ -417,6 +417,7 @@ class Owner:
         """
         await ctx.send("Restarting...")
         self.bot.restarting.place("restarting", "True")
+        self.bot.restarting.place("restarted", "True")  # IDK
         self.bot.restarting.place("restart_channel", ctx.channel.id)
         await ctx.bot.logout()
 

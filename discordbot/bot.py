@@ -13,6 +13,7 @@ import aiohttp
 import asyncpg
 import asyncqlio.exc
 import discord
+import discord.errors
 import nacl.secret
 import nacl.utils
 from asyncqlio.db import DatabaseInterface
@@ -203,9 +204,11 @@ class DiscordBot(AutoShardedBot):
         # Attempt to load Bot modules
         self.load_modules(modules)
 
-        if self.restarting.get("restarting"):
+        if self.restarting.get("restarted"):
             await self.get_channel(int(self.restarting.get("restart_channel"))).send("Finished! Hello again ;)")
+            self.restarting.delete("restarted")
 
+        self.logger.info("Finished loading!")
         self._loaded = True
 
     async def on_member_join(self, member: discord.Member):
@@ -268,7 +271,7 @@ class DiscordBot(AutoShardedBot):
             await ctx.channel.send(f"\N{NO ENTRY} {e}", delete_after=5)
         elif isinstance(e, commands.errors.CommandNotFound):
             return
-        elif isinstance(e, discord.errors.NotFound):
+        elif isinstance(e.__cause__, discord.errors.NotFound):
             return
         elif isinstance(e, exceptions.EmbedError):
             await ctx.channel.send("\N{NO ENTRY} This command requires the `Embed Links` "
