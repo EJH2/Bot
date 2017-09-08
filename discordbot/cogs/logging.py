@@ -2,19 +2,15 @@
 Logging.
 """
 import ast
-import asyncio
-import json
 
 import asyncpg
 import discord
 from discord.ext import commands
-from ghostbin import GhostBin
 from yourls import YOURLSClient
 
 from discordbot.bot import DiscordBot
-from discordbot.cogs.utils import checks
+from discordbot.cogs.utils import checks, util
 from discordbot.cogs.utils.tables import Messages, Table
-from discordbot.consts import bot_config
 
 
 class YOURLS(YOURLSClient):
@@ -70,35 +66,6 @@ class Logging:
     #    Retrieving Messages
     # =========================
 
-    @staticmethod
-    async def on_handle_delete(timer, seconds=None, url=None):
-        """
-        Deletes a short link.
-        """
-        yourl = YOURLS(bot_config["yourls"]["yourls_base"], signature=bot_config["yourls"]["yourls_signature"])
-        if not seconds and not url:
-            url = json.loads(timer.extras)["url"]
-            await yourl.delete(url)
-        else:
-            await asyncio.sleep(seconds)
-            await yourl.delete(url)
-
-    async def paste_logs(self, ctx, gb, body):
-        res = await gb.paste(body, expire="15m")
-        if "None" not in [bot_config["yourls"]["yourls_base"], bot_config["yourls"]["yourls_signature"]]:
-            yourl = YOURLS(bot_config["yourls"]["yourls_base"], signature=bot_config["yourls"]["yourls_signature"])
-            res, is_yourl = (await yourl.shorten(res)).shorturl, True
-        else:
-            res, is_yourl, yourl = res, None, None
-        await ctx.send(f"Here is a link to your logs: {res}. Hurry, it expires in 15 minutes!")
-        if is_yourl:
-            if self.db:
-                extras = json.dumps({"url": res})
-                self.bot.loop.create_task(self.bot.get_cog("Scheduling").create_timer({"expires": 54000, "event":
-                    "handle_delete", "extras": extras}))
-            else:
-                await self.on_handle_delete(None, 54000, res)
-
     @commands.group(invoke_without_command=True)
     @commands.check(checks.needs_logging)
     async def logs(self, ctx, limit: int = 100):
@@ -107,7 +74,6 @@ class Logging:
         """
         msgs = []
         counter = 0
-        gb = GhostBin()
         server = ctx.guild.id if ctx.guild else ctx.channel.recipient.id
         async with self.bot.db.get_session() as s:
             query = await s.select(Messages).where(Messages.guild_id == server).limit(limit).all()
@@ -129,7 +95,8 @@ class Logging:
             msgs.append(line)
             counter += 1
         body = "".join(msgs)
-        await self.paste_logs(ctx, gb, body)
+        res = await util.paste_logs(ctx, body, "15m")
+        await ctx.send(f"Here is a link to your logs: {res}. Hurry, it expires in 15 minutes!")
 
     @logs.command(name="channel")
     @commands.check(checks.needs_logging)
@@ -140,7 +107,6 @@ class Logging:
         """
         msgs = []
         counter = 0
-        gb = GhostBin()
         channel = channel if channel else ctx.channel
         async with self.bot.db.get_session() as s:
             query = await s.select(Messages).where(Messages.channel_id == channel.id).limit(limit).all()
@@ -155,7 +121,8 @@ class Logging:
             msgs.append(line)
             counter += 1
         body = "".join(msgs)
-        await self.paste_logs(ctx, gb, body)
+        res = await util.paste_logs(ctx, body, "15m")
+        await ctx.send(f"Here is a link to your logs: {res}. Hurry, it expires in 15 minutes!")
 
     @logs.command(name="user")
     @commands.check(checks.needs_logging)
@@ -166,7 +133,6 @@ class Logging:
         """
         msgs = []
         counter = 0
-        gb = GhostBin()
         user = user if user else ctx.author
         async with self.bot.db.get_session() as s:
             query = await s.select(Messages).where(Messages.author == user.id).limit(limit).all()
@@ -183,7 +149,8 @@ class Logging:
             msgs.append(line)
             counter += 1
         body = "".join(msgs)
-        await self.paste_logs(ctx, gb, body)
+        res = await util.paste_logs(ctx, body, "15m")
+        await ctx.send(f"Here is a link to your logs: {res}. Hurry, it expires in 15 minutes!")
 
 
 def setup(bot: DiscordBot):

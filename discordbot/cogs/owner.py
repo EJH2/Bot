@@ -88,11 +88,22 @@ class Owner:
             value = stdout.getvalue()
 
             if ret is None:
-                if value:
+                if value and len(value) < 1980:
                     await ctx.send(f'```py\n{value}\n```')
+                else:
+                    paste = await util.paste_logs(ctx, value, "15m")
+                    return await ctx.send(
+                        f'**Your requested sauce was too stronk. So I uploaded to GhostBin! Hurry, it expires'
+                        f' in 15 minutes!**\n<{paste}>')
             else:
                 self._last_result = ret
-                await ctx.send(f'```py\n{value}{ret}\n```')
+                if len(value) + len(ret) < 1980:
+                    await ctx.send(f'```py\n{value}{ret}\n```')
+                else:
+                    paste = await util.paste_logs(ctx, f'{value}{ret}', "15m")
+                    return await ctx.send(
+                        f'**Your requested sauce was too stronk. So I uploaded to GhostBin! Hurry, it expires'
+                        f' in 15 minutes!**\n<{paste}>')
 
     @commands.is_owner()
     @commands.command()
@@ -178,7 +189,10 @@ class Owner:
             try:
                 if fmt is not None:
                     if len(fmt) > 2000:
-                        await ctx.send('Content too big to be printed.')
+                        paste = await util.paste_logs(ctx, fmt[6:-4], "15m")
+                        await ctx.send(
+                            f'**Your requested sauce was too stronk. So I uploaded to GhostBin! Hurry, it expires'
+                            f' in 15 minutes!**\n<{paste}>')
                     else:
                         await ctx.send(fmt)
             except discord.Forbidden:

@@ -7,8 +7,6 @@ import sys
 import aiohttp
 from ruamel import yaml
 
-from discordbot.cogs.utils import util
-
 # Creating a bot_config file path
 config_file = os.path.join(os.getcwd(), "config.yaml")
 
@@ -30,7 +28,7 @@ async def download_config():
                     data = await get.read()
                     with open("config.example.yaml", "wb") as f:
                         f.write(data)
-        except util.Borked:
+        except aiohttp.ClientError:
             print("Config could not be cloned automatically, please ask on GitHub or Discord", file=sys.stderr)
             input("Press any key to continue...")
             sys.exit(1)

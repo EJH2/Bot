@@ -1,11 +1,13 @@
 import asyncio
 import datetime
+import json
 
 import asyncqlio
 import asyncqlio.exc
 import discord
 
 from discordbot.cogs.utils.tables import Schedule, Table
+from discordbot.cogs.utils.util import validate_yourls
 
 
 class Scheduling:
@@ -104,6 +106,19 @@ class Scheduling:
             self._task = self.bot.loop.create_task(self.dispatch_timers())
 
         return timer
+
+    @staticmethod
+    async def on_handle_delete(timer, seconds: int = None, url=None):
+        """
+        Deletes a short link.
+        """
+        yourl = validate_yourls()
+        if not seconds and not url:
+            url = json.loads(timer.extras)["url"]
+            await yourl.delete(url)
+        else:
+            await asyncio.sleep(seconds)
+            await yourl.delete(url)
 
 
 def setup(bot):

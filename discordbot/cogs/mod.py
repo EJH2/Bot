@@ -344,6 +344,27 @@ class Moderation:
         else:
             await ctx.send(f"The currently active invites for this server are: {', '.join(map(str, invs))}")
 
+    @invites.command(name="check")
+    async def invites_check(self, ctx, invite: discord.Invite):
+        """
+        Gives information about a discord invite link.
+        """
+        invite.max_age = invite.max_age if invite.max_age is not None else 0
+        m, s = divmod(invite.max_age, 60)
+        h, m = divmod(m, 60)
+        d, h = divmod(h, 24)
+        w, d = divmod(d, 7)
+        em = discord.Embed(title=f"Info for Invite {invite.code}:")
+        em.set_thumbnail(url=f"https://cdn.discordapp.com/icons/{invite.guild.id}/{invite.guild.icon}.webp")
+        em.add_field(name="Guild:", value=f"{invite.guild.name} (ID: {invite.guild.id})", inline=False)
+        em.add_field(name="Channel:", value=f"#{invite.channel.name} (ID: {invite.channel.id})", inline=False)
+        em.add_field(name="Inviter:", value=f"{invite.inviter.name} (ID: {invite.inviter.id})", inline=False)
+        em.add_field(name="Uses:", value=invite.uses, inline=False)
+        em.add_field(name="Max Uses:", value=invite.max_uses if invite.max_uses else "Infinite", inline=False)
+        em.add_field(name="Expires In:", value=f"{int(w)}w : {int(d)}d : {int(h)}h : {int(m)}m : {int(s)}s" if
+        invite.max_age > 0 else "Never")
+        await ctx.send(embed=em)
+
     # =========================
     #   Role related commands
     # =========================

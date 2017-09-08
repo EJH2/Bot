@@ -3,8 +3,10 @@ Informative commands.
 """
 import copy
 import datetime
+import inspect
 import random
 import sys
+import textwrap
 import time
 from collections import Counter, OrderedDict
 
@@ -16,6 +18,23 @@ from discord.ext import commands
 from discordbot.bot import DiscordBot
 from discordbot.cogs.utils import checks, config, util, exceptions
 from discordbot.consts import bot_config
+
+
+class SourceEntity(commands.Converter):
+    async def convert(self, ctx, arg):
+        cmd = ctx.bot.get_command(arg)
+        if cmd is not None:
+            return cmd.callback
+
+        cog = ctx.bot.get_cog(arg)
+        if cog is not None:
+            return cog.__class__
+
+        module = ctx.bot.extensions.get(arg)
+        if module is not None:
+            return module
+
+        raise commands.BadArgument(f'{arg} is neither a command, a cog, nor an extension.')
 
 
 class Information:
@@ -293,6 +312,19 @@ class Information:
                     if member.name not in disc:
                         disc.append(member.name)
         await ctx.send(f"```\n{', '.join(disc)}\n```")
+
+    @commands.command()
+    async def source(self, ctx, *, entity: SourceEntity):
+        """Posts the source code of a command, cog or extension."""
+        code = inspect.getsource(entity)
+        code = textwrap.dedent(code).replace('`', '\u200b`')
+
+        if len(code) > 1990:
+            paste = await util.paste_logs(ctx, code, "15m")
+            return await ctx.send(f'**Your requested sauce was too stronk. So I uploaded to GhostBin! Hurry, it expires'
+                                  f' in 15 minutes!**\n<{paste}>')
+
+        return await ctx.send(f'```py\n{code}\n```')
 
 
 def setup(bot: DiscordBot):
