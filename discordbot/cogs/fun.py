@@ -460,7 +460,7 @@ class Fun:
     @commands.command()
     async def works(self, ctx):
         """
-        It worked for me ¯\_(ツ)_/¯
+        It worked for me ¯\_(ツ)_/¯.
         """
         await ctx.send(file=discord.File(fp="discordbot/cogs/utils/files/works.png"))
 
