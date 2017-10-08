@@ -1,6 +1,7 @@
 """
-Informative commands.
+Informative commands for the bot.
 """
+import asyncio
 import copy
 import datetime
 import inspect
@@ -15,9 +16,8 @@ import dateutil.parser
 import discord
 from discord.ext import commands
 
-from discordbot.bot import DiscordBot
-from discordbot.cogs.utils import checks, config, util, exceptions
-from discordbot.consts import bot_config
+from discordbot.main import DiscordBot
+from discordbot.utils import checks, util
 
 
 class SourceEntity(commands.Converter):
@@ -38,33 +38,12 @@ class SourceEntity(commands.Converter):
 
 
 class Information:
+    """
+    Informative commands for the bot.
+    """
+
     def __init__(self, bot: DiscordBot):
         self.bot = bot
-
-    def __global_check(self, ctx):
-        self.config = config.Config("ignored.yaml")
-
-        author = ctx.author
-        if commands.is_owner():
-            return True
-
-        # user is a bot
-        if author.bot:
-            return False
-
-        # user is blacklisted
-        if author.id in self.config.get("users"):
-            return False
-
-        perms = ctx.channel.permissions_for(author)
-        perm_list = [perms.administrator, perms.manage_messages, perms.manage_guild]
-        un_ignore = any(x for x in perm_list)
-
-        # now we can finally realise if we can actually bypass the ignore
-        if not un_ignore and ctx.channel.id in self.config.get("channels"):
-            raise exceptions.Ignored
-
-        return True
 
     # ========================
     #   Bot related commands
@@ -72,9 +51,7 @@ class Information:
 
     @commands.command()
     async def alert(self, ctx, *, message):
-        """
-        Sends a message to my developer! (Use only to report bugs. Abuse will get you bot banned!)
-        """
+        """Sends a message to my developer! (Use only to report bugs. Abuse will get you bot banned!)"""
         guild = "Private Messages"
         if ctx.guild:
             guild = ctx.guild.name
@@ -83,9 +60,7 @@ class Information:
 
     @commands.command()
     async def uptime(self, ctx):
-        """
-        Gives the bot's uptime.
-        """
+        """Gives the bot's uptime."""
         seconds = time.time() - self.bot.start_time
         m, s = divmod(seconds, 60)
         h, m = divmod(m, 60)
@@ -96,9 +71,7 @@ class Information:
     @commands.group(invoke_without_command=True, aliases=["stats"])
     @commands.check(checks.needs_embed)
     async def info(self, ctx):
-        """
-        Gives information about the bot.
-        """
+        """Gives information about the bot."""
         commit_list = []
         async with self.bot.session.get("https://api.github.com/repos/EJH2/ViralBot/commits") as get:
             commits = await get.json()
@@ -144,9 +117,9 @@ class Information:
         em.add_field(name="Library:", value="[Discord.py](https://github.com/Rapptz/discord.py)"
                                             f" (Python {sys.version_info[0]}.{sys.version_info[1]}."
                                             f"{sys.version_info[2]})")
-        if None not in [bot_config["bot"]["version"], bot_config["bot"]["codename"]]:
-            em.add_field(name="Bot Version:", value=f"[{bot_config['bot']['version']}]"
-                                                    f"(!!!! '{bot_config['bot']['codename']}')")
+        if None not in [self.bot.config["bot"]["version"], self.bot.config["bot"]["codename"]]:
+            em.add_field(name="Bot Version:", value=f"[{self.bot.config['bot']['version']}]"
+                                                    f"(!!!! '{self.bot.config['bot']['codename']}')")
         em.add_field(name="Servers:", value=str(len(ctx.bot.guilds)))
         em.add_field(name="Up-time:", value=f"{int(w)}w : {int(d)}d : {int(h)}h : {int(m)}m : {int(s)}s")
         em.add_field(name="Total Unique Users:", value=f"{len(unique_members)} ({unique_online} online)")
@@ -159,9 +132,7 @@ class Information:
 
     @info.command(aliases=["commands"])
     async def commands_used(self, ctx):
-        """
-        Gives info on how many commands have been used.
-        """
+        """Gives info on how many commands have been used."""
         msg = []
         used = OrderedDict(self.bot.commands_used.most_common())
         if used:
@@ -170,13 +141,11 @@ class Information:
         else:
             msg = [("None", "No commands seemed to have been run yet!")]
         await ctx.send(embed=discord.Embed(title="Commands Run:", description=util.neatly(
-                           entries=msg, colors="autohotkey")))
+            entries=msg, colors="autohotkey")))
 
     @commands.command()
     async def ping(self, ctx):
-        """
-        Pings the bot.
-        """
+        """Pings the bot."""
         joke = random.choice(["not actually pinging server...", "hey bb", "what am I doing with my life",
                               "Some Dragon is a dank music bot tbh", "I'd like to thank the academy for this award",
                               "The NSA is watching 👀", "`<Insert clever joke here>`", "¯\_(ツ)_/¯", "(づ｡◕‿‿◕｡)づ",
@@ -201,9 +170,7 @@ class Information:
 
     @commands.command(aliases=["oauth", "invite"])
     async def join(self, ctx):
-        """
-        Gives my OAuth url.
-        """
+        """Gives my OAuth url."""
         app_info = await self.bot.application_info()
         app_id = str(app_info.id)
         perms = discord.Permissions.none()
@@ -212,9 +179,7 @@ class Information:
 
     @commands.command(aliases=["playerstats", "player", "userinfo", "userstats", "user"])
     async def playerinfo(self, ctx, *, user: discord.Member = None):
-        """
-        Gives you player info on a user. If a user isn't passed then the shown info is yours.
-        """
+        """Gives you player info on a user. If a user isn't passed then the shown info is yours."""
         if not user:
             user = ctx.author
 
@@ -245,9 +210,7 @@ class Information:
 
     @commands.command(aliases=["serverstats", "serverdata", "server"])
     async def serverinfo(self, ctx):
-        """
-        Gives information about the current server.
-        """
+        """Gives information about the current server."""
         server = ctx.guild
 
         roles = [role.name.replace("@", "@\u200b") for role in server.roles]
@@ -290,28 +253,38 @@ class Information:
 
     @commands.command()
     async def avatar(self, ctx, *, member: discord.Member = None):
-        """
-        Shows a members avatar.
-        """
+        """Shows a member's avatar."""
         if not member:
             member = ctx.author
 
-        await ctx.send(f"The avatar of {member.name} is: {member.avatar_url_as(static_format='png')}")
+        await ctx.send(f"The avatar of {member.name} is: {member.avatar_url}")
+
+    # ====================
+    #    Other Commands
+    # ====================
 
     @commands.command()
-    async def discrim(self, ctx, discrim: int = None):
-        """
-        Shows other people with your discriminator.
-        """
-        if not discrim:
-            discrim = int(ctx.author.discriminator)
-        disc = []
-        for server in ctx.bot.guilds:
-            for member in server.members:
-                if int(member.discriminator) == discrim:
-                    if member.name not in disc:
-                        disc.append(member.name)
-        await ctx.send(f"```\n{', '.join(disc)}\n```")
+    async def timer(self, ctx, seconds: int, *, remember: str = ""):
+        """Sets a timer for a user with the option of setting a reminder text."""
+        if not remember:
+            await ctx.send(f"{ctx.author.mention}, you have set a timer for {seconds} seconds!")
+            end_timer = ctx.send(f"{ctx.author.mention}, your timer for {seconds} seconds has expired!")
+
+        else:
+            await ctx.send(f"{ctx.author.mention}, I will remind you about `{remember}` in {seconds} seconds!")
+            end_timer = ctx.send(f"{ctx.author.mention}, your timer for {seconds} seconds has expired! I was instructed"
+                                 f" to remind you about `{remember}`!")
+
+        def check(m):
+            return m.author == ctx.author and m.content == f"{ctx.bot.command_prefix_}cancel"
+
+        try:
+            timer = await ctx.bot.wait_for("message", check=check, timeout=seconds)
+            if timer:
+                await ctx.send(f"{ctx.author.mention}, Cancelling your timer...")
+        except asyncio.TimeoutError:
+            await end_timer
+            return
 
     @commands.command()
     async def source(self, ctx, *, entity: SourceEntity):
@@ -320,7 +293,7 @@ class Information:
         code = textwrap.dedent(code).replace('`', '\u200b`')
 
         if len(code) > 1990:
-            paste = await util.paste_logs(ctx, code, "15m")
+            paste = await self.bot.get_cog("GhostBin").paste_logs(code, "15m")
             return await ctx.send(f'**Your requested sauce was too stronk. So I uploaded to GhostBin! Hurry, it expires'
                                   f' in 15 minutes!**\n<{paste}>')
 

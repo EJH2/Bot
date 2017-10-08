@@ -8,13 +8,16 @@ import aiohttp
 import discord
 from discord.ext import commands
 
-from discordbot.cogs.utils.checks import permissions
+from discordbot.main import DiscordBot
+from discordbot.utils import tables
+from discordbot.utils.checks import permissions
 
 
 # noinspection PyTypeChecker
 class Moderation:
-    def __init__(self, bot):
+    def __init__(self, bot: DiscordBot):
         self.bot = bot
+        self.db = bot.db
 
     # =================================
     #   Blacklisting related commands
@@ -35,6 +38,8 @@ class Moderation:
         """
         Grabs a list of currently ignored channels in the server.
         """
+        if not self.db:
+            return await ctx.send("Database is down, try again later?")
         ignored = self.bot.ignored.get("channels", [])
         channel_ids = set(c.id for c in ctx.guild.channels)
         result = []
@@ -55,7 +60,8 @@ class Moderation:
         If you don"t specify a channel the current channel will be ignored.
         To use this you need Manage Channels.
         """
-
+        if not self.db:
+            return await ctx.send("Database is down, try again later?")
         if channel is None:
             channel = ctx.channel
 
@@ -65,7 +71,10 @@ class Moderation:
             return
 
         ignored.append(channel.id)
-        self.bot.ignored.place("channels", ignored)
+        values = {"object_id": channel.id, "type": "channel"}
+        async with self.db.get_session() as s:
+            await s.add(tables.Ignored(**values))
+        self.bot.ignored["channels"] = ignored
         await ctx.send("I am no longer reading from that channel.", delete_after=5)
 
     @ignore.command(name="server")
@@ -75,11 +84,20 @@ class Moderation:
 
         To use this you need Manage Server.
         """
-
+        if not self.db:
+            return await ctx.send("Database is down, try again later?")
         ignored = self.bot.ignored.get("channels", [])
-        channels = ctx.guild.channels
-        ignored.extend(c.id for c in channels if c.type == discord.ChannelType.text)
-        self.bot.ignored.place("channels", list(set(ignored)))  # make unique
+        channels_ = ctx.guild.channels
+        channels = [c.id for c in channels_ if c.type == discord.ChannelType.text]
+        ignored.extend(channels)
+
+        rows = []
+        for chan in channels:
+            values = {"object_id": chan.id, "type": "channel"}
+            rows.append(tables.Ignored(**values))
+        async with self.db.get_session() as s:
+            await s.insert.rows(*rows)
+        self.bot.ignored["channels"] = list(set(ignored))  # make unique
         await ctx.send("I am now ignoring this server.", delete_after=5)
 
     @commands.group(invoke_without_command=True)
@@ -100,7 +118,8 @@ class Moderation:
         If no channels are specified, it unignores the current channel.
         To use this you need Manage Channels.
         """
-
+        if not self.db:
+            return await ctx.send("Database is down, try again later?")
         if not channel:
             channel = ctx.channel
 
@@ -111,9 +130,10 @@ class Moderation:
             await ctx.send("I am not currently ignoring that channel.", delete_after=5)
             return
 
-        self.bot.ignored.remove("channels", channel.id)
-
-        self.bot.ignored.place("channels", ignored)
+        async with self.db.get_session() as s:
+            query = await s.select(tables.Ignored).where(tables.Ignored.object_id == channel.id).first()
+            await s.remove(query)
+        self.bot.ignored["channels"].remove(channel.id)
         await ctx.send("I am now reading from that channel.", delete_after=5)
 
     @unignore.command(name="server")
@@ -125,15 +145,21 @@ class Moderation:
 
         To use this you need Manage Server.
         """
+        if not self.db:
+            return await ctx.send("Database is down, try again later?")
         channels = [c for c in ctx.guild.channels if c.type is discord.channel.ChannelType.text]
         ignored = self.bot.ignored.get("channels", [])
         for channel in channels:
             try:
-                self.bot.ignored.remove("channels", channel.id)
+                ignored.remove(channel.id)
             except ValueError:
                 pass
+            async with self.db.get_session() as s:
+                query = await s.select(tables.Ignored).where(tables.Ignored.object_id == channel.id).first()
+                if query is not None:
+                    await s.remove(query)
+                    self.bot.ignored["channels"] = ignored
 
-        self.bot.ignored.place("channels", ignored)
         await ctx.send("I am now reading from this server.", delete_after=5)
 
     # ============================
@@ -155,7 +181,7 @@ class Moderation:
 
     @commands.command()
     @commands.guild_only()
-    @commands.check(permissions(manage_server=True))
+    @commands.check(permissions(kick_members=True))
     async def kick(self, ctx, *members: discord.Member):
         """
         Kicks the member of choice.
@@ -169,7 +195,7 @@ class Moderation:
 
     @commands.command()
     @commands.guild_only()
-    @commands.check(permissions(manage_server=True))
+    @commands.check(permissions(kick_members=True))
     async def softban(self, ctx, *members: discord.Member):
         """
         Kicks a member and deletes 7 days of their messages.
@@ -278,27 +304,24 @@ class Moderation:
         """
         Deletes x amount of messages in a channel.
         """
+        if messages > 1000:
+            return ctx.send("That's too many messages! 1000 or less please.")
         await ctx.channel.purge(limit=messages + 1)
         removed = messages + 1
-        x = await ctx.send(f"Removed {removed} messages")
-        await asyncio.sleep(5)
-        await x.delete()
+        await ctx.send(f"Removed {removed} messages")
 
     @commands.command()
     @commands.check(permissions(manage_messages=True))
-    async def clean(self, ctx, messages: int = 100):
+    async def clean(self, ctx):
         """
-        Deletes x amount of messages from the bot in a channel.
+        Deletes messages from the bot in the last 100 messages of a channel.
         """
-        removed = 0
-        async for message in ctx.channel.history():
-            if message.author == ctx.bot.user and removed <= messages - 1:
-                await message.delete()
-                await asyncio.sleep(.21)
-                removed += 1
-        x = await ctx.send(f"Removed {removed} messages")
-        await asyncio.sleep(5)
-        await x.delete()
+
+        def is_me(m):
+            return m.author == self.bot.user
+
+        deleted = await ctx.channel.purge(limit=100, check=is_me)
+        await ctx.send('Deleted {} message(s)'.format(len(deleted)))
 
     # ===========================
     #   Invite related commands
@@ -314,21 +337,25 @@ class Moderation:
 
     @invites.command(name="create")
     @commands.guild_only()
-    async def invites_create(self, ctx):
+    async def invites_create(self, ctx, channel: discord.TextChannel = None):
         """
         Creates an instant invite.
         """
-        invite = await ctx.guild.create_invite()
+        if channel is None:
+            channel = ctx.channel
+        invite = await channel.create_invite()
         await ctx.send(invite)
 
     @invites.command(name="delete")
     @commands.guild_only()
     @commands.check(permissions(manage_server=True))
-    async def invites_delete(self, ctx, invite: str):
+    async def invites_delete(self, ctx, invite: discord.Invite):
         """
         Deletes/Deactivates an invite.
         """
-        await ctx.guild.delete_invite(invite)
+        if invite.guild != ctx.guild:
+            return await ctx.send("You can't delete invites from other guilds!")
+        await self.bot.delete_invite(invite)
         await ctx.send("Successfully deleted the invite!")
 
     @invites.command(name="list")
@@ -479,13 +506,14 @@ class Moderation:
         """
         Mass renames everyone in the server.
         """
+        nicked = 0
         for member in ctx.guild.members:
             try:
                 await member.edit(nick=nickname)
-                await ctx.send(f"Alright, I changed the nickname of `{member}` to `{nickname}`")
-                await asyncio.sleep(.21)
-            except discord.errors.Forbidden:
-                await ctx.send(f"Skipping `{member}`, permissions error.")
+                nicked += 1
+            except discord.errors.DiscordException as e:
+                await ctx.send(f"User `{str(member)}` (ID: `{member.id}`) could not be re-nicked: `{e}`")
+        await ctx.send(f"Successfully nicked {nicked}/{len(ctx.guild.members)} users to {nickname}")
 
     @commands.command()
     @commands.guild_only()
@@ -494,15 +522,15 @@ class Moderation:
         """
         Mass un-names everyone in the server.
         """
+        unnicked = 0
         for member in ctx.guild.members:
-            if member.nick:
-                try:
-                    await member.edit(nick=None)
-                    await ctx.send(f"Alright, I reset the nickname of `{member}`")
-                    await asyncio.sleep(.21)
-                except discord.errors.Forbidden:
-                    await ctx.send(f"Skipping `{member}`, permissions error.")
+            try:
+                await member.edit(nick=None)
+                unnicked += 1
+            except discord.errors.DiscordException as e:
+                await ctx.send(f"User `{str(member)}` (ID: `{member.id}`) could not be re-nicked: `{e}`")
+        await ctx.send(f"Successfully unnicked {unnicked}/{len(ctx.guild.members)} users!")
 
 
-def setup(bot):
+def setup(bot: DiscordBot):
     bot.add_cog(Moderation(bot))

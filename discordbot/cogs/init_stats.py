@@ -1,4 +1,7 @@
-from discordbot.consts import bot_config
+"""
+Cog for updating the https://bots.discord.pw bot information.
+"""
+from discordbot.main import DiscordBot
 
 
 class Stats:
@@ -6,12 +9,12 @@ class Stats:
     Cog for updating the https://bots.discord.pw bot information.
     """
 
-    def __init__(self, bot):
+    def __init__(self, bot: DiscordBot):
         self.bot = bot
 
     async def update(self):
         stats = {'server_count': len(self.bot.guilds)}
-        token = bot_config["bot"].get("bots_pw_key", None)
+        token = self.bot.config["bot"].get("bots_pw_key", None)
         if not token:
             return
 
@@ -24,8 +27,6 @@ class Stats:
         await self.update()
 
     async def on_guild_remove(self, guild):
-        while not self.bot._loaded:
-            continue
         await self.update()
 
     async def on_ready(self):
@@ -35,5 +36,5 @@ class Stats:
         await self.update()
 
 
-def setup(bot):
+def setup(bot: DiscordBot):
     bot.add_cog(Stats(bot))

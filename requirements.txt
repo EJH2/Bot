@@ -3,6 +3,7 @@ astral          == 1.4
 asyncpg         == 0.12.0
 babel           == 2.5.0
 beautifulsoup4  == 4.6.0
+colorlog        == 2.10.0
 click           == 6.7
 darkskylib      == 0.3.6
 geocoder        == 1.23.2

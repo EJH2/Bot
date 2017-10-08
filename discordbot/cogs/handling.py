@@ -1,0 +1,117 @@
+"""
+Command handling for the bot.
+"""
+import asyncio
+import sys
+import traceback
+
+import discord
+from discord.ext import commands
+
+from discordbot.main import DiscordBot
+from discordbot.utils import exceptions
+
+
+class CommandHandler:
+    """
+    Command handling for the bot.
+    """
+
+    def __init__(self, bot: DiscordBot):
+        self.bot = bot
+
+    async def __global_check(self, ctx):
+
+        author = ctx.author
+        if await self.bot.is_owner(ctx.author):
+            return True
+
+        # user is a bot
+        if author.bot:
+            return False
+
+        # user is blacklisted
+        if author.id in self.bot.ignored.get("users"):
+            return False
+
+        perms = ctx.channel.permissions_for(author)
+        perm_list = [perms.administrator, perms.manage_messages, perms.manage_guild]
+        un_ignore = any(x for x in perm_list)
+
+        # now we can finally realise if we can actually bypass the ignore
+        if not un_ignore and ctx.channel.id in self.bot.ignored.get("channels"):
+            raise exceptions.Ignored
+
+        return True
+
+    async def on_message_edit(self, before, after):
+        """
+        Checks message edit to see if I screwed up a command...
+        """
+        await self.bot.process_commands(after)
+
+    @staticmethod
+    async def on_command_error(ctx, e):
+        """
+        Catch command errors.
+        """
+        if isinstance(e, exceptions.Ignored):
+            await ctx.channel.send("\N{CROSS MARK} This channel is currently being ignored.", delete_after=5)
+        elif isinstance(e, commands.errors.NotOwner):
+            await ctx.channel.send(f"\N{CROSS MARK} {e}", delete_after=5)
+        elif isinstance(e, discord.errors.Forbidden):
+            await ctx.channel.send("\N{NO ENTRY} I don't have permission to perform the action", delete_after=5)
+        elif isinstance(e, exceptions.ClearanceError):
+            await ctx.channel.send(f"\N{NO ENTRY} {e}", delete_after=5)
+        elif isinstance(e, commands.errors.CommandNotFound):
+            return
+        elif isinstance(e.__cause__, discord.errors.NotFound):
+            return
+        elif isinstance(e, exceptions.EmbedError):
+            await ctx.channel.send("\N{NO ENTRY} This command requires the `Embed Links` "
+                                   "permission to execute!", delete_after=5)
+        elif isinstance(e, commands.errors.NoPrivateMessage):
+            await ctx.channel.send("\N{NO ENTRY} That command can not be run in PMs!",
+                                   delete_after=5)
+            return
+        elif isinstance(e, commands.errors.DisabledCommand):
+            await ctx.channel.send("\N{NO ENTRY} Sorry, but that command is currently disabled!",
+                                   delete_after=5)
+        elif isinstance(e, commands.errors.CheckFailure):
+            await ctx.channel.send("\N{CROSS MARK} Check failed. You probably don't have "
+                                   "permission to do this.", delete_after=5)
+        elif isinstance(e, commands.errors.CommandOnCooldown):
+            await ctx.channel.send(f"\N{NO ENTRY} {e}", delete_after=5)
+        elif isinstance(e, (commands.errors.BadArgument, commands.errors.MissingRequiredArgument)):
+            await ctx.channel.send(f"\N{CROSS MARK} Bad argument: {' '.join(e.args)}", delete_after=5)
+            formatted_help = await ctx.bot.formatter.format_help_for(ctx, ctx.command)
+            for page in formatted_help:
+                await ctx.channel.send(page, delete_after=20)
+        else:
+            await ctx.channel.send("\N{NO ENTRY} An error happened. This has been logged and reported.",
+                                   delete_after=5)
+            if isinstance(e, commands.errors.CommandInvokeError):
+                traceback.print_exception(type(e), e.__cause__, e.__cause__.__traceback__, file=sys.stderr)
+            else:
+                traceback.print_exception(type(e), e, e.__traceback__, file=sys.stderr)
+
+    async def on_command(self, ctx):
+        author = ctx.author
+        if ctx.guild is not None:
+            self.bot.command_logger.info(f"[Shard {ctx.guild.shard_id}] {ctx.guild.name} (ID: {ctx.guild.id}) > "
+                                         f"{author} (ID: {author.id}): {ctx.message.clean_content}")
+        else:
+            self.bot.command_logger.info(f"[Shard 0] Private Messages > {author} (ID: {author.id}):"
+                                         f" {ctx.message.clean_content}")
+
+    async def on_command_completion(self, ctx):
+        self.bot.commands_used[ctx.command.name] += 1
+        await asyncio.sleep(5)
+        try:
+            await ctx.message.delete()
+        except discord.DiscordException:
+            pass
+
+
+def setup(bot: DiscordBot):
+    bot.add_cog(CommandHandler(bot))

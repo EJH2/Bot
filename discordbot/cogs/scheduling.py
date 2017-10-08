@@ -1,22 +1,24 @@
+"""
+Bot task scheduling.
+"""
 import asyncio
 import datetime
-import json
 
 import asyncqlio
-import asyncqlio.exc
 import discord
 
-from discordbot.cogs.utils.tables import Schedule, Table
-from discordbot.cogs.utils.util import validate_yourls
+from discordbot.main import DiscordBot
+from discordbot.utils.tables import Schedule
 
 
 class Scheduling:
-    """Reminders to do something."""
+    """
+    Bot task scheduling.
+    """
 
-    def __init__(self, bot):
+    def __init__(self, bot: DiscordBot):
         self.bot = bot
         self.db = bot.db
-        self.db.bind_tables(Table)
         self._have_data = asyncio.Event(loop=bot.loop)
         self._current_timer = None
         self._task = bot.loop.create_task(self.dispatch_timers())
@@ -24,7 +26,13 @@ class Scheduling:
     def __unload(self):
         self._task.cancel()
 
-    async def get_active_timers(self, *, days=7):
+    async def get_active_timers(self, *, days=7) -> list:
+        """
+        Get active timers in the database.
+
+        :param days: How many days until timer expiration to search for.
+        :return: List of active timers.
+        """
         days = datetime.datetime.utcnow() + datetime.timedelta(days)
         async with self.bot.db.get_session() as s:
             query = await s.select(Schedule).where(Schedule.expires < days).order_by(Schedule.expires).all()
@@ -32,7 +40,13 @@ class Scheduling:
 
             return query
 
-    async def wait_for_active_timers(self, *, days=7):
+    async def wait_for_active_timers(self, *, days=7) -> list:
+        """
+        Wait for active timers in the database.
+
+        :param days: How many days until timer expiration to search for.
+        :return: List of active timers.
+        """
         timers = await self.get_active_timers(days=days)
         if len(timers):
             self._have_data.set()
@@ -44,6 +58,12 @@ class Scheduling:
         return await self.get_active_timers(days=days)
 
     async def call_timer(self, timer):
+        """
+        Call a timer's event.
+
+        :param timer: The timer to get the event to call.
+        :return: None
+        """
         # delete the timer
         async with self.bot.db.get_session() as s:
             await s.remove(timer)
@@ -53,6 +73,11 @@ class Scheduling:
             self.bot.dispatch(event_name, timer)
 
     async def dispatch_timers(self):
+        """
+        Finish a timer.
+
+        :return: None
+        """
         try:
             while not self.bot.is_closed():
                 # can only asyncio.sleep for up to ~48 days reliably
@@ -70,20 +95,29 @@ class Scheduling:
                     await self.call_timer(timer)
         except asyncio.CancelledError:
             pass
-        except (OSError, discord.ConnectionClosed, asyncqlio.exc.DatabaseException):
+        except (OSError, discord.ConnectionClosed, asyncqlio.DatabaseException):
             self._task.cancel()
             self._task = self.bot.loop.create_task(self.dispatch_timers())
 
     async def short_timer_optimisation(self, seconds, timer):
+        """
+        Rather than adding the timer to the database, we're going to use a `sleep` to finish the timer.
+
+        :param seconds: Seconds to sleep.
+        :param timer: The timer to run.
+        :return: None
+        """
         await asyncio.sleep(seconds)
         event_name = timer.event
         self.bot.dispatch(event_name, timer)
 
-    async def create_timer(self, attrs: dict):
+    async def create_timer(self, attrs: dict) -> Schedule:
         """
         Creates a timer.
-        """
 
+        :param attrs: The timer's attributes.
+        :return: Timer object.
+        """
         when = datetime.datetime.utcnow() + datetime.timedelta(seconds=attrs.pop("expires"))
         attrs["expires"] = when
         now = datetime.datetime.utcnow()
@@ -107,19 +141,6 @@ class Scheduling:
 
         return timer
 
-    @staticmethod
-    async def on_handle_delete(timer, seconds: int = None, url=None):
-        """
-        Deletes a short link.
-        """
-        yourl = validate_yourls()
-        if not seconds and not url:
-            url = json.loads(timer.extras)["url"]
-            await yourl.delete(url)
-        else:
-            await asyncio.sleep(seconds)
-            await yourl.delete(url)
 
-
-def setup(bot):
+def setup(bot: DiscordBot):
     bot.add_cog(Scheduling(bot))

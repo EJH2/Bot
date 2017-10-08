@@ -49,7 +49,7 @@ Before you continue, you will need 2 things:
 
     The migration scripts upgrade the database to the latest version. Run this in the terminal.
 
-     `PYTHONPATH=. asql-migrate migrate`
+     `asql-migrate migrate`
      
 5. **Create a config.**
 
@@ -78,14 +78,13 @@ Sometimes I will make bug fixes that were left over from previous commits, in wh
 to your computer and just copy over the config. In a rare case I might need to re-configure the database, in which case
 you will need to issue two commands in a terminal:
 
-1. `PYTHONPATH=. asql-migrate migrate -- -1`
+1. `asql-migrate migrate -- -1`
 
-2. `PYTHONPATH=. asql-migrate migrate -- 1`
+2. `asql-migrate migrate -- 1`
 
 Done!
     
 ## Contributing to ViralBot
 
 Contibutions alre always welcome! A copy of guidelines to follow when contributing to the project can be found 
-[**here**](https://github.com/EJH2/ViralBot/blob/8806486c46af1a6221c8e3f5366d94ef1acffae8/CONTRIBUTING.md 
-"CONTRIBUTING.md").
+[**here**](https://github.com/EJH2/ViralBot/blob/master/CONTRIBUTING.md "CONTRIBUTING.md").

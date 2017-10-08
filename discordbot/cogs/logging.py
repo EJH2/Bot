@@ -1,32 +1,26 @@
 """
-Logging.
+Logging/log retrieval for the bot.
 """
 import ast
 
 import asyncpg
 import discord
 from discord.ext import commands
-from yourls import YOURLSClient
 
-from discordbot.bot import DiscordBot
-from discordbot.cogs.utils import checks, util
-from discordbot.cogs.utils.tables import Messages, Table
-
-
-class YOURLS(YOURLSClient):
-    async def delete(self, short):
-        """
-        Deletes a YOURL link.
-        """
-        data = dict(action='delete', shorturl=short)
-        await self._api_request(params=data)
+from discordbot.main import DiscordBot
+from discordbot.utils import checks
+from discordbot.utils.tables import Messages
 
 
 class Logging:
+    """
+    Logging/log retrieval for the bot.
+    """
+
     def __init__(self, bot: DiscordBot):
         self.bot = bot
         self.db = bot.db
-        self.db.bind_tables(Table)
+        self.gb = bot.get_cog("GhostBin")
 
     # ======================
     #    Logging Messages
@@ -37,7 +31,7 @@ class Logging:
         Process commands and log.
         """
         try:
-            if message.channel.id not in self.bot.ignored.get("channels"):
+            if message.channel.id not in self.bot.ignored["channels"]:
                 if message.attachments:
                     attachment = " ".join([message.attachments[i].url for i in range(0, len(message.attachments))])
                     if message.clean_content:
@@ -54,10 +48,10 @@ class Logging:
                 encrypted = str(self.bot.cipher.encrypt(content))
                 author = message.author.id
                 message_id = message.id
-                time = message.created_at.strftime("%a %B %d %H:%M:%S %Y")
+                time = message.created_at
                 values = {"guild_id": guild, "channel_id": channel, "message_id": message_id, "author": author,
                           "content": encrypted, "timestamp": time}
-                async with self.bot.db.get_session() as s:
+                async with self.db.get_session() as s:
                     await s.add(Messages(**values))
         except asyncpg.exceptions.InterfaceError:
             pass
@@ -69,9 +63,7 @@ class Logging:
     @commands.group(invoke_without_command=True)
     @commands.check(checks.needs_logging)
     async def logs(self, ctx, limit: int = 100):
-        """
-        Gets the last `x` server logs.
-        """
+        """Gets the last `x` server logs."""
         msgs = []
         counter = 0
         server = ctx.guild.id if ctx.guild else ctx.channel.recipient.id
@@ -95,16 +87,14 @@ class Logging:
             msgs.append(line)
             counter += 1
         body = "".join(msgs)
-        res = await util.paste_logs(ctx, body, "15m")
+        res = await self.gb.paste_logs(body, "15m")
         await ctx.send(f"Here is a link to your logs: {res}. Hurry, it expires in 15 minutes!")
 
     @logs.command(name="channel")
     @commands.check(checks.needs_logging)
     @commands.guild_only()
     async def logs_channel(self, ctx, channel: discord.TextChannel = None, limit: int = 100):
-        """
-        Gets the last `x` channel logs.
-        """
+        """Gets the last `x` channel logs."""
         msgs = []
         counter = 0
         channel = channel if channel else ctx.channel
@@ -121,16 +111,14 @@ class Logging:
             msgs.append(line)
             counter += 1
         body = "".join(msgs)
-        res = await util.paste_logs(ctx, body, "15m")
+        res = await self.gb.paste_logs(body, "15m")
         await ctx.send(f"Here is a link to your logs: {res}. Hurry, it expires in 15 minutes!")
 
     @logs.command(name="user")
     @commands.check(checks.needs_logging)
     @commands.guild_only()
     async def logs_user(self, ctx, user: discord.User = None, limit: int = 100):
-        """
-        Gets the last `x` user logs.
-        """
+        """Gets the last `x` user logs."""
         msgs = []
         counter = 0
         user = user if user else ctx.author
@@ -149,7 +137,7 @@ class Logging:
             msgs.append(line)
             counter += 1
         body = "".join(msgs)
-        res = await util.paste_logs(ctx, body, "15m")
+        res = await self.gb.paste_logs(body, "15m")
         await ctx.send(f"Here is a link to your logs: {res}. Hurry, it expires in 15 minutes!")
 
 

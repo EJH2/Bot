@@ -5,8 +5,6 @@ Fun commands.
 import asyncio
 import io
 import random
-import re
-from urllib.parse import quote_plus
 
 import aiohttp
 import discord
@@ -15,125 +13,19 @@ from discord.ext import commands
 from discord.ext.commands import BucketType
 from pyfiglet import figlet_format, FontNotFound
 
-from discordbot.bot import DiscordBot
-from discordbot.cogs.utils import util
+from discordbot.main import DiscordBot
 
 rr_bullet = random.randint(1, 6)
 rr_count = 1
 
 
-# noinspection PyTypeChecker
 class Fun:
     def __init__(self, bot: DiscordBot):
         self.bot = bot
 
-    @commands.command()
-    async def shoot(self, ctx, *members: discord.Member):
-        """
-        Allows the user to shoot a person of choice.
-        """
-        if not members:
-            await ctx.send("You gotta give me someone to work with here!")
-            return
-        for member in members:
-            if member == self.bot.user:
-                file = random.choice([
-                    "http://static1.comicvine.com/uploads/original/11127/111275532/5288551-9830962548-latest",
-                    "http://i.imgur.com/hPL5TGD.gif"
-                ])
-                gif = await util.get_file(self.bot, file)
-                await ctx.send(
-                    f"You attempted to shoot me, {ctx.author.name}, but I dodged it!",
-                    file=discord.File(io.BytesIO(gif), filename="gif.gif"))
-            elif member == ctx.author:
-                gif = await util.get_file(self.bot, "https://media.giphy.com/media/5xaOcLAo1Gg0oRgBz0Y/giphy.gif")
-                await ctx.send(
-                    f"{ctx.author.name} committed suicide!", file=discord.File(io.BytesIO(gif), filename="gif.gif"))
-            else:
-                gif = await util.get_file(self.bot, "https://s-media-cache-ak0.pinimg.com/originals/2d/fa/a9/"
-                                          "2dfaa995a09d81a07cad24d3ce18e011.gif")
-                await ctx.send(
-                    f"{member.name} was shot dead by the mighty {ctx.author.name}!",
-                    file=discord.File(io.BytesIO(gif), filename="gif.gif"))
-
-    @commands.command()
-    async def stab(self, ctx, *members: discord.Member):
-        """
-        Allows the user to stab a person of choice.
-        """
-        if not members:
-            await ctx.send("You gotta give me someone to work with here!")
-            return
-        for member in members:
-            if member == self.bot.user:
-                file = random.choice([
-                    "https://s-media-cache-ak0.pinimg.com/originals/90/21/85/902185dfeec38c7f09102ff6fdaa31ae.gif",
-                    "https://media.giphy.com/media/DFwhlTWNrwDEA/giphy.gif",
-                    "https://s-media-cache-ak0.pinimg.com/originals/d2/54/39/d25439365581a4797a1e351ca030f31d.gif"
-                ])
-                gif = await util.get_file(self.bot, file)
-                await ctx.send(
-                    f"You attempted to stab me, {ctx.author.name}, but I dodged it!",
-                    file=discord.File(io.BytesIO(gif), filename="gif.gif"))
-            elif member == ctx.author:
-                file = random.choice([
-                    "http://24.media.tumblr.com/tumblr_lyqs1c3ml11qhl4r8o1_400.gif",
-                    "https://66.media.tumblr.com/04dbe8065a66a08fedfab6cad1edada4/tumblr_inline_o43358nVy"
-                    "b1tat2xb_500.gif",
-                    "http://i.imgur.com/6aSNqpO.gif"
-                ])
-                gif = await util.get_file(self.bot, file)
-                await ctx.send(
-                    f"{ctx.author.name} died to their own blade!",
-                    file=discord.File(io.BytesIO(gif), filename="gif.gif"))
-            else:
-                file = random.choice([
-                    "https://24.media.tumblr.com/c7eb88eddb09a3fa30b2d69d7c9e0647/tumblr_n0tb9sVhOv1ryx1zoo1_500.gif",
-                    "http://pa1.narvii.com/5844/56df36d19b8df053f46d5be39a5de5303b6b9805_hq.gif"
-                ])
-                gif = await util.get_file(self.bot, file)
-                await ctx.send(
-                    f"{member.name} was stabbed to death by the mighty {ctx.author.name}!",
-                    file=discord.File(io.BytesIO(gif), filename="gif.gif"))
-
-    @commands.command()
-    async def punch(self, ctx, *members: discord.Member):
-        """
-        Allows the user to punch a person of choice.
-        """
-        if not members:
-            await ctx.send("You gotta give me someone to work with here!")
-            return
-        for member in members:
-            if member == self.bot.user:
-                gif = await util.get_file(self.bot, "https://media.giphy.com/media/qRdL7w5ddkHDi/giphy.gif")
-                await ctx.send(
-                    f"You attempted to punch me, {ctx.author.name}, but I dodged it!",
-                    file=discord.File(io.BytesIO(gif), filename="gif.gif"))
-            elif member == ctx.author:
-                file = random.choice([
-                    "https://media.giphy.com/media/7G2cxOTQLPeOk/giphy.gif",
-                    "https://media.giphy.com/media/7JjAXbG2mQ3uM/giphy.gif"
-                ])
-                gif = await util.get_file(self.bot, file)
-                await ctx.send(
-                    f"{ctx.author.name} punched their self!",
-                    file=discord.File(io.BytesIO(gif), filename="gif.gif"))
-            else:
-                file = random.choice([
-                    "https://media.giphy.com/media/arbHBoiUWUgmc/giphy.gif",
-                    "http://pa1.narvii.com/5758/7c65ad50e958a34baa7f51b6ab1f764506deea50_hq.gif"
-                ])
-                gif = await util.get_file(self.bot, file)
-                await ctx.send(
-                    f"{member.name} was punched by the mighty {ctx.author.name}!",
-                    file=discord.File(io.BytesIO(gif), filename="gif.gif"))
-
     @commands.group(invoke_without_command=True)
-    async def ascii(self, ctx, text: str, font: str, textcolor='', background=''):
-        """
-        Creates ASCII text.
-        """
+    async def ascii(self, ctx, text: str, font: str, textcolor: str = '', background: str = ''):
+        """Creates ASCII text."""
         if not textcolor:
             textcolor = "white"
         if not background:
@@ -158,16 +50,30 @@ class Fun:
 
     @ascii.command(name="fonts")
     async def ascii_fonts(self, ctx):
-        """
-        Lists available ASCII fonts.
-        """
+        """Lists available ASCII fonts."""
         await ctx.send("All available fonts for the command can be found here: http://www.figlet.org/examples.html")
 
     @commands.command()
+    async def fancify(self, ctx, *, text: str):
+        """"Fancy-ify" text."""
+        output = ""
+        for letter in text:
+            if 65 <= ord(letter) <= 90:
+                output += chr(ord(letter) + 119951)
+            elif 97 <= ord(letter) <= 122:
+                output += chr(ord(letter) + 119919)
+            elif letter == " ":
+                output += " "
+        await ctx.send(output)
+
+    @commands.command()
+    async def bigtext(self, ctx, *, text):
+        """Create enlarged text."""
+        await ctx.send("```fix\n" + figlet_format(text, font="big") + "```")
+
+    @commands.command()
     async def rr(self, ctx):
-        """
-        Allows the user to take part in the famous Russian Pastime.
-        """
+        """Allows the user to take part in the famous Russian Pastime."""
         await ctx.send('You spin the cylinder of the revolver with 1 bullet in it...')
         await asyncio.sleep(1)
         await ctx.send('...you place the muzzle against your head and pull the trigger...')
@@ -182,103 +88,14 @@ class Fun:
             rr_count += 1
 
     @commands.command()
-    async def lmgtfy(self, ctx, *, query: str):
-        """
-        Gives the user a "Let Me Google That For You" link.
-        """
-        await ctx.send(f"http://lmgtfy.com/?q={quote_plus(query)}")
-
-    @commands.command()
     async def say(self, ctx, *, message: str):
-        """
-        Makes the bot say anything the user wants it to.
-        """
+        """Makes the bot say anything the user wants it to."""
         await ctx.send(message)
-
-    @commands.command(aliases=["out"])
-    async def nope(self, ctx):
-        """Gives a user a 'nope' gif."""
-        nopes = [
-            "https://giphy.com/gifs/reaction-nope-oh-god-why-dqmpS64HsNvb2",
-            "https://i.imgur.com/2YeDA.jpg",
-            "http://giphy.com/gifs/morning-good-reaction-ihWcaj6R061wc"
-        ]
-        await ctx.send(random.choice(nopes))
-
-    @commands.command()
-    async def timer(self, ctx, seconds: int, *, remember: str = ""):
-        """
-        Sets a timer for a user with the option of setting a reminder text.
-        """
-        if not remember:
-            await ctx.send(f"{ctx.author.mention}, you have set a timer for {seconds} seconds!")
-            end_timer = ctx.send(f"{ctx.author.mention}, your timer for {seconds} seconds has expired!")
-
-        else:
-            await ctx.send(f"{ctx.author.mention}, I will remind you about `{remember}` in {seconds} seconds!")
-            end_timer = ctx.send(f"{ctx.author.mention}, your timer for {seconds} seconds has expired! I was instructed"
-                                 f" to remind you about `{remember}`!")
-
-        def check(m):
-            return m.author == ctx.author and m.content == f"{ctx.bot.command_prefix_}cancel"
-
-        try:
-            timer = await ctx.bot.wait_for("message", check=check, timeout=seconds)
-            if timer:
-                await ctx.send(f"{ctx.author.mention}, Cancelling your timer...")
-        except asyncio.TimeoutError:
-            await end_timer
-            return
-
-    @commands.command()
-    async def shame(self, ctx):
-        """
-        Let the shame bells ring!
-        """
-        await ctx.send(":bell::bell::bell: ​ ​ ​ ​ ​ ​ ​:bell: ​ ​ ​ ​ ​ ​ "
-                       "​:bell: ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​:bell: ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​:bell:"
-                       " ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​:bell: ​ ​ ​ ​ ​ ​:bell::bell:"
-                       ":bell:\n:bell: ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​:bell:"
-                       " ​ ​ ​ ​ ​ ​ ​:bell: ​ ​ ​ ​ ​ ​ ​:bell: ​ ​ ​ ​ ​ ​ ​:bell:"
-                       " ​ ​ ​ ​ ​ ​ ​:bell::bell::bell::bell: ​ ​ ​ ​ ​ ​:bell:\n:bell:"
-                       ":bell::bell: ​ ​ ​ ​ ​ ​ ​:bell::bell::bell:"
-                       " ​ ​ ​ ​ ​ ​ ​:bell::bell::bell: ​ ​ ​ ​ ​ ​ ​:bell: ​ ​:bell:"
-                       " ​ ​ ​ ​:bell: ​ ​ ​ ​ ​ ​ ​:bell::bell::bell:\n"
-                       "              :bell: ​ ​ ​ ​ ​ ​ ​:bell: ​ ​ ​ ​ ​ ​ ​:bell:"
-                       " ​ ​ ​ ​ ​ ​ ​:bell: ​ ​ ​ ​ ​ ​ ​:bell: ​ ​ ​ ​ ​ ​ ​:bell: ​ ​ ​ ​ ​ "
-                       "​ ​ ​ ​ ​ ​ ​ ​ ​:bell: ​ ​ ​ ​ ​ ​ ​:bell:\n:bell::bell:"
-                       ":bell: ​ ​ ​ ​ ​ ​ ​:bell: ​ ​ ​ ​ ​ ​ ​:bell: ​ ​ ​ ​ ​ ​ ​:bell: ​ ​ ​ ​ ​ ​ ​:bell:"
-                       " ​ ​ ​ ​ ​ ​ ​:bell: ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​ ​:bell:"
-                       " ​ ​ ​ ​ ​ ​ ​:bell::bell:​:bell:\n")
-
-    @commands.command()
-    async def fancify(self, ctx, *, text: str):
-        """
-        "Fancy-ify" text.
-        """
-        output = ""
-        for letter in text:
-            if 65 <= ord(letter) <= 90:
-                output += chr(ord(letter) + 119951)
-            elif 97 <= ord(letter) <= 122:
-                output += chr(ord(letter) + 119919)
-            elif letter == " ":
-                output += " "
-        await ctx.send(output)
-
-    @commands.command()
-    async def bigtext(self, ctx, *, text):
-        """
-        Create enlarged text.
-        """
-        await ctx.send("```fix\n" + figlet_format(text, font="big") + "```")
 
     @commands.command()
     @commands.cooldown(1, 20, BucketType.channel)
     async def repeat(self, ctx, times: int, *, content: str):
-        """
-        Repeats a message x times.
-        """
+        """Repeats a message x times."""
         if times > 50:
             await ctx.send("I can't repeat that that many times! I might choke!")
             return
@@ -289,9 +106,7 @@ class Fun:
 
     @commands.command(aliases=["8ball"])
     async def eightball(self, ctx, *, question: str):
-        """
-        Receive a response from the mighty eight ball.
-        """
+        """Receive a response from the mighty eight ball."""
         responses = [
             "It is certain",
             "It is decidedly so",
@@ -318,44 +133,8 @@ class Fun:
                        f"`{random.choice(responses)}`")
 
     @commands.command()
-    async def copypasta(self, ctx, query: int = None):
-        """Gives the user a random copypasta.
-
-        Do `^copypasta <number from 1-22>` for a specific copypasta!
-        """
-        with io.open('discordbot/cogs/utils/files/copypasta.txt', 'r', encoding='utf8') as f:
-            data = f.readlines()
-        if query:
-            query_req = 1 <= query <= len(data)
-            line = f"Query must be from 1 to {len(data)}!"
-            if query_req:
-                line = data[query - 1]
-        else:
-            line = random.choice(data)
-        await ctx.send(line)
-
-    @commands.command()
-    async def lenny(self, ctx):
-        """
-        Lenny faces!
-        """
-        async with self.bot.session.get("http://lenny.today/api/v1/random") as get:
-            assert isinstance(get, aiohttp.ClientResponse)
-            lenny = await get.json()
-            await ctx.send(lenny[0]["face"])
-
-    @commands.command(aliases=["shrug"])
-    async def meh(self, ctx):
-        """
-        Meh.
-        """
-        await ctx.send("¯\_(ツ)_/¯")
-
-    @commands.command()
     async def scramble(self, ctx, word_length: int = None):
-        """
-        Allows the user to play a word scramble with the bot.
-        """
+        """Allows the user to play a word scramble with the bot."""
         if word_length:
             word_length_req = 3 <= word_length <= 20
             if word_length_req:
@@ -384,85 +163,6 @@ class Fun:
                 await ctx.send(f"Nice job! {msg.author.name} solved the scramble! The word was `{word}`!")
         except asyncio.TimeoutError:
             await ctx.send(f"Oops! Nobody solved it. The word was `{word}`!")
-
-    @commands.command()
-    async def roti(self, ctx, *, number: int = None):
-        """
-        Bestows the user with the Rules of the Internet.
-        """
-        with io.open('discordbot/cogs/utils/files/RulesOTI.txt', 'r', encoding='utf8') as f:
-            data = f.readlines()
-        if number:
-            query_req = 1 <= number <= len(data)
-            line = f"Number must be from 1 to {len(data)}!"
-            if query_req:
-                line = data[number - 1]
-        else:
-            line = random.choice(data)
-        await ctx.send(line)
-
-    @commands.command()
-    async def color(self, ctx, *, color: str):
-        """
-        Returns a picture and a name of the requested color!
-
-        Colors can be either hexadecimal or rgb.
-        """
-        regex = re.compile("#?([\d\w]{6}|[\d\w]{3})$|\(?(\d{1,3}), ?(\d{1,3}), ?(\d{1,3})\)?")
-        match = regex.match(color)
-        attrs = {"format": "json"}
-        if match:
-            # Hex vs. RGB values
-            if match.group(1):
-                attrs["hex"] = match.group()
-            else:
-                attrs["rgb"] = match.group()
-        else:
-            return await ctx.send("Sorry, but that is not a valid rgb or hex color.")
-        color_api = "http://thecolorapi.com/id?"
-        async with self.bot.session.get(color_api, params=attrs) as get:
-            resp = await get.json()
-        hex_code = str(resp["hex"]["clean"])
-        contrast = str(resp["contrast"]["value"]).strip("#")
-        name = str(resp["name"]["value"])
-        image = f"http://placehold.it/300x300.png/{hex_code}/{contrast}&text={name}"
-        pic = await util.get_file(self.bot, image)
-        await ctx.send(file=discord.File(fp=io.BytesIO(pic), filename="color.png"))
-
-    @commands.command()
-    async def whoosh(self, ctx):
-        """
-        Whoosh!
-        """
-        await ctx.send(file=discord.File(fp="discordbot/cogs/utils/files/overhead.png"))
-
-    @commands.command(aliases=["pybelike"])
-    async def python(self, ctx):
-        """
-        Gives an accurate XKCD representation of Python.
-        """
-        await ctx.send(file=discord.File(fp="discordbot/cogs/utils/files/python.png"))
-
-    @commands.command(aliases=["star"])
-    async def goldstar(self, ctx):
-        """
-        You get a gold star!
-        """
-        await ctx.send(file=discord.File(fp="discordbot/cogs/utils/files/goldstar.png"))
-
-    @commands.command()
-    async def tried(self, ctx):
-        """
-        At least you tried...
-        """
-        await ctx.send(file=discord.File(fp="discordbot/cogs/utils/files/tried.png"))
-
-    @commands.command()
-    async def works(self, ctx):
-        """
-        It worked for me ¯\_(ツ)_/¯
-        """
-        await ctx.send(file=discord.File(fp="discordbot/cogs/utils/files/works.png"))
 
 
 def setup(bot: DiscordBot):

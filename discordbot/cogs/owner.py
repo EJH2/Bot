@@ -1,10 +1,8 @@
 """
-Owner-only commands.
+Owner-only commands for the bot.
 """
-
 import asyncio
 import glob
-import importlib
 import inspect
 import io
 import os
@@ -15,18 +13,18 @@ from contextlib import redirect_stdout
 import discord
 from discord.ext import commands
 
-from discordbot import consts
-from discordbot.bot import DiscordBot
-from discordbot.cogs.utils import config
-from discordbot.cogs.utils import util
+from discordbot.main import DiscordBot
+from discordbot.utils import util, tables
 
 
-# noinspection PyMethodMayBeStatic,PyMethodMayBeStatic
-# noinspection PyBroadException,PyUnboundLocalVariable
-# noinspection PyUnusedLocal,PyUnusedLocal,PyUnresolvedReferences,PyUnresolvedReferences,PyTypeChecker
 class Owner:
+    """
+    Owner-only commands for the bot.
+    """
+
     def __init__(self, bot: DiscordBot):
         self.bot = bot
+        self.db = bot.db
         self._last_result = None
         self.sessions = set()
 
@@ -34,7 +32,8 @@ class Owner:
     #   Debugging related commands (Totally not ripped from Danny#0007)
     # ===================================================================
 
-    def cleanup_code(self, content):
+    @staticmethod
+    def cleanup_code(content):
         """Automatically removes code blocks from the code."""
         # remove ```py\n```
         if content.startswith('```') and content.endswith('```'):
@@ -43,7 +42,8 @@ class Owner:
         # remove `foo`
         return content.strip('` \n')
 
-    def get_syntax_error(self, e):
+    @staticmethod
+    def get_syntax_error(e):
         if e.text is None:
             return f'```py\n{e.__class__.__name__}: {e}\n```'
         return f'```py\n{e.text}{"^":>{e.offset}}\n{e.__class__.__name__}: {e}```'
@@ -51,9 +51,7 @@ class Owner:
     @commands.is_owner()
     @commands.command()
     async def debug(self, ctx, *, body: str):
-        """
-        Evaluates code.
-        """
+        """Evaluates code."""
 
         env = {
             'bot': self.bot,
@@ -88,19 +86,20 @@ class Owner:
             value = stdout.getvalue()
 
             if ret is None:
-                if value and len(value) < 1980:
+                if value and len(str(value)) < 1980:
                     await ctx.send(f'```py\n{value}\n```')
                 else:
-                    paste = await util.paste_logs(ctx, value, "15m")
-                    return await ctx.send(
-                        f'**Your requested sauce was too stronk. So I uploaded to GhostBin! Hurry, it expires'
-                        f' in 15 minutes!**\n<{paste}>')
+                    print(f'{value}, {len(value), value.__class__}')
+                    # paste = await self.bot.get_cog("GhostBin").paste_logs(value, "15m")
+                    # return await ctx.send(
+                    #     f'**Your requested sauce was too stronk. So I uploaded to GhostBin! Hurry, it expires'
+                    #     f' in 15 minutes!**\n<{paste}>')
             else:
                 self._last_result = ret
-                if len(value) + len(ret) < 1980:
+                if len(str(value)) + len(str(ret)) < 1980:
                     await ctx.send(f'```py\n{value}{ret}\n```')
                 else:
-                    paste = await util.paste_logs(ctx, f'{value}{ret}', "15m")
+                    paste = await self.bot.get_cog("GhostBin").paste_logs(f'{value}{ret}', "15m")
                     return await ctx.send(
                         f'**Your requested sauce was too stronk. So I uploaded to GhostBin! Hurry, it expires'
                         f' in 15 minutes!**\n<{paste}>')
@@ -108,9 +107,7 @@ class Owner:
     @commands.is_owner()
     @commands.command()
     async def repl(self, ctx):
-        """
-        Launches an interactive REPL session.
-        """
+        """Launches an interactive REPL session."""
         variables = {
             'ctx': ctx,
             'bot': self.bot,
@@ -189,7 +186,7 @@ class Owner:
             try:
                 if fmt is not None:
                     if len(fmt) > 2000:
-                        paste = await util.paste_logs(ctx, fmt[6:-4], "15m")
+                        paste = await self.bot.get_cog("GhostBin").paste_logs(fmt[6:-4], "15m")
                         await ctx.send(
                             f'**Your requested sauce was too stronk. So I uploaded to GhostBin! Hurry, it expires'
                             f' in 15 minutes!**\n<{paste}>')
@@ -207,50 +204,41 @@ class Owner:
     @commands.group(invoke_without_command=True)
     @commands.is_owner()
     async def appearance(self, ctx):
-        """
-        Command for getting/editing bot configs.
-        """
+        """Command for changing the bot's appearance."""
         raise commands.BadArgument(f"Invalid subcommand passed: {ctx.subcommand_passed}")
 
     @appearance.command(name="game")
     @commands.is_owner()
     async def appearance_game(self, ctx, game: str, *, url: str = None):
-        """
-        Change the bots game.
-        """
+        """Change the bots game."""
         if not url:
             status = discord.Game(name=game, type=0)
         else:
             status = discord.Game(name=game, url=url, type=1)
 
-        await ctx.bot.change_presence(game=status)
+        await self.bot.change_presence(game=status)
         await ctx.send(f"Changed game to {game}{' on ' + url if url else ''}.")
 
     @appearance.command(name="status")
     @commands.is_owner()
     async def appearance_status(self, ctx, *, status: str):
-        """
-        Change the bots online status.
-        """
-        await ctx.change_presence(status=discord.Status(status))
+        """Change the bots online status."""
+        await self.bot.change_presence(status=discord.Status(status))
+        await ctx.send(f"I am now {status}!")
 
     @appearance.command(name="name")
     @commands.is_owner()
     async def appearance_name(self, ctx, *, name: str):
-        """
-        Change the bot name.
-        """
-        await ctx.bot.user.edit(username=name)
+        """Change the bot name."""
+        await self.bot.user.edit(username=name)
         await ctx.send(f"Changed name to {name}.")
 
     @appearance.command(name="avatar")
     @commands.is_owner()
     async def appearance_avatar(self, ctx, *, url: str):
-        """
-        Change the bot's avatar.
-        """
+        """Change the bot's avatar."""
         avatar = await util.get_file(self.bot, url)
-        await ctx.bot.user.edit(avatar=avatar)
+        await self.bot.user.edit(avatar=avatar)
         await ctx.send("Changed avatar.")
 
     # ===========================
@@ -260,15 +248,13 @@ class Owner:
     @commands.command()
     @commands.is_owner()
     async def load(self, ctx, *, extension: str):
-        """
-        Load an extension.
-        """
+        """Load an extension."""
         extension = extension.lower()
         extent = f"discordbot.cogs.{extension}" in self.bot.extensions
         if extent:
             return await ctx.send(f"Could not load `{extension}` -> `It's already loaded!`")
         try:
-            ext = ctx.bot.load_extension(f"discordbot.cogs.{extension}")
+            self.bot.load_extension(f"discordbot.cogs.{extension}")
             await ctx.send(f"Loaded cog `discordbot.cogs.{extension}`.")
         except Exception as e:
             traceback.print_exc()
@@ -277,12 +263,10 @@ class Owner:
     @commands.command()
     @commands.is_owner()
     async def unload(self, ctx, *, extension: str):
-        """
-        Unload an extension.
-        """
+        """Unload an extension."""
         extension = extension.lower()
         ext = f"discordbot.cogs.{extension}" in self.bot.extensions
-        ctx.bot.unload_extension(f"discordbot.cogs.{extension}")
+        self.bot.unload_extension(f"discordbot.cogs.{extension}")
         if ext is False:
             await ctx.send(f"Could not unload `{extension}` -> `Either it doesn't exist or it's already unloaded!`")
         else:
@@ -291,13 +275,11 @@ class Owner:
     @commands.group(invoke_without_command=True)
     @commands.is_owner()
     async def reload(self, ctx, *, extension: str):
-        """
-        Reload an extension.
-        """
+        """Reload an extension."""
         extension = extension.lower()
         try:
-            ctx.bot.unload_extension(f"discordbot.cogs.{extension}")
-            ctx.bot.load_extension(f"discordbot.cogs.{extension}")
+            self.bot.unload_extension(f"discordbot.cogs.{extension}")
+            self.bot.load_extension(f"discordbot.cogs.{extension}")
         except Exception as e:
             traceback.print_exc()
             await ctx.send(f"Could not reload `{extension}` -> `{e}`")
@@ -307,49 +289,51 @@ class Owner:
     @reload.command()
     @commands.is_owner()
     async def reload_all(self, ctx):
-        """
-        Reload all extensions.
-        """
-        for extension in ctx.bot.extensions:
+        """Reload all extensions."""
+        ext = len(self.bot.extensions)
+        counter = 0
+        for extension in self.bot.extensions:
             try:
-                ctx.bot.unload_extension(extension)
-                ctx.bot.load_extension(extension)
-                await asyncio.sleep(1)
+                self.bot.unload_extension(extension)
+                self.bot.load_extension(extension)
+                counter += 1
             except Exception as e:
                 await ctx.send(f"Could not reload `{extension}` -> `{e}`")
-                await asyncio.sleep(1)
+            await asyncio.sleep(1)
 
-        await ctx.send("Reloaded all.")
+        await ctx.send(f"Reloaded {counter}/{ext} extensions.")
 
     @commands.command()
     @commands.is_owner()
     async def refresh(self, ctx):
-        """
-        Re-initialise the cogs folder.
-        """
+        """Re-initialise the cogs folder."""
         await ctx.send("Please wait...")
 
-        for extension in consts.modules:
-            ctx.bot.unload_extension(f"discordbot.cogs.{extension}")
-            await ctx.send(f"Unloaded `{extension}`.")
+        modules = len(self.bot.modules)
+        counter = 0
+        for extension in self.bot.modules:
+            try:
+                self.bot.unload_extension(f"discordbot.cogs.{extension}")
+                counter += 1
+            except Exception as e:
+                await ctx.send(f"Could not load module `{extension}` -> `{e}`")
+        await ctx.send(f"{counter}/{modules} unloaded!")
 
-        consts.modules = []
+        self.bot.modules = []
 
         for i in glob.glob(os.getcwd() + "/discordbot/cogs/*.py"):
             if "init" not in i:
-                modules.append(i.replace(os.getcwd() + "/", "").replace("\\", ".").replace("/", ".")[:-3])
+                self.bot.modules.append(i.replace(os.getcwd() + "/", "").replace("\\", ".").replace("/", ".")[:-3])
 
-        for extension in consts.modules:
+        counter = 0
+        for extension in self.bot.modules:
             try:
-                ctx.load_extension(extension)
+                self.bot.load_extension(extension)
+                counter += 1
             except Exception as e:
-                ctx.send(f"Could not load module `{extension}` -> `{e}`")
-                await asyncio.sleep(1)
-            else:
-                ctx.bot.logger.info(f"Loaded extension `{extension}`.")
-                await asyncio.sleep(1)
-
-        await ctx.send("Refreshed all modules!")
+                await ctx.send(f"Could not load module `{extension}` -> `{e}`")
+            await asyncio.sleep(1)
+        await ctx.send(f"{counter}/{modules} loaded!")
 
     # ===============================
     #   Management related commands
@@ -357,129 +341,71 @@ class Owner:
 
     @commands.command()
     @commands.is_owner()
-    async def dm(self, ctx, user_id: int, *, reason: str):
-        user = ctx.bot.get_user(user_id)
+    async def dm(self, ctx, user: discord.User, *, reason: str):
+        """DMs a user."""
         if user is not None:
             await user.send(reason)
             await ctx.send("The message has been sent!")
         else:
             await ctx.send("I couldn't find that user, sorry!")
 
-    @commands.group(invoke_without_command=True)
-    @commands.is_owner()
-    async def settings(self, ctx):
-        """
-        Command for getting/editing bot configs.
-        """
-        raise commands.BadArgument(f"Invalid subcommand passed: {ctx.subcommand_passed}")
-
-    @settings.command()
-    async def get(self, ctx, configfile, *, keys: str):
-        """
-        Gets a config value.
-        """
-        keys = keys.split(", ")
-        configfile = config.Config(configfile).to_dict()
-        value = configfile
-        for x in keys:
-            value = dict.get(value, x)
-        if value is not None:
-            await ctx.send(value)
-            return
-        else:
-            await ctx.send("I couldn't find that key in the specified config!")
-
-    @settings.command()
-    async def set(self, ctx, configfile, keys, *, value):
-        """
-        Sets a config value.
-        """
-        configfile = config.Config(configfile)
-        config_file = configfile.db
-        keys = keys.split(", ")
-        if len(keys) > 1:
-            for x in keys[:-1]:
-                config_file = dict.get(config_file, x)
-        end = "".join(keys[-1:])
-        start = "".join(keys[:-1])
-        config_file[end] = value
-        configfile.db[start] = config_file
-        configfile.save()
-        if hasattr(ctx.bot, end):
-            if keys == "command_prefix":
-                ctx.bot.command_prefix = commands.when_mentioned_or(value)
-            else:
-                setattr(ctx.bot, end, value)
-        importlib.reload(consts)
-        await ctx.send(f"Alright, I changed `{end}` to `{value}`!")
-
     @commands.command()
     @commands.is_owner()
     async def endbot(self, ctx):
-        """
-        Segfault the bot in order to kill it.
-        """
+        """Log out the bot."""
         await ctx.send("Goodbye!")
-        self.bot.restarting.delete("restarting")
-        await ctx.bot.logout()
+        await self.bot.logout()
 
     @commands.command()
     @commands.is_owner()
-    async def restart(self, ctx):
-        """
-        Restart the bot.
-        """
-        await ctx.send("Restarting...")
-        self.bot.restarting.place("restarting", "True")
-        self.bot.restarting.place("restarted", "True")  # IDK
-        self.bot.restarting.place("restart_channel", ctx.channel.id)
-        await ctx.bot.logout()
-
-    @commands.command()
-    @commands.is_owner()
-    async def botban(self, ctx, *, member: discord.Member):
-        """
-        Bans a user from using the bot.
-        """
-        if member.id == ctx.bot.owner_id:
-            await ctx.send("You can't bot ban the owner!")
-            return
+    async def botban(self, ctx, member: discord.User, *, reason: str = "Excessive Stupid"):
+        """Bans a user from using the bot."""
+        if not self.db:
+            return await ctx.send("Database is down, try again later?")
+        if member.id == self.bot.owner_id:
+            return await ctx.send("You can't bot ban the owner!")
 
         plonks = self.bot.ignored.get("users", [])
         if member.id in plonks:
-            await ctx.send("That user is already bot banned.")
-            return
+            return await ctx.send("That user is already bot banned.")
 
         plonks.append(member.id)
-        self.bot.ignored.place("users", plonks)
-        await ctx.send(f"{member.name} has been banned from using the bot.")
+        values = {"object_id": member.id, "type": "user", "reason": reason}
+        async with self.db.get_session() as s:
+            await s.add(tables.Ignored(**values))
+        self.bot.ignored["users"] = plonks
+        await ctx.send(f"{member.name} has been banned from using the bot for `{reason}`.")
 
     @commands.command()
     @commands.is_owner()
-    async def unbotban(self, ctx, *, member: discord.Member):
-        """
-        Unbans a user from using the bot.
-        """
-        if member.id == ctx.bot.owner_id:
-            await ctx.send("You can't un-bot ban the owner, because they can't be banned!")
-            return
+    async def unbotban(self, ctx, *, member: discord.User):
+        """Unbans a user from using the bot."""
+        if not self.db:
+            return await ctx.send("Database is down, try again later?")
+        if member.id == self.bot.owner_id:
+            return await ctx.send("You can't un-bot ban the owner, because they can't be banned!")
 
         plonks = self.bot.ignored.get("users", [])
         if member.id not in plonks:
-            await ctx.send("That user isn't bot banned.")
-            return
+            return await ctx.send("That user isn't bot banned.")
 
-        self.bot.ignored.remove("users", member.id)
+        plonks.remove(member.id)
+        async with self.db.get_session() as s:
+            entry = await s.select(tables.Ignored).where(tables.Ignored.object_id == member.id).first()
+            await s.remove(entry)
+        self.bot.ignored["users"] = plonks
         await ctx.send(f"{member.name} has been unbanned from using the bot.")
 
     @commands.command()
     @commands.is_owner()
     async def sneaky(self, ctx, *, server: str):
-        """
-        Generates an invite link for the specified server.
-        """
-        invite = await discord.utils.find(lambda m: m.name == server, ctx.bot.guilds).create_invite()
-        await ctx.send(invite)
+        """Generates an invite link for the specified server."""
+        server = discord.utils.get(self.bot.guilds, name=server)
+        channels = [c for c in server.channels if c.permissions_for(server.me).create_instant_invite]
+        if len(channels) > 0:
+            invite = await channels[0].create_invite(max_uses=1)
+            return await ctx.send(invite)
+        await ctx.send("I can't invite from any channels. Sorry!")
 
 
 def setup(bot: DiscordBot):

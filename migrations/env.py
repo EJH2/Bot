@@ -1,12 +1,18 @@
 """
 Example environment file for asql-migrate.
 """
+import os
+import sys
 import typing
 
 from asyncqlio.db import DatabaseInterface
 from asyncqlio.orm.session import Session
+from ruamel import yaml
 
-from discordbot.consts import bot_config
+sys.path.insert(0, os.path.abspath("."))
+
+with open("config.yaml") as config:
+    config = yaml.safe_load(config)
 
 # If you need to import your own tables, do so here.
 # import sys, os
@@ -16,8 +22,8 @@ from discordbot.consts import bot_config
 # The DSN to connect to the server with.
 # You probably want to change this.
 dsn = 'postgresql://{}:{}@{}:{}/{}'
-dsn = dsn.format(bot_config["postgres"]["pg_user"], bot_config["postgres"]["pg_pass"], 'localhost', '5432',
-                 bot_config["postgres"]["pg_name"])
+dsn = dsn.format(config["postgres"]["pg_user"], config["postgres"]["pg_pass"], 'localhost', '5432',
+                 config["postgres"]["pg_name"])
 
 
 async def create_database_interface() -> DatabaseInterface:

@@ -21,7 +21,7 @@ async def upgrade(session: Session):
         message_id BIGINT PRIMARY KEY,
         author BIGINT,
         content TEXT,
-        timestamp TEXT
+        timestamp TIMESTAMP
     );
     
     CREATE INDEX messages_guild_id_idx ON messages (guild_id);
@@ -36,13 +36,21 @@ async def upgrade(session: Session):
     CREATE INDEX dynamic_rules_guild_id_idx ON dynamic_rules (guild_id);
     
     CREATE TABLE IF NOT EXISTS schedule(
-        id SMALLSERIAL NOT NULL PRIMARY KEY,
+        id BIGSERIAL NOT NULL PRIMARY KEY,
         expires TIMESTAMP,
         event TEXT,
         extras TEXT
     );
     
     CREATE INDEX schedule_id_idx ON schedule (id);
+    
+    CREATE TABLE IF NOT EXISTS ignored(
+        object_id BIGINT PRIMARY KEY,
+        reason TEXT DEFAULT NULL,
+        type TEXT
+    );
+    
+    CREATE INDEX ignored_type_idx on ignored (type);
     ''')
 
 
@@ -54,4 +62,5 @@ async def downgrade(session: Session):
         DROP TABLE IF EXISTS messages;
         DROP TABLE IF EXISTS dynamic_rules;
         DROP TABLE IF EXISTS schedule;
+        DROP TABLE IF EXISTS ignored;
     ''')
