@@ -106,6 +106,9 @@ class CommandHandler:
 
     async def on_command_completion(self, ctx):
         self.bot.commands_used[ctx.command.name] += 1
+        if not ctx.guild:
+            ctx.guild = "PMs"
+        self.bot.commands_used_in[str(ctx.guild)] += 1
         await asyncio.sleep(5)
         try:
             await ctx.message.delete()

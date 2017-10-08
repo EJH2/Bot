@@ -98,17 +98,22 @@ class Information:
         text = channel_types[discord.channel.TextChannel]
         perms = discord.Permissions(470083623)
         url = discord.utils.oauth_url(app_info.id, perms)
-        try:
-            c = self.bot.commands_used
-            max_value = max(c.values())
-            commands_used = [(key, c[key]) for key in c if c[key] == max_value]
-            if len(commands_used) > 3:
-                most_used = f"See `{self.bot.command_prefix_}info commands`"
-            else:
-                most_used = ", ".join([str(x[0]) + " - " + str(x[1]) for x in commands_used])
-        except ValueError:
-            most_used = "None"
 
+        def calc_max_values(c: Counter, optional_msg: str = None):
+            try:
+                max_value = max(c.values())
+                used = [(key, c[key]) for key in c if c[key] == max_value]
+                if len(used) > 3:
+                    most_used = f"See `{self.bot.command_prefix_}info commands`"
+                else:
+                    most_used = ", ".join([f"{str(x[0])} - {str(x[1])}" + (f" {optional_msg}" if optional_msg else "")
+                                           for x in used])
+            except ValueError:
+                most_used = "None"
+            return most_used
+
+        cmd_used, cmd_used_in = calc_max_values(self.bot.commands_used), calc_max_values(self.bot.commands_used_in,
+                                                                                         "commands run")
         em = discord.Embed(description='Latest Changes:\n' + revision)
         em.title = "Bot Invite Link"
         em.url = url
@@ -125,23 +130,33 @@ class Information:
         em.add_field(name="Total Unique Users:", value=f"{len(unique_members)} ({unique_online} online)")
         em.add_field(name="Text Channels:", value=str(text))
         em.add_field(name="Voice Channels:", value=str(voice))
-        em.add_field(name="Most Used Commands", value=str(most_used))
+        em.add_field(name="Most Used Commands", value=str(cmd_used))
+        em.add_field(name="Most Active Servers", value=str(cmd_used_in))
         em.add_field(name="Support Server", value="Click [**here**](https://discord.gg/4fKgwPn 'Gears of Bots') to stay"
                                                   " updated on all the latest news!", inline=False)
         await ctx.send(embed=em)
 
     @info.command(aliases=["commands"])
     async def commands_used(self, ctx):
-        """Gives info on how many commands have been used."""
-        msg = []
-        used = OrderedDict(self.bot.commands_used.most_common())
-        if used:
-            for k, v in used.items():
-                msg.append((str(k), str(v) + " uses"))
-        else:
-            msg = [("None", "No commands seemed to have been run yet!")]
-        await ctx.send(embed=discord.Embed(title="Commands Run:", description=util.neatly(
-            entries=msg, colors="autohotkey")))
+        """Gives info on how many commands have been used, and most popular servers."""
+
+        def calc_popularity(c: Counter, msg: str = None):
+            cmd_msg = []
+            used = OrderedDict(c.most_common())
+            if used:
+                for k, v in used.items():
+                    cmd_msg.append((str(k), str(v) + " uses"))
+            else:
+                cmd_msg = [("None", "No commands seemed to have been run yet!" if not msg else msg)]
+            return cmd_msg
+
+        em = discord.Embed(title="Command Statistics", description="Gives statistics on how the bot is used.")
+        em.add_field(name="Commands Run:", value=util.neatly(entries=calc_popularity(self.bot.commands_used),
+                                                             colors="autohotkey"))
+        em.add_field(name="Most Popular Servers:", value=util.neatly(entries=calc_popularity(self.bot.commands_used_in,
+                                                                                             "No servers have run commands yet!"),
+                                                                     colors="autohotkey"))
+        await ctx.send(embed=em)
 
     @commands.command()
     async def ping(self, ctx):

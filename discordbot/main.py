@@ -61,6 +61,7 @@ class DiscordBot(commands.AutoShardedBot):
 
         # Commands related setup.
         self.commands_used = Counter()
+        self.commands_used_in = Counter()
 
         # As the great Danny once said: "pay no mind to this ugliness."
         self.remove_command("help")
