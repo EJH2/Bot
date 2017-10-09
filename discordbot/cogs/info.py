@@ -153,9 +153,8 @@ class Information:
         em = discord.Embed(title="Command Statistics", description="Gives statistics on how the bot is used.")
         em.add_field(name="Commands Run:", value=util.neatly(entries=calc_popularity(self.bot.commands_used),
                                                              colors="autohotkey"))
-        em.add_field(name="Most Popular Servers:", value=util.neatly(entries=calc_popularity(self.bot.commands_used_in,
-                                                                                             "No servers have run commands yet!"),
-                                                                     colors="autohotkey"))
+        em.add_field(name="Most Popular Servers:", value=util.neatly(entries=calc_popularity(
+            self.bot.commands_used_in, "No servers have run commands yet!"), colors="autohotkey"))
         await ctx.send(embed=em)
 
     @commands.command()
