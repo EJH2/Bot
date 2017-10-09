@@ -139,7 +139,6 @@ class Information:
     @info.command(aliases=["commands"])
     async def commands_used(self, ctx):
         """Gives info on how many commands have been used, and most popular servers."""
-
         def calc_popularity(c: Counter, msg: str = None):
             cmd_msg = []
             used = OrderedDict(c.most_common())
