@@ -96,29 +96,29 @@ class Image:
 
         if member == self.bot.user:
             gif = random.choice([
-                "discordbot/files/gifs/punch_dodge1",
-                "discordbot/files/gifs/punch_dodge2",
-                "discordbot/files/gifs/punch_dodge3",
-                "discordbot/files/gifs/punch_dodge4",
-                "discordbot/files/gifs/punch_dodge5"
+                "discordbot/files/gifs/punch_dodge1.gif",
+                "discordbot/files/gifs/punch_dodge2.gif",
+                "discordbot/files/gifs/punch_dodge3.gif",
+                "discordbot/files/gifs/punch_dodge4.gif",
+                "discordbot/files/gifs/punch_dodge5.gif"
             ])
             message = f"You attempted to punch me, {ctx.author.name}, but I dodged it!"
 
         elif member == ctx.author:
             gif = random.choice([
-                "discordbot/files/gifs/punch_self1",
-                "discordbot/files/gifs/punch_self2",
-                "discordbot/files/gifs/punch_self3"
+                "discordbot/files/gifs/punch_self1.gif",
+                "discordbot/files/gifs/punch_self2.gif",
+                "discordbot/files/gifs/punch_self3.gif"
             ])
             message = f"{ctx.author.name} punched their self!"
 
         else:
             gif = random.choice([
-                "discordbot/files/gifs/punch_punch1",
-                "discordbot/files/gifs/punch_punch2",
-                "discordbot/files/gifs/punch_punch3",
-                "discordbot/files/gifs/punch_punch4",
-                "discordbot/files/gifs/punch_punch5"
+                "discordbot/files/gifs/punch_punch1.gif",
+                "discordbot/files/gifs/punch_punch2.gif",
+                "discordbot/files/gifs/punch_punch3.gif",
+                "discordbot/files/gifs/punch_punch4.gif",
+                "discordbot/files/gifs/punch_punch5.gif"
             ])
             message = f"{member.name} was punched by the mighty {ctx.author.name}!"
 
