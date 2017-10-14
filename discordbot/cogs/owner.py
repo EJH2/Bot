@@ -89,11 +89,10 @@ class Owner:
                 if value and len(str(value)) < 1980:
                     await ctx.send(f'```py\n{value}\n```')
                 else:
-                    print(f'{value}, {len(value), value.__class__}')
-                    # paste = await self.bot.get_cog("GhostBin").paste_logs(value, "15m")
-                    # return await ctx.send(
-                    #     f'**Your requested sauce was too stronk. So I uploaded to GhostBin! Hurry, it expires'
-                    #     f' in 15 minutes!**\n<{paste}>')
+                    paste = await self.bot.get_cog("GhostBin").paste_logs(value, "15m")
+                    return await ctx.send(
+                        f'**Your requested sauce was too stronk. So I uploaded to GhostBin! Hurry, it expires'
+                        f' in 15 minutes!**\n<{paste}>')
             else:
                 self._last_result = ret
                 if len(str(value)) + len(str(ret)) < 1980:
