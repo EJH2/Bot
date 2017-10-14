@@ -48,7 +48,7 @@ class Stupid:
 
         Do `copypasta <number from 1-22>` for a specific copypasta!
         """
-        with io.open('discordbot/utils/files/text/copypasta.txt', 'r', encoding='utf8') as f:
+        with io.open('discordbot/files/text/copypasta.txt', 'r', encoding='utf8') as f:
             data = f.readlines()
         if query:
             query_req = 1 <= query <= len(data)
@@ -64,7 +64,7 @@ class Stupid:
         """Bestows the user with the Rules of the Internet.
 
         If no number is provided, then a random rule will be retrieved."""
-        with io.open('discordbot/utils/files/text/RulesOTI.txt', 'r', encoding='utf8') as f:
+        with io.open('discordbot/files/text/RulesOTI.txt', 'r', encoding='utf8') as f:
             data = f.readlines()
         if number:
             query_req = 1 <= number <= len(data)
