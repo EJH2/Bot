@@ -196,7 +196,7 @@ class Information:
         await ctx.send(discord.utils.oauth_url(app_id, perms))
 
     @commands.command(aliases=["playerstats", "player", "userinfo", "userstats", "user"])
-    async def playerinfo(self, ctx, *, user: discord.User = None):
+    async def playerinfo(self, ctx, *, user: discord.Member = None):
         """Gives you player info on a user. If a user isn't passed then the shown info is yours."""
         if not user:
             user = ctx.author
