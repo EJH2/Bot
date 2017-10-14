@@ -99,12 +99,12 @@ class Information:
         perms = discord.Permissions(470083623)
         url = discord.utils.oauth_url(app_info.id, perms)
 
-        def calc_max_values(c: Counter, optional_msg: str = None):
+        def calc_max_values(c: Counter, cmd: str, optional_msg: str = None):
             try:
                 max_value = max(c.values())
                 used = [(key, c[key]) for key in c if c[key] == max_value]
                 if len(used) > 3:
-                    most_used = f"See `{self.bot.command_prefix_}info commands`"
+                    most_used = f"See `{self.bot.command_prefix_}info {cmd}`"
                 else:
                     most_used = ", ".join([f"{str(x[0])} - {str(x[1])}" + (f" {optional_msg}" if optional_msg else "")
                                            for x in used])
@@ -112,8 +112,8 @@ class Information:
                 most_used = "None"
             return most_used
 
-        cmd_used, cmd_used_in = calc_max_values(self.bot.commands_used), calc_max_values(self.bot.commands_used_in,
-                                                                                         "commands run")
+        cmd_used, cmd_used_in = calc_max_values(self.bot.commands_used, "commands"), \
+                                calc_max_values(self.bot.commands_used_in, "servers", "commands run")
         em = discord.Embed(description='Latest Changes:\n' + revision)
         em.title = "Bot Invite Link"
         em.url = url
@@ -136,33 +136,30 @@ class Information:
                                                   " updated on all the latest news!", inline=False)
         await ctx.send(embed=em)
 
-    @info.command(aliases=["commands"])
-    async def commands_used(self, ctx):
-        """Gives info on how many commands have been used, and most popular servers."""
-        def calc_popularity(c: Counter, msg: str = None):
-            cmd_msg = []
-            used = OrderedDict(c.most_common())
-            if used:
-                for k, v in used.items():
-                    cmd_msg.append((str(k), str(v) + " uses"))
-            else:
-                cmd_msg = [("None", "No commands seemed to have been run yet!" if not msg else msg)]
-            return cmd_msg
+    @staticmethod
+    def calc_popularity(c: Counter, msg: str = None):
+        cmd_msg = []
+        used = OrderedDict(c.most_common())
+        if used:
+            for k, v in used.items():
+                cmd_msg.append((str(k), str(v) + " uses"))
+        else:
+            cmd_msg = [("None", "No commands seemed to have been run yet!" if not msg else msg)]
+        return cmd_msg
 
-        try:
-            em = discord.Embed(title="Command Statistics", description="Gives statistics on how the bot is used.")
-            em.add_field(name="Commands Run:", value=util.neatly(entries=calc_popularity(self.bot.commands_used),
-                                                                 colors="autohotkey"), inline=False)
-            em.add_field(name="Most Popular Servers:",
-                         value=util.neatly(entries=calc_popularity(self.bot.commands_used_in), colors="autohotkey"),
-                         inline=False)
-            await ctx.send(embed=em)
-        except discord.DiscordException:
-            await ctx.send(embed=discord.Embed(title="Commands Run:", description=util.neatly(
-                entries=calc_popularity(self.bot.commands_used), colors="autohotkey")))
+    @info.command(name="commands")
+    async def info_commands(self, ctx):
+        """Gives info on how many commands have been used."""
+        em = discord.Embed(title="Command Statistics", description=util.neatly(
+            entries=self.calc_popularity(self.bot.commands_used), colors="autohotkey"))
+        await ctx.send(embed=em)
 
-            await ctx.send(embed=discord.Embed(title="Commands Run:", description=util.neatly(
-                entries=calc_popularity(self.bot.commands_used_in), colors="autohotkey")))
+    @info.command(name="servers")
+    async def info_servers(self, ctx):
+        """Gives info on the most popular servers."""
+        em = discord.Embed(title="Server Statistics", description=util.neatly(
+            entries=self.calc_popularity(self.bot.commands_used_in), colors="autohotkey"))
+        await ctx.send(embed=em)
 
     @commands.command()
     async def ping(self, ctx):
