@@ -2,6 +2,7 @@
 Logging/log retrieval for the bot.
 """
 import ast
+import asyncio
 
 import asyncpg
 import discord
@@ -19,7 +20,6 @@ class Logging:
 
     def __init__(self, bot: DiscordBot):
         self.bot = bot
-        self.db = bot.db
         self.gb = bot.get_cog("GhostBin")
 
     # ======================
@@ -51,7 +51,7 @@ class Logging:
                 time = message.created_at
                 values = {"guild_id": guild, "channel_id": channel, "message_id": message_id, "author": author,
                           "content": encrypted, "timestamp": time}
-                async with self.db.get_session() as s:
+                async with self.bot.db.get_session() as s:
                     await s.add(Messages(**values))
         except asyncpg.exceptions.InterfaceError:
             pass
@@ -139,6 +139,47 @@ class Logging:
         body = "".join(msgs)
         res = await self.gb.paste_logs(body, "15m")
         await ctx.send(f"Here is a link to your logs: {res}. Hurry, it expires in 15 minutes!")
+
+    @logs.group(invoke_without_command=True, name="purge")
+    @commands.check(checks.needs_logging)
+    @commands.is_owner()
+    async def logs_purge(self, ctx):
+        """Purges all user logs. Only usable by the bot owner."""
+        await ctx.send("Are you sure you want to clear *all* entries? This action is IRREVERSIBLE! "
+                       "If yes, type `yes` in 10 seconds, or the action will be aborted.")
+
+        def check(m):
+            return m.author == ctx.author and m.content.lower() == "yes"
+
+        try:
+            await ctx.bot.wait_for("message", check=check, timeout=10)
+        except asyncio.TimeoutError:
+            return await ctx.send("Timeout limit reached, aborting.")
+
+        async with self.bot.db.get_session() as s:
+            await s.truncate(Messages)
+
+        await ctx.send("Purged all messages!")
+
+    @logs_purge.command(name="user")
+    @commands.check(checks.needs_logging)
+    @commands.is_owner()
+    async def logs_purge_user(self, ctx, user: discord.User):
+        """Purges the logs of a user to comply with the Discord ToS."""
+        await ctx.send(f"Are you sure you want to clear *all* entries for user with ID {user.id}? "
+                       f"This action is IRREVERSIBLE! If yes, type `yes` in 10 seconds, or the action will be aborted.")
+
+        def check(m):
+            return m.author == ctx.author and m.content.lower() == "yes"
+
+        try:
+            await self.bot.wait_for("message", check=check, timeout=10)
+        except asyncio.TimeoutError:
+            return await ctx.send("Timeout limit reached, aborting.")
+        async with self.bot.db.get_session() as s:
+            await s.delete(Messages).where(Messages.author == user.id).run()
+
+        await ctx.send(f"Purged all messages from user with ID {user.id}")
 
 
 def setup(bot: DiscordBot):

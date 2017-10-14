@@ -78,6 +78,6 @@ def needs_embed(ctx):
 
 
 def needs_logging(ctx):
-    if not ctx.bot.logging:
+    if not ctx.bot.db:
         raise commands.errors.DisabledCommand
     return True
