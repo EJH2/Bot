@@ -149,12 +149,20 @@ class Information:
                 cmd_msg = [("None", "No commands seemed to have been run yet!" if not msg else msg)]
             return cmd_msg
 
-        em = discord.Embed(title="Command Statistics", description="Gives statistics on how the bot is used.")
-        em.add_field(name="Commands Run:", value=util.neatly(entries=calc_popularity(self.bot.commands_used),
-                                                             colors="autohotkey"))
-        em.add_field(name="Most Popular Servers:", value=util.neatly(entries=calc_popularity(
-            self.bot.commands_used_in, "No servers have run commands yet!"), colors="autohotkey"))
-        await ctx.send(embed=em)
+        try:
+            em = discord.Embed(title="Command Statistics", description="Gives statistics on how the bot is used.")
+            em.add_field(name="Commands Run:", value=util.neatly(entries=calc_popularity(self.bot.commands_used),
+                                                                 colors="autohotkey"), inline=False)
+            em.add_field(name="Most Popular Servers:",
+                         value=util.neatly(entries=calc_popularity(self.bot.commands_used_in), colors="autohotkey"),
+                         inline=False)
+            await ctx.send(embed=em)
+        except discord.DiscordException:
+            await ctx.send(embed=discord.Embed(title="Commands Run:", description=util.neatly(
+                entries=calc_popularity(self.bot.commands_used), colors="autohotkey")))
+
+            await ctx.send(embed=discord.Embed(title="Commands Run:", description=util.neatly(
+                entries=calc_popularity(self.bot.commands_used_in), colors="autohotkey")))
 
     @commands.command()
     async def ping(self, ctx):
@@ -191,7 +199,7 @@ class Information:
         await ctx.send(discord.utils.oauth_url(app_id, perms))
 
     @commands.command(aliases=["playerstats", "player", "userinfo", "userstats", "user"])
-    async def playerinfo(self, ctx, *, user: discord.Member = None):
+    async def playerinfo(self, ctx, *, user: discord.User = None):
         """Gives you player info on a user. If a user isn't passed then the shown info is yours."""
         if not user:
             user = ctx.author
@@ -254,7 +262,6 @@ class Information:
             ("ID", server.id),
             ("Owner", server.owner),
             ("Region", server.region),
-            ("Default Channel", server.default_channel),
             ("Members", member_list.format(len(server.members), member_by_status)),
             ("Text Channels", text_list.format(text_channels, secret_channels)),
             ("Voice Channels", voice_list.format(voice_channels, secret_voice)),
@@ -265,7 +272,7 @@ class Information:
         await ctx.send(util.neatly(msg))
 
     @commands.command()
-    async def avatar(self, ctx, *, member: discord.Member = None):
+    async def avatar(self, ctx, *, member: discord.User = None):
         """Shows a member's avatar."""
         if not member:
             member = ctx.author
