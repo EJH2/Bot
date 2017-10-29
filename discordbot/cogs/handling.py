@@ -7,7 +7,6 @@ import traceback
 
 import discord
 from discord.ext import commands
-from raven import Client
 
 from discordbot.main import DiscordBot
 from discordbot.utils import exceptions
@@ -20,7 +19,6 @@ class CommandHandler:
 
     def __init__(self, bot: DiscordBot):
         self.bot = bot
-        self.sentry = self.get_sentry()
 
     async def __global_check(self, ctx):
 
@@ -46,31 +44,19 @@ class CommandHandler:
 
         return True
 
-    def get_sentry(self):
-        if self.bot.config["sentry"] is not None:
-            sentry = Client(self.bot.config["sentry"], enable_breadcrumbs=False)
-            return sentry
-
     async def on_message_edit(self, before, after):
         """
         Checks message edit to see if I screwed up a command...
         """
         await self.bot.process_commands(after)
 
-    async def on_error(self, event_method):
-        """
-        Catches non-command errors
-        """
-        print('Ignoring exception in {}'.format(event_method), file=sys.stderr)
-        traceback.print_exc()
-        self.sentry.captureException()
-        self.bot.logger.warn("Error sent to Sentry!")
-
     async def on_command_error(self, ctx, error):
         """
         Catch command errors.
         """
-        if isinstance(error, exceptions.Ignored):
+        if isinstance(error.__cause__, discord.errors.NotFound):
+            return
+        elif isinstance(error, exceptions.Ignored):
             await ctx.channel.send("\N{CROSS MARK} This channel is currently being ignored.", delete_after=5)
         elif isinstance(error, commands.errors.NotOwner):
             await ctx.channel.send(f"\N{CROSS MARK} {error}", delete_after=5)
@@ -79,8 +65,6 @@ class CommandHandler:
         elif isinstance(error, exceptions.ClearanceError):
             await ctx.channel.send(f"\N{NO ENTRY} {error}", delete_after=5)
         elif isinstance(error, commands.errors.CommandNotFound):
-            return
-        elif isinstance(error.__cause__, discord.errors.NotFound):
             return
         elif isinstance(error, exceptions.EmbedError):
             await ctx.channel.send("\N{NO ENTRY} This command requires the `Embed Links` "
@@ -109,14 +93,6 @@ class CommandHandler:
                 traceback.print_exception(type(error), error.__cause__, error.__cause__.__traceback__, file=sys.stderr)
             else:
                 traceback.print_exception(type(error), error, error.__traceback__, file=sys.stderr)
-            if self.sentry:
-                try:
-                    raise error.original
-                except:
-                    assert isinstance(self.sentry, Client)
-                    self.sentry.captureException(data={'message': ctx.message.content}, extra={'ctx': ctx.__dict__,
-                                                                                               'error': error})
-            self.bot.logger.warn("Error sent to Sentry!")
 
     async def on_command(self, ctx):
         author = ctx.author

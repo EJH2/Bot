@@ -42,18 +42,6 @@ postgres:
   # Once filled, DO NOT ALTER IT! If you do, you risk breaking the bot.
   crypt_key: None
 
-## Sentry Logging Information. Leave this None since you probably won't have this
-sentry: None
-
-## YOURLS API things, leave these None since you won't have these
-yourls:
-
-  # YOURLS API base, example http://sho.rt/yourls-api.php
-  yourls_base: None
-
-  # YOURLS API Key
-  yourls_signature: None
-
 # The default log level
 log_level: INFO
 
