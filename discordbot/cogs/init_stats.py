@@ -14,7 +14,7 @@ class Stats:
 
     async def update(self):
         stats = {'server_count': len(self.bot.guilds)}
-        token = self.bot.config["bot"].get("bots_pw_key", None)
+        token = self.bot.cog_config.get("bots_pw_key", None)
         if not token:
             return
 

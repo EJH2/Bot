@@ -14,9 +14,6 @@ bot:
   # Developer command prefix
   dev_prefix: None
 
-  # Key for https://bots.discord.pw stats
-  bots_pw_key: None
-
   # Darksky Weather API Key, found by registering at https://darksky.net/dev/register
   WeatherKey: None
 
