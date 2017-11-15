@@ -31,7 +31,7 @@ class DynamicRules:
         self.bot = bot
         self.db = bot.db
 
-        self.valid_settings = {"command_prefix": str, "announce_joins": bool, "announce_leaves": bool}
+        self.valid_settings = {"command_prefix": str}
 
     # ============================
     #    Dynamic Rules Commands
