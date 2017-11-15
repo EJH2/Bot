@@ -35,6 +35,8 @@ class DiscordBot(commands.AutoShardedBot):
 
         with open("config.yaml") as config:
             self.config = yaml.safe_load(config)
+        with open("cog_config.yaml") as c_config:
+            self.cog_config = yaml.safe_load(c_config)
 
         # Setting up logging.
         discord_logger = formatter.setup_logger("discord")
@@ -85,6 +87,7 @@ class DiscordBot(commands.AutoShardedBot):
 
         # Extras
         self.start_time = time.time()
+        self.pm_help = None
 
     # Cleanup methods
 
