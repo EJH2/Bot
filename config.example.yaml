@@ -42,7 +42,7 @@ postgres:
 # The default log level
 log_level: INFO
 
-#Do message logging. Only enable this if you have set up Postgres.
+# Do message logging. Only enable this if you have set up Postgres.
 logging: False
 
 # Allows for per-server customisation. Only enable this if you have set up Postgres.
