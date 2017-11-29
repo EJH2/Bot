@@ -56,6 +56,15 @@ class Fun:
     @commands.command()
     async def fancify(self, ctx, *, text: str):
         """"Fancy-ify" text."""
+
+        def strip_non_ascii(string):
+            """ Returns the string without non ASCII characters"""
+            stripped = (c for c in string if 0 < ord(c) < 127)
+            return ''.join(stripped)
+
+        text = strip_non_ascii(text)
+        if len(text.strip()) < 1:
+            return await ctx.send("ASCII characters only please!")
         output = ""
         for letter in text:
             if 65 <= ord(letter) <= 90:
