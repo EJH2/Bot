@@ -50,7 +50,7 @@ class Salty:
             em.title = term.word
             em.url = term.permalink
             em.description = term.definition
-            em.add_field(name="Example", value=term.example)
+            em.add_field(name="Example", value=term.example if len(term.example) < 0 else "None")
             em.set_footer(text="Author: {}".format(term.author))
             em.timestamp = ctx.message.created_at
             await ctx.send(embed=em)
