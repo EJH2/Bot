@@ -133,21 +133,11 @@ class Fun:
                        f"`{random.choice(responses)}`")
 
     @commands.command()
-    async def scramble(self, ctx, word_length: int = None):
+    async def scramble(self, ctx):
         """Allows the user to play a word scramble with the bot."""
-        if word_length:
-            word_length_req = 3 <= word_length <= 20
-            if word_length_req:
-                async with self.bot.session.get(f"http://www.setgetgo.com/randomword/get.php?len={word_length}") as get:
-                    assert isinstance(get, aiohttp.ClientResponse)
-                    word = await get.read()
-            else:
-                await ctx.send("Word length must be within 3 and 20!")
-                return
-        else:
-            async with self.bot.session.get("http://www.setgetgo.com/randomword/get.php") as get:
-                assert isinstance(get, aiohttp.ClientResponse)
-                word = await get.read()
+        async with self.bot.session.post("http://watchout4snakes.com/wo4snakes/Random/RandomWord") as post:
+            assert isinstance(post, aiohttp.ClientResponse)
+            word = await post.read()
         word = word.decode()
         print(word)
         scrambled = random.sample(word, len(word))
