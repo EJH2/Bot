@@ -57,22 +57,13 @@ class Bot(commands.AutoShardedBot):
             except DiscordException as exc:
                 self.logger.error(f"{type(exc).__name__} occurred when loading {module}: {exc}")
 
-        # make sure to only print resume text once
+        # make sure to only print ready text once
         self._loaded = False
-
-    # def regenerate_usages(self):
-    #     """Re-create the help commands of commands using argument parsing"""
-    #     for k in command_parsers:
-    #         if self.get_command(k):
-    #             spt = len(k.split())
-    #             self.get_command(k).usage = "[".join((" ".join(self.get_command(k).signature.split()[spt:])).split("[")
-    #                                                  [:-1]) + create_help(command_parsers[k])
 
     async def on_ready(self):
         """Function called when bot is ready or resumed"""
         if self._loaded is False:
             end_time = time.time() - self._start_time
-            # self.regenerate_usages()
             self.app_info = await self.application_info()
             self.owner_id = self.app_info.owner.id
             self.logger.info(f"Loaded Bot:")
