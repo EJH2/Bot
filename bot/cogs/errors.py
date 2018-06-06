@@ -39,6 +39,8 @@ class ErrorHandler:
         """
         if isinstance(e.__cause__, discord.errors.NotFound):
             return
+        elif isinstance(e, commands.errors.CommandNotFound):
+            return
         elif isinstance(e, commands.errors.NotOwner):
             await ctx.channel.send(f"\N{CROSS MARK} {e}", delete_after=5)
         elif isinstance(e, discord.errors.Forbidden):
