@@ -1,11 +1,29 @@
 # coding=utf-8
 """Overrides for Discord.py classes"""
+import contextlib
 import inspect
+import io
 import itertools
 
 from discord.ext.commands import HelpFormatter as HelpF, Paginator, Command
 
-from bot.utils.args import create_help, command_parsers
+from bot.utils.args import ArgParseConverter as ArgPC
+
+
+def create_help(cmd, parser):
+    """Creates an updated usage for the help command"""
+    sio = io.StringIO()
+    with contextlib.redirect_stdout(sio):
+        parser.print_help()
+    sio.seek(0)
+    s = sio.read()
+    # Strip the filename and trailing newline from help text
+    arg_part = s[(len(str(s[7:]).split()[0]) + 8):-1]
+    k = cmd.qualified_name
+    spt = len(k.split())
+    # Remove a duplicate command name + leading arguments
+    split_sig = cmd.signature.split()[spt:]
+    return "[".join((" ".join(split_sig)).split("[")[:-1]) + arg_part
 
 
 class HelpFormatter(HelpF):
@@ -36,11 +54,8 @@ class HelpFormatter(HelpF):
 
         if isinstance(self.command, Command):
             # <signature portion>
-            if self.command.usage is False:  # create a better help for commands using argument parsing
-                k = self.command.qualified_name
-                spt = len(k.split())
-                self.command.usage = "[".join((" ".join(self.command.signature.split()[spt:])).split("[")
-                                              [:-1]) + create_help(command_parsers[k])
+            if self.command.params.get("args", None) and type(self.command.params['args'].annotation) == ArgPC:
+                self.command.usage = create_help(self.command, self.command.params['args'].annotation.parser)
             signature = self.get_command_signature()
             self._paginator.add_line(signature, empty=True)
 

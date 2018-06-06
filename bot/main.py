@@ -9,7 +9,6 @@ from discord.ext import commands
 from ghostbin import GhostBin
 
 from bot.utils.logging import setup_logger
-from bot.utils.args import command_parsers, create_help
 
 old_send = discord.abc.Messageable.send
 

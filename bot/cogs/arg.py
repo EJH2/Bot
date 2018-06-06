@@ -13,8 +13,8 @@ class Br:
         self.bot = bot
 
     # Example command:
-    @commands.group(aliases=["words", "wc"], invoke_without_command=True, usage=False)
-    async def word_cloud(self, ctx, thinkerton, *, args: ArgParseConverter("word_cloud",
+    @commands.group(aliases=["words", "wc"], invoke_without_command=True)
+    async def word_cloud(self, ctx, thinkerton, *, args: ArgParseConverter(
         [Argument("--mask", help="Mask to use", default="mask"),
          Argument("--font", help="Font to use", default="random"),
          Argument("--color", help="Background color"),
@@ -28,8 +28,8 @@ class Br:
         print(msg, args_)
         await ctx.send(args_)
 
-    @word_cloud.command(aliases=["borb", "birb"], usage=False)
-    async def bird_pic(self, ctx, thunk, *, args: ArgParseConverter("word_cloud bird_pic",
+    @word_cloud.command(aliases=["borb", "birb"])
+    async def bird_pic(self, ctx, thunk, *, args: ArgParseConverter(
         [Argument("--color", help="Borb color"),
          Argument("--count", default=10, type=int, help="Borb count")]
     ) = Default(count=10, color="red")):
