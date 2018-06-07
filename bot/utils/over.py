@@ -14,18 +14,20 @@ from bot.utils.args import ArgParseConverter as ArgPC
 
 def create_help(cmd, parser):
     """Creates an updated usage for the help command"""
-    sio = io.StringIO()
-    with contextlib.redirect_stdout(sio):
-        parser.print_help()
-    sio.seek(0)
-    s = sio.read()
-    # Strip the filename and trailing newline from help text
-    arg_part = s[(len(str(s[7:]).split()[0]) + 8):-1]
-    k = cmd.qualified_name
-    spt = len(k.split())
-    # Remove a duplicate command name + leading arguments
-    split_sig = cmd.signature.split()[spt:]
-    return "[".join((" ".join(split_sig)).split("[")[:-1]) + arg_part
+    if cmd.signature.split("[")[-1] == f"args={cmd.params['args'].default}]":
+        sio = io.StringIO()
+        with contextlib.redirect_stdout(sio):
+            parser.print_help()
+        sio.seek(0)
+        s = sio.read()
+        # Strip the filename and trailing newline from help text
+        arg_part = s[(len(str(s[7:]).split()[0]) + 8):-1]
+        k = cmd.qualified_name
+        spt = len(k.split())
+        # Remove a duplicate command name + leading arguments
+        split_sig = cmd.signature.split()[spt:]
+        return "[".join((" ".join(split_sig)).split("[")[:-1]) + arg_part
+    return cmd.usage
 
 
 class HelpFormatter(HelpF):
