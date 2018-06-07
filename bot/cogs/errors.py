@@ -64,8 +64,6 @@ class ErrorHandler:
             formatted_help = await ctx.bot.formatter.format_help_for(ctx, ctx.command)
             for page in formatted_help:
                 await ctx.channel.send(page, delete_after=20)
-        elif isinstance(e, commands.errors.CommandError):
-            await ctx.channel.send(f"\N{NO ENTRY} {e}")
         else:
             await ctx.channel.send("\N{NO ENTRY} An error happened. This has been logged and reported.",
                                    delete_after=5)
@@ -74,14 +72,15 @@ class ErrorHandler:
                     type(e), e.__cause__, e.__cause__.__traceback__)))
             else:
                 self.bot.logger.error(''.join(traceback.format_exception(type(e), e, e.__traceback__)))
-            if self.sentry:
-                try:
-                    raise e.original if hasattr(e, 'original') else e
-                except:
-                    assert isinstance(self.sentry, Client)
-                    self.sentry.captureException(data={'message': ctx.message.content}, extra={'ctx': ctx.__dict__,
-                                                                                               'error': e})
-                self.bot.logger.warn("Error sent to Sentry!")
+            if not isinstance(e, commands.errors.CommandError):
+                if self.sentry:
+                    try:
+                        raise e.original if hasattr(e, 'original') else e
+                    except:
+                        assert isinstance(self.sentry, Client)
+                        self.sentry.captureException(data={'message': ctx.message.content}, extra={'ctx': ctx.__dict__,
+                                                                                                   'error': e})
+                    self.bot.logger.warn("Error sent to Sentry!")
 
 
 def setup(bot: Bot):
