@@ -6,21 +6,9 @@ from pathlib import Path
 import discord
 from discord import DiscordException
 from discord.ext import commands
-from ghostbin import GhostBin
 
 from bot.utils.logging import setup_logger
-
-old_send = discord.abc.Messageable.send
-
-
-async def send(self, content=None, **kwargs):
-    """Overrides default send method in order to create a paste if the response is more than 2000 characters"""
-    if content is not None and len(str(content)) > 2000:
-        paste = await GhostBin().paste(content, expire="15m")
-        await old_send(self, f"Hey, I couldn't handle all the text I was gonna send you, so I put it in a paste!"
-                             f"\nThe link is **{paste}**, but it expires in 15 minutes, so get it quick!", **kwargs)
-    else:
-        await old_send(self, content, **kwargs)
+from bot.utils.over import send
 
 
 discord.abc.Messageable.send = send
