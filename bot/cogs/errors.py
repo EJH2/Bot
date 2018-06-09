@@ -82,6 +82,23 @@ class ErrorHandler:
                                                                                                    'error': e})
                     self.bot.logger.warn("Error sent to Sentry!")
 
+    async def on_command(self, ctx):
+        """Event ran every time a command is run"""
+        author = ctx.author
+        if ctx.guild is not None:
+            self.bot.command_logger.info(f"[Shard {ctx.guild.shard_id}] {ctx.guild.name} (ID: {ctx.guild.id}) > "
+                                         f"{author} (ID: {author.id}): {ctx.message.clean_content}")
+        else:
+            self.bot.command_logger.info(f"[Shard 0] Private Messages > {author} (ID: {author.id}):"
+                                         f" {ctx.message.clean_content}")
+
+    async def on_command_completion(self, ctx):
+        """Event ran every time a command completes successfully"""
+        self.bot.commands_used[ctx.command.name] += 1
+        if not ctx.guild:
+            ctx.guild = "PMs"
+        self.bot.commands_used_in[str(ctx.guild)] += 1
+
 
 def setup(bot: Bot):
     """d"""
