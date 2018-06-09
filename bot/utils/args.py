@@ -9,7 +9,7 @@ class Default(Namespace):
     """Default args for a command"""
 
     def __repr__(self):
-        return f"'{' '.join(f'--{k}={v}'for k, v in self._get_kwargs())}'"
+        return ' '.join(f'--{k}={v}'for k, v in self._get_kwargs())
 
 
 class Argument:
