@@ -14,7 +14,8 @@ from bot.utils.args import ArgParseConverter as ArgPC
 
 def create_help(cmd, parser):
     """Creates an updated usage for the help command"""
-    if cmd.signature.split("[")[-1] == f"args={cmd.params['args'].default}]":
+    default = cmd.params['args'].default
+    if cmd.signature.split("[")[-1] == f"args={default}]" if default else "args]":
         sio = io.StringIO()
         with contextlib.redirect_stdout(sio):
             parser.print_help()
