@@ -157,3 +157,4 @@ venv.bak/
 .idea/
 /dev_config.yaml
 /config.yaml
+[_]*.py
