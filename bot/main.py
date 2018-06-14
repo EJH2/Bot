@@ -1,5 +1,6 @@
 # coding=utf-8
 """Main bot file"""
+import aiohttp
 import time
 from collections import Counter
 from pathlib import Path
@@ -26,6 +27,7 @@ class Bot(commands.AutoShardedBot):
         super().__init__(*args, **kwargs)
         shard = f"| Shard {self.shard_id}" if self.shard_id else ""
         self.activity = discord.Game(name=f"{self.command_prefix}help {shard}")
+        self.session = aiohttp.ClientSession(loop=self.loop, headers={"User-Agent": self.http.user_agent})
         self.commands_used = Counter()
         self.commands_used_in = Counter()
 
