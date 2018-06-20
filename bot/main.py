@@ -74,3 +74,5 @@ class Bot(commands.AutoShardedBot):
         for logger in self.loggers:
             for handler in logger:
                 logger.removeHandler(handler)
+        await self.http._session.close()
+        await self.session.close()
