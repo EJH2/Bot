@@ -63,10 +63,10 @@ class Bot(commands.AutoShardedBot):
     async def get_revisions(self):
         """Get latest git revisions"""
         await self.wait_until_ready()
-        repo = git.Repo(os.getcwd())
-        url = repo.remote().urls.__next__()
-        commit_url = url.split("@")[1].replace(":", "/")[:-4]
         while not self.is_closed():
+            repo = git.Repo(os.getcwd())
+            url = repo.remote().urls.__next__()
+            commit_url = url.split("@")[1].replace(":", "/")[:-4]
             commits = []
             for commit in list(repo.iter_commits("master"))[:3]:
                 commit_time = humanize.naturaltime(datetime.datetime.now(tz=commit.committed_datetime.tzinfo)
