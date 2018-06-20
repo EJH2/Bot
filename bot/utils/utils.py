@@ -3,6 +3,7 @@
 import aiohttp
 
 from bot.main import Bot
+from tabulate import tabulate
 
 
 async def get_file(bot: Bot, url: str) -> bytes:
@@ -19,7 +20,7 @@ async def get_file(bot: Bot, url: str) -> bytes:
         return data
 
 
-def neatly(entries, colors="") -> str:
+def neatly(entries: dict, colors="") -> str:
     """
     Neatly order text.
 
@@ -27,10 +28,7 @@ def neatly(entries, colors="") -> str:
     :param colors: Markdown code for Discord code blocks.
     :return: Neatened string.
     """
-    width = max(map(lambda t: len(t[0]), entries))
-    output = [f"```{colors}"]
-    fmt = "\u200b{0:>{width}}: {1}"
-    for name, entry in entries:
-        output.append(fmt.format(name, entry, width=width))
-    output.append("```")
-    return "\n".join(output)
+    entries = [[f'{entry}:', entries[entry]] for entry in entries]
+    return f"```{colors}\n" \
+           f"{tabulate(entries, tablefmt='plain', colalign=('right',))}\n" \
+           f"```"
