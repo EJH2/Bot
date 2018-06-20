@@ -68,11 +68,15 @@ class Bot(commands.AutoShardedBot):
             url = repo.remote().urls.__next__()
             commit_url = url.split("@")[1].replace(":", "/")[:-4]
             commits = []
+            unpublished_commits = list(repo.iter_commits('master@{u}..master'))
             for commit in list(repo.iter_commits("master"))[:3]:
                 commit_time = humanize.naturaltime(datetime.datetime.now(tz=commit.committed_datetime.tzinfo)
                                                    - commit.committed_datetime)
-                commits.append(f"[`{commit.hexsha[:7]}`](https://{commit_url}/commit/{commit.hexsha[:7]}) "
-                               f"{commit.summary} ({commit_time})")
+                if commit not in unpublished_commits:
+                    commits.append(f"[`{commit.hexsha[:7]}`](https://{commit_url}/commit/{commit.hexsha[:7]}) "
+                                   f"{commit.summary} ({commit_time})")
+                else:
+                    commits.append(f"`{commit.hexsha[:7]}` {commit.summary} ({commit_time})")
             self.revisions = '\n'.join(commits)
             await asyncio.sleep(3600)
 
