@@ -1,11 +1,17 @@
 # coding=utf-8
 """Main bot file"""
+import asyncio
+import datetime
+import os
+
 import aiohttp
 import time
 from collections import Counter
 from pathlib import Path
 
 import discord
+import git
+import humanize
 from discord import DiscordException
 from discord.ext import commands
 
@@ -30,6 +36,8 @@ class Bot(commands.AutoShardedBot):
         self.session = aiohttp.ClientSession(loop=self.loop, headers={"User-Agent": self.http.user_agent})
         self.commands_used = Counter()
         self.commands_used_in = Counter()
+        self.revision_loop = self.loop.create_task(self.get_revisions())
+        self.revisions = None
 
         discord_logger = setup_logger("discord")
         self.logger = setup_logger("Bot")
@@ -51,6 +59,22 @@ class Bot(commands.AutoShardedBot):
 
         # make sure to only print ready text once
         self._loaded = False
+
+    async def get_revisions(self):
+        """Get latest git revisions"""
+        await self.wait_until_ready()
+        repo = git.Repo(os.getcwd())
+        url = repo.remote().urls.__next__()
+        commit_url = url.split("@")[1].replace(":", "/")[:-5]
+        while not self.is_closed():
+            commits = []
+            for commit in list(repo.iter_commits("master"))[:3]:
+                commit_time = humanize.naturaltime(datetime.datetime.now(tz=commit.committed_datetime.tzinfo)
+                                                   - commit.committed_datetime)
+                commits.append(f"[`{commit.hexsha[:7]}`](https://{commit_url}/commit/{commit.hexsha[:7]}) "
+                               f"{commit.summary} ({commit_time})")
+            self.revisions = '\n'.join(commits)
+            await asyncio.sleep(3600)
 
     async def on_ready(self):
         """Function called when bot is ready or resumed"""

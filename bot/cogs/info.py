@@ -93,20 +93,10 @@ class Info:
         em.set_thumbnail(url=user.avatar_url_as(static_format='png'))
         await ctx.send(embed=em)
 
-    @staticmethod
-    async def get_commit_messages(commit_num: int):
-        """Get {commit_num} amount of commits from the remote url"""
-        url = os.popen("git remote get-url --push origin").read()
-        git = url.split("@")[1].replace(":", "/")[:-5]
-        _format = f"[`%h`](https://{git}/commit/%h) %B (%cr)"
-        msg = f'git log -n {commit_num} --pretty=format:"{_format}"'
-        print(os.popen(msg).read())
-        return os.popen(msg).read()
-
     @commands.group(invoke_without_command=True, aliases=["stats"])
     async def about(self, ctx):
         """Gives information about the bot."""
-        revision = await self.get_commit_messages(3)
+        revision = self.bot.revisions
         app_info = await self.bot.application_info()
         owner = app_info.owner
         seconds = time.time() - self.bot._start_time
