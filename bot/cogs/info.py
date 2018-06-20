@@ -98,7 +98,7 @@ class Info:
         """Get {commit_num} amount of commits from the remote url"""
         url = os.popen("git remote get-url --push origin").read()
         git = url.split("@")[1].replace(":", "/")[:-5]
-        _format = f"[%h](https://{git}/commit/%h) %B (%cr)"
+        _format = f"[`%h`](https://{git}/commit/%h) %B (%cr)"
         msg = f'git log -n {commit_num} --pretty=format:"{_format}"'
         print(os.popen(msg).read())
         return os.popen(msg).read()
@@ -163,15 +163,15 @@ class Info:
         return cmd_msg
 
     @about.command(name="commands")
-    async def info_commands(self, ctx):
+    async def about_commands(self, ctx):
         """Gives info on how many commands have been used."""
         em = discord.Embed(title="Command Statistics", description=neatly(
             entries=self.calc_popularity(self.bot.commands_used), colors="autohotkey"))
         await ctx.send(embed=em)
 
-    @about.command(name="servers")
-    async def info_servers(self, ctx):
-        """Gives info on the most popular servers."""
+    @about.command(name="servers", aliases=["guilds"])
+    async def about_servers(self, ctx):
+        """Gives info on the most popular servers by command usage"""
         em = discord.Embed(title="Server Statistics", description=neatly(
             entries=self.calc_popularity(self.bot.commands_used_in), colors="autohotkey"))
         await ctx.send(embed=em)
