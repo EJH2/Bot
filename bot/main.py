@@ -65,7 +65,7 @@ class Bot(commands.AutoShardedBot):
         await self.wait_until_ready()
         repo = git.Repo(os.getcwd())
         url = repo.remote().urls.__next__()
-        commit_url = url.split("@")[1].replace(":", "/")[:-5]
+        commit_url = url.split("@")[1].replace(":", "/")[:-4]
         while not self.is_closed():
             commits = []
             for commit in list(repo.iter_commits("master"))[:3]:
