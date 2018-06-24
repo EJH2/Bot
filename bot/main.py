@@ -61,24 +61,28 @@ class Bot(commands.AutoShardedBot):
         self._loaded = False
 
     async def get_revisions(self):
-        """Get latest git revisions"""
+        """_get_revisions but for a looped task"""
         await self.wait_until_ready()
         while not self.is_closed():
-            repo = git.Repo(os.getcwd())
-            url = repo.remote().urls.__next__()
-            commit_url = url.split("@")[1].replace(":", "/")[:-4]
-            commits = []
-            unpublished_commits = list(repo.iter_commits('master@{u}..master'))
-            for commit in list(repo.iter_commits("master"))[:3]:
-                commit_time = humanize.naturaltime(datetime.datetime.now(tz=commit.committed_datetime.tzinfo)
-                                                   - commit.committed_datetime)
-                if commit not in unpublished_commits:
-                    commits.append(f"[`{commit.hexsha[:7]}`](https://{commit_url}/commit/{commit.hexsha[:7]}) "
-                                   f"{commit.summary} ({commit_time})")
-                else:
-                    commits.append(f"`{commit.hexsha[:7]}` {commit.summary} ({commit_time})")
-            self.revisions = '\n'.join(commits)
+            await self._get_revisions()
             await asyncio.sleep(3600)
+
+    async def _get_revisions(self):
+        """Get latest git revisions"""
+        repo = git.Repo(os.getcwd())
+        url = repo.remote().urls.__next__()
+        commit_url = url.split("@")[1].replace(":", "/")[:-4]
+        commits = []
+        unpublished_commits = list(repo.iter_commits('master@{u}..master'))
+        for commit in list(repo.iter_commits("master"))[:3]:
+            commit_time = humanize.naturaltime(datetime.datetime.now(tz=commit.committed_datetime.tzinfo)
+                                               - commit.committed_datetime)
+            if commit not in unpublished_commits:
+                commits.append(f"[`{commit.hexsha[:7]}`](https://{commit_url}/commit/{commit.hexsha[:7]}) "
+                               f"{commit.summary} ({commit_time})")
+            else:
+                commits.append(f"`{commit.hexsha[:7]}` {commit.summary} ({commit_time})")
+        self.revisions = '\n'.join(commits)
 
     async def on_ready(self):
         """Function called when bot is ready or resumed"""
