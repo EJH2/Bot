@@ -125,6 +125,8 @@ class Info:
 
         cmd_used, cmd_used_in = calc_max_values(self.bot.commands_used, "commands"), \
             calc_max_values(self.bot.commands_used_in, "servers", "commands run")
+        u_s = "s" if len(cmd_used.split(",")) > 1 else ""
+        ui_s = "s" if len(cmd_used_in.split(",")) > 1 else ""
         em = discord.Embed(description='**Latest Changes:**\n' + revision)
         em.title = "Bot Invite Link"
         em.url = url
@@ -136,8 +138,8 @@ class Info:
         em.add_field(name="Servers:", value=str(len(ctx.bot.guilds)))
         em.add_field(name="Up-time:", value=f"{int(w)}w : {int(d)}d : {int(h)}h : {int(m)}m : {int(s)}s")
         em.add_field(name="Total Unique Users:", value=f"{len(unique_members)} ({unique_online} online)")
-        em.add_field(name="Most Used Commands", value=str(cmd_used))
-        em.add_field(name="Most Active Servers", value=str(cmd_used_in))
+        em.add_field(name=f"Most Used Command{u_s}", value=str(cmd_used))
+        em.add_field(name=f"Most Active Server{ui_s}", value=str(cmd_used_in))
         await ctx.send(embed=em)
 
     @staticmethod
