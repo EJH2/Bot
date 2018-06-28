@@ -97,9 +97,8 @@ class Info:
     async def about(self, ctx):
         """Gives information about the bot."""
         revision = self.bot.revisions
-        app_info = await self.bot.application_info()
-        owner = app_info.owner
-        seconds = time.time() - self.bot._start_time
+        owner = self.bot.app_info.owner
+        seconds = time.time() - self.bot.start_time
         m, s = divmod(seconds, 60)
         h, m = divmod(m, 60)
         d, h = divmod(h, 24)
@@ -107,7 +106,7 @@ class Info:
         unique_members = set(self.bot.get_all_members())
         unique_online = sum(1 for m in unique_members if m.status != discord.Status.offline)
         perms = discord.Permissions(470083623)
-        url = discord.utils.oauth_url(app_info.id, perms)
+        url = discord.utils.oauth_url(self.bot.app_info.id, perms)
 
         def calc_max_values(c: Counter, cmd: str, optional_msg: str = None):
             """Calculate max values for a Counter"""
