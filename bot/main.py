@@ -1,18 +1,11 @@
 # coding=utf-8
 """Main bot file"""
-import asyncio
-import datetime
-import os
-
 import aiohttp
 import time
 from collections import Counter
 from pathlib import Path
 
 import discord
-import git
-import humanize
-from discord import DiscordException
 from discord.ext import commands
 
 from bot.utils.logging import setup_logger
@@ -27,16 +20,15 @@ class Bot(commands.AutoShardedBot):
 
     def __init__(self, *args, **kwargs):
         self.config = kwargs.pop('config')
-        self._start_time = time.time()
-        self.app_info = None
+        self.start_time = time.time()
         self.case_insensitive = True
         super().__init__(*args, **kwargs)
+        self.app_info = None
         shard = f"| Shard {self.shard_id}" if self.shard_id else ""
         self.activity = discord.Game(name=f"{self.command_prefix}help {shard}")
         self.session = aiohttp.ClientSession(loop=self.loop, headers={"User-Agent": self.http.user_agent})
         self.commands_used = Counter()
         self.commands_used_in = Counter()
-        self.revision_loop = self.loop.create_task(self.get_revisions())
         self.revisions = None
 
         discord_logger = setup_logger("discord")
@@ -54,40 +46,16 @@ class Bot(commands.AutoShardedBot):
                 if module in ['core', 'errors']:
                     pass
                 self.load_extension(f"bot.cogs.{module}")
-            except DiscordException as exc:
+            except discord.DiscordException as exc:
                 self.logger.error(f"{type(exc).__name__} occurred when loading {module}: {exc}")
 
         # make sure to only print ready text once
         self._loaded = False
 
-    async def get_revisions(self):
-        """_get_revisions but for a looped task"""
-        await self.wait_until_ready()
-        while not self.is_closed():
-            await self._get_revisions()
-            await asyncio.sleep(3600)
-
-    async def _get_revisions(self):
-        """Get latest git revisions"""
-        repo = git.Repo(os.getcwd())
-        url = repo.remote().urls.__next__()
-        commit_url = url.split("@")[1].replace(":", "/")[:-4]
-        commits = []
-        unpublished_commits = list(repo.iter_commits('master@{u}..master'))
-        for commit in list(repo.iter_commits("master"))[:3]:
-            commit_time = humanize.naturaltime(datetime.datetime.now(tz=commit.committed_datetime.tzinfo)
-                                               - commit.committed_datetime)
-            if commit not in unpublished_commits:
-                commits.append(f"[`{commit.hexsha[:7]}`](https://{commit_url}/commit/{commit.hexsha[:7]}) "
-                               f"{commit.summary} ({commit_time})")
-            else:
-                commits.append(f"`{commit.hexsha[:7]}` {commit.summary} ({commit_time})")
-        self.revisions = '\n'.join(commits)
-
     async def on_ready(self):
         """Function called when bot is ready or resumed"""
         if self._loaded is False:
-            end_time = time.time() - self._start_time
+            end_time = time.time() - self.start_time
             self.app_info = await self.application_info()
             self.owner_id = self.app_info.owner.id
             self.logger.info(f"Loaded Bot:")
