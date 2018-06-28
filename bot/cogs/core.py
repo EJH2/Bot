@@ -1,13 +1,19 @@
 # coding=utf-8
 """File containing core commands of the bot"""
 import asyncio
+import datetime
 import inspect
 import io
+import os
 import textwrap
+import time
 import traceback
 from contextlib import redirect_stdout
+from pathlib import Path
 
 import discord
+import git
+import humanize
 from discord.ext import commands
 
 from bot.main import Bot
@@ -20,6 +26,31 @@ class Core:
         self.bot = bot
         self._last_result = None
         self.sessions = set()
+        self.revision_loop = self.bot.loop.create_task(self.get_revisions())
+
+    async def get_revisions(self):
+        """_get_revisions but for a looped task"""
+        await self.bot.wait_until_ready()
+        while not self.bot.is_closed():
+            await self._get_revisions()
+            await asyncio.sleep(3600)
+
+    async def _get_revisions(self):
+        """Get latest git revisions"""
+        repo = git.Repo(os.getcwd())
+        url = repo.remote().urls.__next__()
+        commit_url = url.split("@")[1].replace(":", "/")[:-4]
+        commits = []
+        unpublished_commits = list(repo.iter_commits('master@{u}..master'))
+        for commit in list(repo.iter_commits("master"))[:3]:
+            commit_time = humanize.naturaltime(datetime.datetime.now(tz=commit.committed_datetime.tzinfo)
+                                               - commit.committed_datetime)
+            if commit not in unpublished_commits:
+                commits.append(f"[`{commit.hexsha[:7]}`](https://{commit_url}/commit/{commit.hexsha[:7]}) "
+                               f"{commit.summary} ({commit_time})")
+            else:
+                commits.append(f"`{commit.hexsha[:7]}` {commit.summary} ({commit_time})")
+        self.bot.revisions = '\n'.join(commits)
 
     @staticmethod
     def cleanup_code(content):
@@ -83,6 +114,7 @@ class Core:
 
     # @commands.command(hidden=True)
     # async def activity(self, ctx, ):
+    # TODO: Actually finish this sometime, or not ¯\_(ツ)_/¯
 
     @commands.command(hidden=True)
     async def debug(self, ctx, *, body: str):
