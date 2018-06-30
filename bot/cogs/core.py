@@ -55,18 +55,14 @@ class Core:
             return sentry
 
     async def on_error(self, event_method):
-        """
-        Catches non-command errors
-        """
+        """Catches non-command errors"""
         print('Ignoring exception in {}'.format(event_method), file=sys.stderr)
         traceback.print_exc()
         self.sentry.captureException()
         self.bot.logger.warn("Error sent to Sentry!")
 
     async def on_command_error(self, ctx, e):
-        """
-        Catch command errors.
-        """
+        """Catch command errors."""
         if isinstance(e.__cause__, discord.errors.NotFound):
             return
         elif isinstance(e, commands.errors.CommandNotFound):
@@ -131,5 +127,5 @@ class Core:
 
 
 def setup(bot: Bot):
-    """d"""
+    """Setup function for the cog"""
     bot.add_cog(Core(bot))
