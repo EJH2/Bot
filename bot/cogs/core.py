@@ -1,31 +1,26 @@
 # coding=utf-8
-"""File containing core commands of the bot"""
+"""Error handling for the bot"""
 import asyncio
 import datetime
-import inspect
-import io
 import os
-import textwrap
-import time
+import sys
 import traceback
-from contextlib import redirect_stdout
-from pathlib import Path
 
 import discord
 import git
 import humanize
 from discord.ext import commands
+from raven import Client
 
 from bot.main import Bot
 
 
 class Core:
-    """Cog containing core commands of the bot"""
+    """Error handling for the bot"""
 
-    def __init__(self, bot):
+    def __init__(self, bot: Bot):
         self.bot = bot
-        self._last_result = None
-        self.sessions = set()
+        self.sentry = self.get_sentry()
         self.revision_loop = self.bot.loop.create_task(self.get_revisions())
 
     async def get_revisions(self):
@@ -52,203 +47,89 @@ class Core:
                 commits.append(f"`{commit.hexsha[:7]}` {commit.summary} ({commit_time})")
         self.bot.revisions = '\n'.join(commits)
 
-    @staticmethod
-    def cleanup_code(content):
-        """Automatically removes code blocks from the code."""
-        # remove ```py\n```
-        if content.startswith('```') and content.endswith('```'):
-            return '\n'.join(content.split('\n')[1:-1])
+    def get_sentry(self):
+        """Checks to see if sentry is actually available"""
+        _sentry = self.bot.config.get('extras', {}).get('sentry', 'None')
+        if _sentry is not None:
+            sentry = Client(_sentry, enable_breadcrumbs=False)
+            return sentry
 
-        # remove `foo`
-        return content.strip('` \n')
+    async def on_error(self, event_method):
+        """
+        Catches non-command errors
+        """
+        print('Ignoring exception in {}'.format(event_method), file=sys.stderr)
+        traceback.print_exc()
+        self.sentry.captureException()
+        self.bot.logger.warn("Error sent to Sentry!")
 
-    async def __local_check(self, ctx):
-        return await self.bot.is_owner(ctx.author)
-
-    @staticmethod
-    def get_syntax_error(e):
-        """Parses errors into a codeblock for easy reading"""
-        if e.text is None:
-            return f'```py\n{e.__class__.__name__}: {e}\n```'
-        return f'```py\n{e.text}{"^":>{e.offset}}\n{e.__class__.__name__}: {e}```'
-
-    @commands.command(hidden=True)
-    async def load(self, ctx, *, module):
-        """Loads a module."""
-        _module = f'bot.cogs.{module}'
-        try:
-            self.bot.load_extension(_module)
-        except Exception:
-            await ctx.send(f'```py\n{traceback.format_exc()}\n```')
-        else:
-            await ctx.send(f'Loaded {_module}')
-
-    @commands.command(hidden=True)
-    async def unload(self, ctx, *, module):
-        """Unloads a module."""
-        _module = f'bot.cogs.{module}'
-        try:
-            self.bot.unload_extension(_module)
-        except Exception:
-            await ctx.send(f'```py\n{traceback.format_exc()}\n```')
-        else:
-            await ctx.send(f'Unloaded {_module}')
-
-    @commands.command(hidden=True)
-    async def reload(self, ctx, *, module):
-        """Reloads a module."""
-        _module = f'bot.cogs.{module}'
-        try:
-            self.bot.unload_extension(_module)
-            self.bot.load_extension(_module)
-        except Exception:
-            await ctx.send(f'```py\n{traceback.format_exc()}\n```')
-        else:
-            await ctx.send(f'Reloaded {_module}')
-
-    @commands.command(hidden=True, aliases=['kill', 'die', 'endbot'])
-    async def logout(self, ctx):
-        """Kills the bot"""
-        await ctx.send("Shutting down...")
-        await ctx.bot.logout()
-
-    # @commands.command(hidden=True)
-    # async def activity(self, ctx, ):
-    # TODO: Actually finish this sometime, or not ¯\_(ツ)_/¯
-
-    @commands.command(hidden=True)
-    async def debug(self, ctx, *, body: str):
-        """Evaluates a code"""
-
-        env = {
-            'bot': self.bot,
-            'ctx': ctx,
-            'channel': ctx.channel,
-            'author': ctx.author,
-            'guild': ctx.guild,
-            'message': ctx.message,
-            '_': self._last_result
-        }
-
-        env.update(globals())
-
-        body = self.cleanup_code(body)
-        stdout = io.StringIO()
-
-        to_compile = f'async def func():\n{textwrap.indent(body, "  ")}'
-
-        try:
-            exec(to_compile, env)
-        except Exception as e:
-            return await ctx.send(f'```py\n{e.__class__.__name__}: {e}\n```')
-
-        func = env['func']
-        try:
-            with redirect_stdout(stdout):
-                ret = await func()
-        except Exception:
-            value = stdout.getvalue()
-            await ctx.send(f'```py\n{value}{traceback.format_exc()}\n```')
-        else:
-            value = stdout.getvalue()
-
-            if ret is None:
-                if value:
-                    await ctx.send(f'```py\n{value}\n```')
-            else:
-                self._last_result = ret
-                await ctx.send(f'```py\n{value}{ret}\n```')
-
-    @commands.command(hidden=True)
-    async def repl(self, ctx):
-        """Launches an interactive REPL session."""
-        variables = {
-            'ctx': ctx,
-            'bot': self.bot,
-            'message': ctx.message,
-            'guild': ctx.guild,
-            'channel': ctx.channel,
-            'author': ctx.author,
-            '_': None,
-        }
-
-        if ctx.channel.id in self.sessions:
-            await ctx.send('Already running a REPL session in this channel. Exit it with `quit`.')
+    async def on_command_error(self, ctx, e):
+        """
+        Catch command errors.
+        """
+        if isinstance(e.__cause__, discord.errors.NotFound):
             return
-
-        self.sessions.add(ctx.channel.id)
-        await ctx.send('Enter code to execute or evaluate. `exit()` or `quit` to exit.')
-
-        def check(m):
-            """Checks to see if the user running the repl is the same one that initiated it"""
-            return m.author.id == ctx.author.id and m.channel.id == ctx.channel.id and m.content.startswith('`')
-
-        while True:
-            try:
-                response = await self.bot.wait_for('message', check=check, timeout=10.0 * 60.0)
-            except asyncio.TimeoutError:
-                await ctx.send('Exiting REPL session.')
-                self.sessions.remove(ctx.channel.id)
-                break
-
-            cleaned = self.cleanup_code(response.content)
-
-            if cleaned in ('quit', 'exit', 'exit()'):
-                await ctx.send('Exiting.')
-                self.sessions.remove(ctx.channel.id)
-                return
-
-            executor = exec
-            code = None
-            if cleaned.count('\n') == 0:
-                # single statement, potentially 'eval'
-                try:
-                    code = compile(cleaned, '<repl session>', 'eval')
-                except SyntaxError:
-                    pass
-                else:
-                    executor = eval
-
-            if executor is exec:
-                try:
-                    code = compile(cleaned, '<repl session>', 'exec')
-                except SyntaxError as e:
-                    await ctx.send(self.get_syntax_error(e))
-                    continue
-
-            variables['message'] = response
-
-            fmt = None
-            stdout = io.StringIO()
-
-            try:
-                with redirect_stdout(stdout):
-                    result = executor(code, variables)
-                    if inspect.isawaitable(result):
-                        result = await result
-            except Exception:
-                value = stdout.getvalue()
-                fmt = f'```py\n{value}{traceback.format_exc()}\n```'
+        elif isinstance(e, commands.errors.CommandNotFound):
+            return
+        elif isinstance(e, commands.errors.NotOwner):
+            await ctx.channel.send(f"\N{CROSS MARK} {e}", delete_after=5)
+        elif isinstance(e, discord.errors.Forbidden):
+            await ctx.channel.send("\N{NO ENTRY} I don't have permission to perform the action", delete_after=5)
+        elif isinstance(e, commands.errors.CommandNotFound):
+            return
+        elif isinstance(e, commands.errors.NoPrivateMessage):
+            await ctx.channel.send("\N{NO ENTRY} That command can not be run in PMs!",
+                                   delete_after=5)
+            return
+        elif isinstance(e, commands.errors.DisabledCommand):
+            await ctx.channel.send("\N{NO ENTRY} Sorry, but that command is currently disabled!",
+                                   delete_after=5)
+        elif isinstance(e, commands.errors.CheckFailure):
+            await ctx.channel.send("\N{CROSS MARK} Check failed. You probably don't have "
+                                   "permission to do this.", delete_after=5)
+        elif isinstance(e, commands.errors.CommandOnCooldown):
+            await ctx.channel.send(f"\N{NO ENTRY} {e}", delete_after=5)
+        elif isinstance(e, (commands.errors.BadArgument, commands.errors.MissingRequiredArgument)):
+            await ctx.channel.send(f"\N{CROSS MARK} Bad argument: {' '.join(e.args)}", delete_after=5)
+            formatted_help = await ctx.bot.formatter.format_help_for(ctx, ctx.command)
+            for page in formatted_help:
+                await ctx.channel.send(page, delete_after=20)
+        else:
+            await ctx.channel.send("\N{NO ENTRY} An error happened. This has been logged and reported.",
+                                   delete_after=5)
+            if isinstance(e, commands.errors.CommandInvokeError):
+                self.bot.logger.error(''.join(traceback.format_exception(
+                    type(e), e.__cause__, e.__cause__.__traceback__)))
             else:
-                value = stdout.getvalue()
-                if result is not None:
-                    fmt = f'```py\n{value}{result}\n```'
-                    variables['_'] = result
-                elif value:
-                    fmt = f'```py\n{value}\n```'
+                self.bot.logger.error(''.join(traceback.format_exception(type(e), e, e.__traceback__)))
+            if not isinstance(e, commands.errors.CommandError):
+                if self.sentry:
+                    try:
+                        raise e.original if hasattr(e, 'original') else e
+                    except:
+                        assert isinstance(self.sentry, Client)
+                        self.sentry.captureException(data={'message': ctx.message.content}, extra={'ctx': ctx.__dict__,
+                                                                                                   'error': e})
+                    self.bot.logger.warn("Error sent to Sentry!")
 
-            try:
-                if fmt is not None:
-                    if len(fmt) > 2000:
-                        await ctx.send('Content too big to be printed.')
-                    else:
-                        await ctx.send(fmt)
-            except discord.Forbidden:
-                pass
-            except discord.HTTPException as e:
-                await ctx.send(f'Unexpected error: `{e}`')
+    async def on_command(self, ctx):
+        """Event ran every time a command is run"""
+        author = ctx.author
+        if ctx.guild is not None:
+            self.bot.command_logger.info(f"[Shard {ctx.guild.shard_id}] {ctx.guild.name} (ID: {ctx.guild.id}) > "
+                                         f"{author} (ID: {author.id}): {ctx.message.clean_content}")
+        else:
+            self.bot.command_logger.info(f"[Shard 0] Private Messages > {author} (ID: {author.id}):"
+                                         f" {ctx.message.clean_content}")
+
+    async def on_command_completion(self, ctx):
+        """Event ran every time a command completes successfully"""
+        self.bot.commands_used[ctx.command.name] += 1
+        if not ctx.guild:
+            ctx.guild = "PMs"
+        self.bot.commands_used_in[str(ctx.guild)] += 1
 
 
 def setup(bot: Bot):
-    """Setup function for the cog"""
+    """d"""
     bot.add_cog(Core(bot))

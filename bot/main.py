@@ -38,7 +38,7 @@ class Bot(commands.AutoShardedBot):
 
         _modules = [mod.stem for mod in Path("bot/cogs").glob("*.py")]
         self.load_extension(f"bot.cogs.core")
-        self.load_extension(f"bot.cogs.errors")
+        self.load_extension(f"bot.cogs.owner")
         if 'bare' in kwargs.pop('argv'):  # load the bot bare-bones to diagnose issues
             return
         for module in _modules:
