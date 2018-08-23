@@ -1,7 +1,7 @@
 # coding=utf-8
 """File containing informative commands for the bot"""
 import inspect
-import os
+import random
 import re
 import sys
 import textwrap
@@ -23,7 +23,7 @@ class Info:
 
     @commands.command()
     async def source(self, ctx, *, entity: SourceEntity):
-        """Gets the source of the requested entity"""
+        """Gets the source of the requested entity."""
         code = inspect.getsource(entity)
         code = textwrap.dedent(code).replace('`', '\u200b`')
         await ctx.send(f'```py\n{code}\n```')
@@ -37,7 +37,7 @@ class Info:
 
     @commands.command()
     async def lookup(self, ctx, *, id_number: InviteUserGuild):
-        """Looks up an ID for a guild, user, or invite"""
+        """Looks up an ID for a guild, user, or invite."""
         if isinstance(id_number, discord.Invite):
             inv = id_number
             embed = discord.Embed(title=f'Invite Code {inv.code}')
@@ -90,6 +90,7 @@ class Info:
         em.add_field(name='Bot:', value=user.bot)
         em.add_field(name='Created At:', value=user.created_at)
         em.add_field(name='Shared Servers:', value=shared)
+        em.add_field(name='Avatar URL:', value=user.avatar_url())
         em.set_thumbnail(url=user.avatar_url_as(static_format='png'))
         await ctx.send(embed=em)
 
@@ -105,7 +106,7 @@ class Info:
         w, d = divmod(d, 7)
         unique_members = set(self.bot.get_all_members())
         unique_online = sum(1 for m in unique_members if m.status != discord.Status.offline)
-        perms = discord.Permissions(470083623)
+        perms = discord.Permissions(470150343)
         url = discord.utils.oauth_url(self.bot.app_info.id, perms)
 
         def calc_max_values(c: Counter, cmd: str, optional_msg: str = None):
@@ -114,7 +115,7 @@ class Info:
                 max_value = max(c.values())
                 used = [(key, c[key]) for key in c if c[key] == max_value]
                 if len(used) > 3:
-                    most_used = f"See `{self.bot.command_prefix_}info {cmd}`"
+                    most_used = f"See `{self.bot.command_prefix}info {cmd}`"
                 else:
                     most_used = ", ".join([f"{str(x[0])} - {str(x[1])}" + (f" {optional_msg}" if optional_msg else "")
                                            for x in used])
@@ -126,7 +127,7 @@ class Info:
             calc_max_values(self.bot.commands_used_in, "servers", "commands run")
         u_s = "s" if len(cmd_used.split(",")) > 1 else ""
         ui_s = "s" if len(cmd_used_in.split(",")) > 1 else ""
-        em = discord.Embed(description='**Latest Changes:**\n' + revision)
+        em = discord.Embed(description=str('**Latest Changes:**\n' + revision) if revision else None)
         em.title = "Bot Invite Link"
         em.url = url
         em.set_thumbnail(url=self.bot.user.avatar_url)
@@ -166,6 +167,33 @@ class Info:
         em = discord.Embed(title="Server Statistics", description=neatly(
             entries=self.calc_popularity(self.bot.commands_used_in), colors="autohotkey"))
         await ctx.send(embed=em)
+
+    @commands.command()
+    async def ping(self, ctx):
+        """Pings the bot."""
+        joke = random.choice(["not actually pinging server...", "hey bb", "what am I doing with my life",
+                              "Some Dragon is a dank music bot tbh", "I'd like to thank the academy for this award",
+                              "The NSA is watching 👀", "`<Insert clever joke here>`", "¯\_(ツ)_/¯", "(づ｡◕‿‿◕｡)づ",
+                              "I want to believe...", "Hypesquad is a joke", "EJH2#0330 is my daddy", "Robino pls",
+                              "Seth got arrested again...", "Maxie y u do dis", "aaaaaaaaaaaAAAAAAAAAA", "owo",
+                              "uwu", "meme team best team", "made with dicksword dot pee why", "I'm running out of "
+                                                                                               "ideas here",
+                              "am I *dank* enough for u?", "this is why we can't have nice things. come on",
+                              "You'll understand when you're older...", "\"why\", you might ask? I do not know...",
+                              "I'm a little tea pot, short and stout", "I'm not crying, my eyeballs "
+                                                                       "are sweating!",
+                              "When will the pain end?", "Partnership when?", "Hey Robino, rewrite when?"])
+        before = time.monotonic()
+        ping_msg = await ctx.send("Pinging Server...")
+        after = time.monotonic()
+        ping = (after - before) * 1000
+        await ping_msg.edit(content=joke + f" // ***{ping:.0f}ms***")
+
+    @commands.command(aliases=["oauth", "invite"])
+    async def join(self, ctx):
+        """Gives my OAuth url."""
+        perms = discord.Permissions(470150343)
+        await ctx.send(discord.utils.oauth_url(self.bot.app_info.id, perms))
 
 
 def setup(bot: Bot):
