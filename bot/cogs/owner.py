@@ -21,6 +21,10 @@ class Owner:
         self._last_result = None
         self.sessions = set()
 
+    async def __local_check(self, ctx):
+        """Check to see if the user running a command from this cog is the owner of the bot"""
+        return await self.bot.is_owner(ctx.author)
+
     @staticmethod
     def cleanup_code(content):
         """Automatically removes code blocks from the code."""
@@ -31,9 +35,6 @@ class Owner:
         # remove `foo`
         return content.strip('` \n')
 
-    async def __local_check(self, ctx):
-        return await self.bot.is_owner(ctx.author)
-
     @staticmethod
     def get_syntax_error(e):
         """Parses errors into a codeblock for easy reading"""
@@ -41,53 +42,9 @@ class Owner:
             return f'```py\n{e.__class__.__name__}: {e}\n```'
         return f'```py\n{e.text}{"^":>{e.offset}}\n{e.__class__.__name__}: {e}```'
 
-    @commands.command(hidden=True)
-    async def load(self, ctx, *, module):
-        """Loads a module."""
-        _module = f'bot.cogs.{module}'
-        try:
-            self.bot.load_extension(_module)
-        except Exception:
-            await ctx.send(f'```py\n{traceback.format_exc()}\n```')
-        else:
-            await ctx.send(f'Loaded {_module}')
-
-    @commands.command(hidden=True)
-    async def unload(self, ctx, *, module):
-        """Unloads a module."""
-        _module = f'bot.cogs.{module}'
-        try:
-            self.bot.unload_extension(_module)
-        except Exception:
-            await ctx.send(f'```py\n{traceback.format_exc()}\n```')
-        else:
-            await ctx.send(f'Unloaded {_module}')
-
-    @commands.command(hidden=True)
-    async def reload(self, ctx, *, module):
-        """Reloads a module."""
-        _module = f'bot.cogs.{module}'
-        try:
-            self.bot.unload_extension(_module)
-            self.bot.load_extension(_module)
-        except Exception:
-            await ctx.send(f'```py\n{traceback.format_exc()}\n```')
-        else:
-            await ctx.send(f'Reloaded {_module}')
-
-    @commands.command(hidden=True, aliases=['kill', 'die', 'endbot'])
-    async def logout(self, ctx):
-        """Kills the bot"""
-        await ctx.send("Shutting down...")
-        await ctx.bot.logout()
-
-    # @commands.command(hidden=True)
-    # async def activity(self, ctx, ):
-    # TODO: Actually finish this sometime, or not ¯\_(ツ)_/¯
-
-    @commands.command(hidden=True)
+    @commands.command()
     async def debug(self, ctx, *, body: str):
-        """Evaluates a code"""
+        """Evaluates a code."""
 
         env = {
             'bot': self.bot,
@@ -128,7 +85,7 @@ class Owner:
                 self._last_result = ret
                 await ctx.send(f'```py\n{value}{ret}\n```')
 
-    @commands.command(hidden=True)
+    @commands.command()
     async def repl(self, ctx):
         """Launches an interactive REPL session."""
         variables = {
@@ -216,6 +173,50 @@ class Owner:
                 pass
             except discord.HTTPException as e:
                 await ctx.send(f'Unexpected error: `{e}`')
+
+    @commands.command()
+    async def load(self, ctx, *, module):
+        """Loads a module."""
+        _module = f'bot.cogs.{module}'
+        try:
+            self.bot.load_extension(_module)
+        except Exception:
+            await ctx.send(f'```py\n{traceback.format_exc()}\n```')
+        else:
+            await ctx.send(f'Loaded {_module}')
+
+    @commands.command()
+    async def unload(self, ctx, *, module):
+        """Unloads a module."""
+        _module = f'bot.cogs.{module}'
+        try:
+            self.bot.unload_extension(_module)
+        except Exception:
+            await ctx.send(f'```py\n{traceback.format_exc()}\n```')
+        else:
+            await ctx.send(f'Unloaded {_module}')
+
+    @commands.command()
+    async def reload(self, ctx, *, module):
+        """Reloads a module."""
+        _module = f'bot.cogs.{module}'
+        try:
+            self.bot.unload_extension(_module)
+            self.bot.load_extension(_module)
+        except Exception:
+            await ctx.send(f'```py\n{traceback.format_exc()}\n```')
+        else:
+            await ctx.send(f'Reloaded {_module}')
+
+    @commands.command(aliases=['kill', 'die', 'endbot'])
+    async def logout(self, ctx):
+        """Kills the bot."""
+        await ctx.send("Shutting down...")
+        await ctx.bot.logout()
+
+    # @commands.command()
+    # async def activity(self, ctx, ):
+    # TODO: Actually finish this sometime, or not ¯\_(ツ)_/¯
 
 
 def setup(bot: Bot):
