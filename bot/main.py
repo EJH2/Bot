@@ -21,6 +21,7 @@ class Bot(commands.AutoShardedBot):
     def __init__(self, *args, **kwargs):
         self.config = kwargs.pop('config')
         self.start_time = time.time()
+        self.pm_help = None
         self.case_insensitive = True
         super().__init__(*args, **kwargs)
         self.app_info = None
@@ -57,7 +58,6 @@ class Bot(commands.AutoShardedBot):
         if self._loaded is False:
             end_time = time.time() - self.start_time
             self.app_info = await self.application_info()
-            self.owner_id = self.app_info.owner.id
             self.logger.info(f"Loaded Bot:")
             self.logger.info(f"Logged in as {self.user}")
             self.logger.info(f"ID is {self.user.id}")
