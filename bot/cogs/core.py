@@ -1,14 +1,9 @@
 # coding=utf-8
 """Error handling for the bot"""
-import asyncio
-import datetime
-import os
 import sys
 import traceback
 
 import discord
-import git
-import humanize
 from discord.ext import commands
 from raven import Client
 
@@ -21,31 +16,6 @@ class Core:
     def __init__(self, bot: Bot):
         self.bot = bot
         self.sentry = self.get_sentry()
-        self.revision_loop = self.bot.loop.create_task(self.get_revisions())
-
-    async def get_revisions(self):
-        """_get_revisions but for a looped task"""
-        await self.bot.wait_until_ready()
-        while not self.bot.is_closed():
-            await self._get_revisions()
-            await asyncio.sleep(3600)
-
-    async def _get_revisions(self):
-        """Get latest git revisions"""
-        repo = git.Repo(os.getcwd())
-        url = repo.remote().urls.__next__()
-        commit_url = url.split("@")[1].replace(":", "/")[:-4]
-        commits = []
-        unpublished_commits = list(repo.iter_commits('master@{u}..master'))
-        for commit in list(repo.iter_commits("master"))[:3]:
-            commit_time = humanize.naturaltime(datetime.datetime.now(tz=commit.committed_datetime.tzinfo)
-                                               - commit.committed_datetime)
-            if commit not in unpublished_commits:
-                commits.append(f"[`{commit.hexsha[:7]}`](https://{commit_url}/commit/{commit.hexsha[:7]}) "
-                               f"{commit.summary} ({commit_time})")
-            else:
-                commits.append(f"`{commit.hexsha[:7]}` {commit.summary} ({commit_time})")
-        self.bot.revisions = '\n'.join(commits)
 
     def get_sentry(self):
         """Checks to see if sentry is actually available"""
@@ -53,6 +23,15 @@ class Core:
         if _sentry is not None:
             sentry = Client(_sentry, enable_breadcrumbs=False)
             return sentry
+
+    async def __global_check(self, ctx):
+        """Check function run every time a command is run"""
+        author = ctx.author
+
+        if author.bot:
+            return
+
+        return True  # Assume the user is good to go
 
     async def on_error(self, event_method):
         """Catches non-command errors"""
