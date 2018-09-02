@@ -9,6 +9,9 @@ from ruamel import yaml
 from bot import main
 from bot.utils.over import HelpFormatter
 
+if not sys.version_info >= (3, 6):
+    raise RuntimeError("Python 3.6+ not detected! Please run with 3.6 or above.")
+
 path = os.getcwd()
 
 debug = "debug" in sys.argv
