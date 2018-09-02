@@ -114,7 +114,8 @@ async def send(self, content=None, **kwargs):
         content = content.replace("@everyone", "@\u0435veryone").replace("@here", "@h\u0435re")
     if content is not None and len(str(content)) > 2000:
         paste = await GhostBin().paste(content, expire="15m")
-        await old_send(self, f"Hey, I couldn't handle all the text I was gonna send you, so I put it in a paste!"
-                             f"\nThe link is **{paste}**, but it expires in 15 minutes, so get it quick!", **kwargs)
+        return await old_send(self, f"Hey, I couldn't handle all the text I was gonna send you, so I put it in a paste!"
+                                    f"\nThe link is **{paste}**, but it expires in 15 minutes, so get it quick!",
+                              **kwargs)
     else:
-        await old_send(self, content, **kwargs)
+        return await old_send(self, content, **kwargs)
