@@ -3,18 +3,62 @@
 import io
 import random
 import re
+from urllib.parse import quote_plus
 
 import aiohttp
 import discord
 from discord.ext import commands
 from bot.main import Bot
 from bot.utils import utils
+from pyppeteer import launch
+from datetime import datetime as d
+from PIL import Image
+import base64
 
 
 class Images:
     """Cog containing image related commands for the bot"""
     def __init__(self, bot: Bot):
         self.bot = bot
+
+    @commands.command(aliases=["tombstone"])
+    async def rip(self, ctx, user: discord.User = None, *, epitaph: str = ""):
+        """RIP"""
+        user = user or ctx.author
+        try:
+            user = await ctx.guild.get_member(user.id)
+        except:
+            pass
+        death = f"{user.created_at.strftime('%e %b, %Y')} to {d.now().strftime('%e %b, %Y')}"
+        epitaph = epitaph + f": {death}" if epitaph else death
+        str_to_encrypt = f"n={user.display_name}&e={epitaph}".encode()
+        encrypted = base64.encodebytes(str_to_encrypt).decode()  # Encode parameters to base64
+        url = f"http://www.oregontrailtombstone.com/tombstone.php?p={encrypted}"
+
+        if self.bot.browser is None:
+            self.bot.browser = await launch(headless=True)
+        page = await self.bot.browser.newPage()
+        await page.goto(url)
+        tombstone = (await page.JJ('div'))[1]  # Select second page div containing the tombstone image
+        file = await tombstone.screenshot({"type": "png"})
+
+        im = Image.open(io.BytesIO(file))
+        im = im.convert('RGBA')
+
+        datas = im.getdata()
+        new_data = []
+        for item in datas:
+            if item[0] == 0 and item[1] == 0 and item[2] == 0:
+                new_data.append((0, 0, 0, 0))
+            else:
+                new_data.append(item)
+
+        im.putdata(new_data)
+        img_array = io.BytesIO()
+        im.save(img_array, format="PNG")
+        file = img_array.getvalue()
+        await ctx.send(file=discord.File(fp=io.BytesIO(file), filename="rip.png"))
+        await page.close()
         
     @commands.command()
     async def shoot(self, ctx, member: discord.User = None):
@@ -124,11 +168,11 @@ class Images:
         await ctx.send(message, file=discord.File(gif, filename=gif.split("/")[-1]))
 
     @commands.command()
-    async def robohash(self, ctx, user: str = None):
+    async def robohash(self, ctx, string: str = None):
         """Robot pics."""
-        if user is None:
-            user = ctx.author.display_name
-        url = f"https://robohash.org/{user.replace(' ', '%20')}.png"
+        if string is None:
+            string = ctx.author.display_name
+        url = f"https://robohash.org/{quote_plus(string)}.png"
         file = await utils.get_file(self.bot, url)
         await ctx.send(file=discord.File(fp=io.BytesIO(file), filename="robot.png"))
 

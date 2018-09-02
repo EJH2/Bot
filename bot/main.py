@@ -28,6 +28,7 @@ class Bot(commands.AutoShardedBot):
         shard = f"| Shard {self.shard_id}" if self.shard_id else ""
         self.activity = discord.Game(name=f"{self.command_prefix}help {shard}")
         self.session = aiohttp.ClientSession(loop=self.loop, headers={"User-Agent": self.http.user_agent})
+        self.browser = None
         self.commands_used = Counter()
         self.commands_used_in = Counter()
         self.revisions = None
@@ -70,9 +71,10 @@ class Bot(commands.AutoShardedBot):
 
     async def close(self):
         """Function called when closing the bot"""
+        (await self.browser.close() if self.browser else None) or self.logger.info("Browser successfully closed!")
+        await self.http._session.close()
+        await self.session.close()
         await super().close()
         for logger in self.loggers:
             for handler in logger:
                 logger.removeHandler(handler)
-        await self.http._session.close()
-        await self.session.close()
