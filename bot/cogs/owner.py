@@ -208,15 +208,31 @@ class Owner:
         else:
             await ctx.send(f'Reloaded {_module}')
 
+    @commands.command(aliases=['dm'])
+    async def reply(self, ctx, user: discord.User, *, reason: str):
+        """DMs a user."""
+        await user.send(reason)
+        await ctx.send("The message has been sent!")
+
     @commands.command(aliases=['kill', 'die', 'endbot'])
     async def logout(self, ctx):
         """Kills the bot."""
         await ctx.send("Shutting down...")
         await ctx.bot.logout()
 
-    # @commands.command()
-    # async def activity(self, ctx, ):
-    # TODO: Actually finish this sometime, or not ¯\_(ツ)_/¯
+    @commands.group(aliases=['game'], invoke_without_command=True)
+    async def activity(self, ctx, name: str, activity_type: str = "playing", url: str = None):
+        """Sets the bots activity."""
+        _activity_type = getattr(discord.ActivityType, activity_type)
+        activity = discord.Activity(name=name, type=_activity_type, url=url)
+        await self.bot.change_presence(activity=activity)
+        await ctx.send(f"Changed Activity to `{activity_type.title()} {name}`!")
+
+    @activity.command(name='off')
+    async def activity_off(self, ctx):
+        """Resets the bots status to default."""
+        await self.bot.change_presence(activity=self.bot.activity)
+        await ctx.send("Successfully reset bots activity!")
 
 
 def setup(bot: Bot):
