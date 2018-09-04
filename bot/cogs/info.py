@@ -90,7 +90,7 @@ class Info:
         em.add_field(name='Bot:', value=user.bot)
         em.add_field(name='Created At:', value=user.created_at)
         em.add_field(name='Shared Servers:', value=shared)
-        em.add_field(name='Avatar URL:', value=user.avatar_url())
+        em.add_field(name='Avatar URL:', value=user.avatar_url)
         em.set_thumbnail(url=user.avatar_url_as(static_format='png'))
         await ctx.send(embed=em)
 

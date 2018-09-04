@@ -1,5 +1,7 @@
 # coding=utf-8
 """Utilities for the bot"""
+import re
+
 import aiohttp
 import discord
 from discord.ext import commands
@@ -84,7 +86,7 @@ class InviteUserGuild(commands.Converter):
                 try:
                     return await GuildConverter().convert(ctx, arg)
                 except Exception:
-                    raise commands.CommandError(f'`{arg}` could not be converted to Invite, User, or Guild')
+                    raise commands.BadArgument(f'`{arg}` could not be converted to Invite, User, or Guild')
 
 # Utility functions
 
