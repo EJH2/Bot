@@ -52,6 +52,10 @@ class Fun:
 
     def __init__(self, bot: Bot):
         self.bot = bot
+        with io.open('bot/files/RulesOTI.txt', encoding='utf8') as f:
+            self.rules = f.readlines()
+        with io.open('bot/files/copypasta.txt', encoding='utf8') as f:
+            self.copy = f.readlines()
 
     @commands.command()
     async def scramble(self, ctx):
@@ -220,6 +224,63 @@ class Fun:
             await ctx.send(f"{q.title}:\n```\n{summary}\n```\nFor more information, visit <{q.url}>")
         except wikipedia.exceptions.PageError:
             await ctx.send("Either the page doesn't exist, or you typed it in wrong. Either way, please try again.")
+
+    @commands.command(aliases=["8ball"])
+    async def eightball(self, ctx, *, question: str):
+        """Receive a response from the mighty eight ball."""
+        responses = [
+            "It is certain",
+            "It is decidedly so",
+            "Without a doubt",
+            "Yes, definitely",
+            "You may rely on it",
+            "As I see it, yes",
+            "Most likely",
+            "Outlook good",
+            "Yes",
+            "Signs point to yes",
+            "Reply hazy, try again",
+            "Ask again later",
+            "Better not tell you now",
+            "Cannot predict now",
+            "Concentrate and ask again",
+            "Don't count on it",
+            "My reply is no",
+            "My sources say no",
+            "Outlook not so good",
+            "Very doubtful"
+        ]
+        await ctx.send(f"{ctx.message.author} asked `{question}`, and the magic eight ball replied "
+                       f"`{random.choice(responses)}`!")
+
+    @commands.command()
+    async def copypasta(self, ctx, query: int = None):
+        """Gives the user a random copypasta.
+
+        Do `copypasta <number from 1-22>` for a specific copypasta!
+        """
+        if query:
+            query_req = 1 <= query <= len(self.copy)
+            line = f"Query must be from 1 to {len(self.copy)}!"
+            if query_req:
+                line = self.copy[query - 1]
+        else:
+            line = random.choice(self.copy)
+        await ctx.send(line)
+
+    @commands.command()
+    async def roti(self, ctx, *, number: int = None):
+        """Bestows the user with the Rules of the Internet.
+
+        If no number is provided, then a random rule will be retrieved."""
+        if number:
+            query_req = 1 <= number <= len(self.rules)
+            line = f"Number must be from 1 to {len(self.rules)}!"
+            if query_req:
+                line = self.rules[number - 1]
+        else:
+            line = random.choice(self.rules)
+        await ctx.send(line)
 
 
 def setup(bot: Bot):

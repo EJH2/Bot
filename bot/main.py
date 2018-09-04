@@ -7,6 +7,7 @@ from pathlib import Path
 
 import discord
 from discord.ext import commands
+from pyppeteer import launch, errors
 
 from bot.utils.logging import setup_logger
 from bot.utils.over import send
@@ -28,7 +29,8 @@ class Bot(commands.AutoShardedBot):
         shard = f"| Shard {self.shard_id}" if self.shard_id else ""
         self.activity = discord.Game(name=f"{self.command_prefix}help {shard}")
         self.session = aiohttp.ClientSession(loop=self.loop, headers={"User-Agent": self.http.user_agent})
-        self.browser = None
+        self.browser_page = None
+        self.browser = self.loop.create_task(self.create_browser())
         self.commands_used = Counter()
         self.commands_used_in = Counter()
         self.revisions = None
@@ -69,12 +71,22 @@ class Bot(commands.AutoShardedBot):
             return
         self.logger.info(f"Resumed bot session on shard {self.shard_id}!")
 
+    async def create_browser(self):
+        """Task to create browser for scraping purposes."""
+        await self.wait_until_ready()
+        self.browser = await launch(headless=True)
+        self.browser_page = await self.browser.newPage()
+
     async def close(self):
         """Function called when closing the bot"""
-        (await self.browser.close() if self.browser else None) or self.logger.info("Browser successfully closed!")
+        try:
+            await self.browser_page.close() or self.logger.info("Browser page successfully closed!")
+        except errors.PageError:
+            pass
+        await self.browser.close() or self.logger.info("Browser successfully closed!")
+        await super().close()
         await self.http._session.close()
         await self.session.close()
-        await super().close()
         for logger in self.loggers:
             for handler in logger:
                 logger.removeHandler(handler)

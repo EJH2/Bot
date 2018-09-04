@@ -10,7 +10,6 @@ import discord
 from discord.ext import commands
 from bot.main import Bot
 from bot.utils import utils
-from pyppeteer import launch
 from datetime import datetime as d
 from PIL import Image
 import base64
@@ -35,9 +34,7 @@ class Images:
         encrypted = base64.encodebytes(str_to_encrypt).decode()  # Encode parameters to base64
         url = f"http://www.oregontrailtombstone.com/tombstone.php?p={encrypted}"
 
-        if self.bot.browser is None:
-            self.bot.browser = await launch(headless=True)
-        page = await self.bot.browser.newPage()
+        page = self.bot.browser_page
         await page.goto(url)
         tombstone = (await page.JJ('div'))[1]  # Select second page div containing the tombstone image
         file = await tombstone.screenshot({"type": "png"})
@@ -58,7 +55,32 @@ class Images:
         im.save(img_array, format="PNG")
         file = img_array.getvalue()
         await ctx.send(file=discord.File(fp=io.BytesIO(file), filename="rip.png"))
-        await page.close()
+
+    @commands.command()
+    async def color(self, ctx, *, color: str):
+        """Returns a picture and a name of the requested color!
+
+        Colors can be either hexadecimal or rgb."""
+        regex = re.compile("#?([\d\w]{6}|[\d\w]{3})$|\(?(\d{1,3}), ?(\d{1,3}), ?(\d{1,3})\)?")
+        match = regex.match(color)
+        attrs = {"format": "json"}
+        if match:
+            # Hex vs. RGB values
+            if match.group(1):
+                attrs["hex"] = match.group()
+            else:
+                attrs["rgb"] = match.group()
+        else:
+            return await ctx.send("Sorry, but that is not a valid rgb or hex color.")
+        color_api = "http://thecolorapi.com/id?"
+        async with self.bot.session.get(color_api, params=attrs) as get:
+            resp = await get.json()
+        hex_code = str(resp["hex"]["clean"])
+        contrast = str(resp["contrast"]["value"]).strip("#")
+        name = str(resp["name"]["value"])
+        image = f"http://placehold.it/300x300.png/{hex_code}/{contrast}&text={name}"
+        pic = await utils.get_file(self.bot, image)
+        await ctx.send(file=discord.File(fp=io.BytesIO(pic), filename="color.png"))
         
     @commands.command()
     async def shoot(self, ctx, member: discord.User = None):
