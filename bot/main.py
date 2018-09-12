@@ -7,7 +7,6 @@ from pathlib import Path
 
 import discord
 from discord.ext import commands
-from ghostbin import GhostBin
 from pyppeteer import launch, errors
 
 from bot.utils.logging import setup_logger
@@ -32,7 +31,8 @@ class Bot(commands.AutoShardedBot):
         self.session = aiohttp.ClientSession(loop=self.loop, headers={"User-Agent": self.http.user_agent})
         self.browser_page = None
         self.browser = self.loop.create_task(self.create_browser())
-        self.ghost = GhostBin(loop=self.loop)
+        self.priv = self.config['extras'].get('privatebin', 'https://privatebin.net')
+        self.polr = self.config['extras'].get('polr', None)
         self.commands_used = Counter()
         self.commands_used_in = Counter()
         self.revisions = None
@@ -88,7 +88,6 @@ class Bot(commands.AutoShardedBot):
         await self.browser.close() or self.logger.info("Browser successfully closed!")
         await super().close()
         await self.http._session.close()
-        await self.ghost.session.close()
         await self.session.close()
         for logger in self.loggers:
             for handler in logger.handlers:
