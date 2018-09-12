@@ -190,7 +190,7 @@ class Images:
         await ctx.send(message, file=discord.File(gif, filename=gif.split("/")[-1]))
 
     @commands.command()
-    async def robohash(self, ctx, string: str = None):
+    async def robohash(self, ctx, *, string: str = None):
         """Robot pics."""
         if string is None:
             string = ctx.author.display_name

@@ -7,9 +7,7 @@ from discord.ext.commands import Converter, BadArgument
 
 class Default(Namespace):
     """Default args for a command"""
-
-    def __repr__(self):
-        return ' '.join(f'--{k}={v}'for k, v in self._get_kwargs())
+    pass
 
 
 class Argument:
