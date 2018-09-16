@@ -26,7 +26,7 @@ class Images:
         user = user or ctx.author
         try:
             user = await ctx.guild.get_member(user.id)
-        except:
+        except discord.DiscordException:
             pass
         death = f"{user.created_at.strftime('%e %b, %Y')} to {d.now().strftime('%e %b, %Y')}"
         epitaph = epitaph + f": {death}" if epitaph else death

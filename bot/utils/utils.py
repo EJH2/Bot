@@ -32,6 +32,7 @@ class SourceEntity(commands.Converter):
         raise commands.BadArgument(f'{arg} is neither a command, a cog, nor an extension.')
 
 
+# noinspection PyProtectedMember
 class GuildConverter(commands.Converter):
     """Custom converter for the lookup command"""
 
@@ -39,8 +40,8 @@ class GuildConverter(commands.Converter):
         """Converter function for the lookup command"""
         async with ctx.bot.http._session.get(f'https://discordapp.com/api/v6/guilds/{arg}/widget.json') as get:
             assert isinstance(get, aiohttp.ClientResponse)
-            json = await get.json(encoding='utf-8')
             if get.status == 200:
+                json = await get.json(encoding='utf-8')
                 json['data_type'] = 'guild'
                 return json
             elif get.status == 403:
@@ -49,6 +50,7 @@ class GuildConverter(commands.Converter):
                 raise discord.NotFound(get, 'guild not found')
 
 
+# noinspection PyProtectedMember
 class UserConverter(commands.Converter):
     """Custom converter for the lookup command"""
 
@@ -67,19 +69,19 @@ class UserConverter(commands.Converter):
                     user = await ctx.bot.get_user_info(match.group(1))
             assert isinstance(user, discord.User)
             return user
-        except (AssertionError, Exception):
+        except (AssertionError, discord.DiscordException):
             raise discord.NotFound
 
 
 class InviteUserGuild(commands.Converter):
     """Custom converter for the lookup command"""
 
+    # noinspection PyBroadException
     async def convert(self, ctx, arg):
         """Converter function for the lookup command"""
         try:
             return await commands.InviteConverter().convert(ctx, arg)
         except Exception:
-            pass
             try:
                 return await UserConverter().convert(ctx, arg)
             except Exception:

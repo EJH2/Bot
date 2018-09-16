@@ -79,6 +79,7 @@ class Bot(commands.AutoShardedBot):
         self.browser = await launch(headless=True)
         self.browser_page = await self.browser.newPage()
 
+    # noinspection PyProtectedMember
     async def close(self):
         """Function called when closing the bot"""
         try:

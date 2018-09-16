@@ -59,6 +59,7 @@ class Info:
             embed.set_thumbnail(url=id_number.avatar_url_as(static_format='png'))
             return await ctx.send(embed=embed)
         else:
+            assert isinstance(id_number, dict)
             json = dict(id_number)
             if json['data_type'] == 'guild':
                 rx = r'(?:https?\:\/\/)?(?:[a-zA-z]+\.)?discordapp\.com\/invite\/(.+)'

@@ -39,7 +39,7 @@ def _compress(s: bytes):
     co = zlib.compressobj(wbits=-zlib.MAX_WBITS)
     b = co.compress(s) + co.flush()
 
-    return base64.b64encode(''.join(map(chr, b)).encode('utf-8'))
+    return base64.b64encode(''.join(map(chr, b)).encode())
 
 
 def _make_payload(text, expires, formatter):

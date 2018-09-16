@@ -36,6 +36,7 @@ class HelpFormatter(HelpF):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self._paginator = None
 
     async def format(self):
         """Handles the actual behaviour involved with formatting.

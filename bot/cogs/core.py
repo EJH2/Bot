@@ -24,7 +24,8 @@ class Core:
             sentry = Client(_sentry, enable_breadcrumbs=False)
             return sentry
 
-    async def __global_check(self, ctx):
+    @staticmethod
+    async def __global_check(ctx):
         """Check function run every time a command is run"""
         author = ctx.author
 
@@ -81,7 +82,7 @@ class Core:
                 if self.sentry:
                     try:
                         raise e.original if hasattr(e, 'original') else e
-                    except:
+                    except e.original if hasattr(e, 'original') else e:
                         assert isinstance(self.sentry, Client)
                         self.sentry.captureException(data={'message': ctx.message.content}, extra={'ctx': ctx.__dict__,
                                                                                                    'error': e})

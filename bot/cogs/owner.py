@@ -13,6 +13,7 @@ from discord.ext import commands
 from bot.main import Bot
 
 
+# noinspection PyBroadException,PyBroadException,PyBroadException,PyBroadException,PyBroadException,PyBroadException
 class Owner:
     """Cog containing core commands of the bot"""
 
