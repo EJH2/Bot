@@ -114,6 +114,8 @@ async def send(self, content=None, **kwargs):
     if content is not None and any(x in str(content) for x in ["@everyone", "@here"]):
         content = content.replace("@everyone", "@\u0435veryone").replace("@here", "@h\u0435re")
     if content is not None and len(str(content)) > 2000:
+        if content.startswith("```py"):
+            content = "\n".join(content.split("\n")[1:-1])
         paste = await privatebin.upload(content, expires="15min", server=self.bot.priv)
         if self.bot.polr:
             paste = await polr.shorten(paste, **self.bot.polr)
