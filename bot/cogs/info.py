@@ -79,6 +79,17 @@ class Info:
                 return await ctx.send(f'Guild with ID {json["id"]} found, no other info found.')
 
     @commands.command()
+    async def link(self, ctx, link: str):
+        """Follow link redirects."""
+        links = []
+
+        async with self.bot.session.head(link, allow_redirects=True) as head:
+            for h in head.history:
+                links.append(h.url.human_repr())
+
+        await ctx.send(', '.join(links))
+
+    @commands.command()
     async def info(self, ctx, user: discord.User = None):
         """Gets information about a Discord user."""
         if user is None:
