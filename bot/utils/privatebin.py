@@ -147,8 +147,8 @@ async def get(url: str, password: str = None):
         'X-Requested-With': 'JSONHttpRequest'
     }) as session:
         for tries in range(2):
-            async with session.get(_to_url(server, paste_id)) as get:
-                resp_json = await get.json()
+            async with session.get(_to_url(server, paste_id)) as _get:
+                resp_json = await _get.json()
                 if resp_json['status'] == 0:
                     data = json.loads(resp_json['data'])
                     result = _decrypt(data, passphrase, password)
