@@ -4,7 +4,7 @@ import json
 import random
 
 import discord
-from asyncurban import UrbanDictionary
+from asyncurban import UrbanDictionary, errors
 from discord.ext import commands
 from bot.main import Bot
 
@@ -21,7 +21,7 @@ class Salty:
     @commands.bot_has_role("Salty")
     async def insult(self, ctx, user: str = None):
         """Insults a user."""
-        name = f"{str(user) + ': ' or ''}"
+        name = f"{str(user) + ': ' if user else ''}"
 
         words_list = [self.insult_words['A'], self.insult_words['B'], self.insult_words['C'], self.insult_words['D'],
                       self.insult_words['E'], self.insult_words['F']]
@@ -34,21 +34,22 @@ class Salty:
     @commands.bot_has_role("Salty")
     async def urband(self, ctx, query: str):
         """Finds a phrase in the Urban Dictionary."""
-        term = await self.UD.get_word(query)
-        if term:
+        try:
+            term = await self.UD.get_word(query)
             em = discord.Embed(color=0x2EAE48)
             em.title = term.word
             em.url = term.permalink
             em.description = term.definition
-            em.add_field(name="Example", value=term.example if len(term.example) < 0 else "None")
             em.set_footer(text="Author: {}".format(term.author))
             em.timestamp = ctx.message.created_at
             await ctx.send(embed=em)
-        else:
+        except errors.WordNotFoundError:
             em = discord.Embed(color=discord.Color.red())
             em.title = "\N{CROSS MARK} Error"
             em.description = "Either the page doesn't exist, or you typed it in wrong. Either way, please try again."
-            await ctx.send(embed=em)
+            return await ctx.send(embed=em)
+        except errors.UrbanConnectionError:
+            await ctx.send("I couldn't connect to the Urban Dictionary API, sorry!")
 
 
 def setup(bot: Bot):
