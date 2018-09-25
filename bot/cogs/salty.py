@@ -7,6 +7,7 @@ import discord
 from asyncurban import UrbanDictionary, errors
 from discord.ext import commands
 from bot.main import Bot
+from bot.utils import checks
 
 
 class Salty:
@@ -18,7 +19,7 @@ class Salty:
             self.insult_words = json.load(insults)
 
     @commands.command()
-    @commands.bot_has_role("Salty")
+    @checks.bot_has_role("Salty")
     async def insult(self, ctx, user: str = None):
         """Insults a user."""
         name = f"{str(user) + ': ' if user else ''}"
@@ -30,9 +31,9 @@ class Salty:
         # The one case where using .format is better and shorter than a format string
         await ctx.send("{} You are {} {} {} and a {} {} {}.".format(name, *insult))
 
-    @commands.command()
-    @commands.bot_has_role("Salty")
-    async def urband(self, ctx, query: str):
+    @commands.command(aliases=["ud"])
+    @checks.bot_has_role("Salty")
+    async def urband(self, ctx, *, query: str):
         """Finds a phrase in the Urban Dictionary."""
         try:
             term = await self.UD.get_word(query)

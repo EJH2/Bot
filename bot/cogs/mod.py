@@ -4,6 +4,8 @@ import discord
 from discord.ext import commands
 from bot.main import Bot
 
+from bot.utils import checks
+
 
 class Mod:
     """Cog containing moderation commands for the bot"""
@@ -12,8 +14,8 @@ class Mod:
 
     @commands.command()
     @commands.guild_only()
-    @commands.has_permissions(manage_guild=True)
-    @commands.bot_has_permissions(manage_guild=True)
+    @checks.has_permissions(manage_guild=True)
+    @checks.bot_has_permissions(manage_guild=True)
     async def listbans(self, ctx):
         """
         Lists the current bans on the server.
@@ -26,8 +28,8 @@ class Mod:
 
     @commands.command()
     @commands.guild_only()
-    @commands.has_permissions(kick_members=True)
-    @commands.bot_has_permissions(kick_members=True)
+    @checks.has_permissions(kick_members=True)
+    @checks.bot_has_permissions(kick_members=True)
     async def kick(self, ctx, *members: discord.Member):
         """
         Kicks the member of choice.
@@ -41,8 +43,8 @@ class Mod:
 
     @commands.command()
     @commands.guild_only()
-    @commands.has_permissions(kick_members=True)
-    @commands.bot_has_permissions(ban_members=True)
+    @checks.has_permissions(kick_members=True)
+    @checks.bot_has_permissions(ban_members=True)
     async def softban(self, ctx, *members: discord.Member, days: int = 7):
         """
         Kicks a member and deletes {days} days of their messages. Defaults to 7.
@@ -62,8 +64,8 @@ class Mod:
 
     @commands.command()
     @commands.guild_only()
-    @commands.has_permissions(ban_members=True)
-    @commands.bot_has_permissions(ban_members=True)
+    @checks.has_permissions(ban_members=True)
+    @checks.bot_has_permissions(ban_members=True)
     async def ban(self, ctx, *members: discord.Member):
         """
         Bans a member and deletes their messages.
@@ -82,8 +84,8 @@ class Mod:
 
     @commands.command()
     @commands.guild_only()
-    @commands.has_permissions(ban_members=True)
-    @commands.bot_has_permissions(ban_members=True)
+    @checks.has_permissions(ban_members=True)
+    @checks.bot_has_permissions(ban_members=True)
     async def unban(self, ctx, *, name: str):
         """
         Unbans a member.
@@ -98,8 +100,8 @@ class Mod:
 
     @commands.command()
     @commands.guild_only()
-    @commands.has_permissions(ban_members=True)
-    @commands.bot_has_permissions(ban_members=True)
+    @checks.has_permissions(ban_members=True)
+    @checks.bot_has_permissions(ban_members=True)
     async def hackban(self, ctx, *user_ids: int):
         """
         Preemptive bans a user.
@@ -119,8 +121,8 @@ class Mod:
 
     @commands.command()
     @commands.guild_only()
-    @commands.has_permissions(manage_messages=True)
-    @commands.bot_has_permissions(manage_messages=True)
+    @checks.has_permissions(manage_messages=True)
+    @checks.bot_has_permissions(manage_messages=True)
     async def prune(self, ctx, messages: int = 100):
         """
         Deletes x amount of messages in a channel.
@@ -132,7 +134,7 @@ class Mod:
         await ctx.send(f"Removed {removed} messages")
 
     @commands.command()
-    @commands.has_permissions(manage_messages=True)
+    @checks.has_permissions(manage_messages=True)
     async def clean(self, ctx):
         """
         Deletes messages from the bot in the last 100 messages of a channel.

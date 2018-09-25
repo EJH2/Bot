@@ -8,6 +8,7 @@ from discord.ext import commands
 from raven import Client
 
 from bot.main import Bot
+from bot.utils import checks
 
 
 class Core:
@@ -48,31 +49,44 @@ class Core:
         elif isinstance(e, commands.errors.CommandNotFound):
             return
         elif isinstance(e, commands.errors.NotOwner):
-            await ctx.channel.send(f"\N{CROSS MARK} {e}", delete_after=5)
+            await ctx.channel.send(f"\N{CROSS MARK} {e}", delete_after=10)
         elif isinstance(e, discord.errors.Forbidden):
-            await ctx.channel.send("\N{NO ENTRY} I don't have permission to perform the action", delete_after=5)
+            await ctx.channel.send("\N{NO ENTRY} I don't have permission to perform the action", delete_after=10)
         elif isinstance(e, commands.errors.CommandNotFound):
             return
         elif isinstance(e, commands.errors.NoPrivateMessage):
             await ctx.channel.send("\N{NO ENTRY} That command can not be run in PMs!",
-                                   delete_after=5)
+                                   delete_after=10)
             return
         elif isinstance(e, commands.errors.DisabledCommand):
             await ctx.channel.send("\N{NO ENTRY} Sorry, but that command is currently disabled!",
-                                   delete_after=5)
+                                   delete_after=10)
+        elif isinstance(e, checks.MissingPermission):
+            await ctx.channel.send("\N{NO ENTRY} Sorry, but that command requires you to have one of these permissions"
+                                   f": {', '.join(e.missing)}!", delete_after=10)
+        elif isinstance(e, checks.BotMissingPermission):
+            await ctx.channel.send("\N{NO ENTRY} Sorry, but that command requires the bot to have one of these "
+                                   f"permissions: {', '.join(e.missing)}!", delete_after=10)
+        elif isinstance(e, checks.MissingRole):
+            await ctx.channel.send("\N{NO ENTRY} Sorry, but that command requires you to have one of these roles"
+                                   f": {', '.join(e.missing)}!", delete_after=10)
+        elif isinstance(e, checks.BotMissingRole):
+            await ctx.channel.send("\N{NO ENTRY} Sorry, but that command requires the bot to have one of these roles: "
+                                   f"{', '.join(e.missing)}!", delete_after=10)
         elif isinstance(e, commands.errors.CheckFailure):
             await ctx.channel.send("\N{CROSS MARK} Check failed. You probably don't have "
-                                   "permission to do this.", delete_after=5)
+                                   "permission to do this.", delete_after=10)
         elif isinstance(e, commands.errors.CommandOnCooldown):
-            await ctx.channel.send(f"\N{NO ENTRY} {e}", delete_after=5)
+            await ctx.channel.send(f"\N{NO ENTRY} {e}", delete_after=10)
         elif isinstance(e, (commands.errors.BadArgument, commands.errors.MissingRequiredArgument)):
-            await ctx.channel.send(f"\N{CROSS MARK} Bad argument: {' '.join(e.args)}", delete_after=5)
+            await ctx.channel.send(f"\N{CROSS MARK} Bad argument: {' '.join(e.args)}", delete_after=10)
             formatted_help = await ctx.bot.formatter.format_help_for(ctx, ctx.command)
             for page in formatted_help:
                 await ctx.channel.send(page, delete_after=20)
         else:
+            self.bot._errors.append(e)
             await ctx.channel.send("\N{NO ENTRY} An error happened. This has been logged and reported.",
-                                   delete_after=5)
+                                   delete_after=10)
             if isinstance(e, commands.errors.CommandInvokeError):
                 self.bot.logger.error(''.join(traceback.format_exception(
                     type(e), e.__cause__, e.__cause__.__traceback__)))
