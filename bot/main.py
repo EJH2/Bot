@@ -2,7 +2,7 @@
 """Main bot file"""
 import aiohttp
 import time
-from collections import Counter
+from collections import Counter, deque
 from pathlib import Path
 
 import discord
@@ -37,6 +37,7 @@ class Bot(commands.AutoShardedBot):
 
         self.commands_used = Counter()
         self.commands_used_in = Counter()
+        self._errors = deque(maxlen=10)
         self.revisions = None
 
         discord_logger = setup_logger("discord")

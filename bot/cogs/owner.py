@@ -176,6 +176,22 @@ class Owner:
                 await ctx.send(f'Unexpected error: `{e}`')
 
     @commands.command()
+    async def geterror(self, ctx, error_number: int):
+        """
+        Gets an error from the internal error queue to diagnose issues quicker.
+        """
+        if error_number > self.bot._errors.maxlen:
+            return await ctx.send('There are only 10 errors maximum in the queue!')
+        if error_number > len(self.bot._errors):
+            return await ctx.send('There aren\'t enough errors in the queue yet!')
+        e = list(reversed(self.bot._errors))[error_number - 1]
+        if isinstance(e, commands.errors.CommandInvokeError):
+            return await ctx.send(''.join(traceback.format_exception(
+                type(e), e.__cause__, e.__cause__.__traceback__)))
+        else:
+            return await ctx.send(''.join(traceback.format_exception(type(e), e, e.__traceback__)))
+
+    @commands.command()
     async def load(self, ctx, *, module):
         """Loads a module."""
         _module = f'bot.cogs.{module}'
