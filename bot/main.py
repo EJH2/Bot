@@ -37,7 +37,7 @@ class Bot(commands.AutoShardedBot):
 
         self.commands_used = Counter()
         self.commands_used_in = Counter()
-        self._errors = deque(maxlen=10)
+        self.errors = deque(maxlen=10)
         self.revisions = None
 
         discord_logger = setup_logger("discord")

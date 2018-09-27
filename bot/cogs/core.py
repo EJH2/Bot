@@ -84,7 +84,7 @@ class Core:
             for page in formatted_help:
                 await ctx.channel.send(page, delete_after=20)
         else:
-            self.bot._errors.append(e)
+            self.bot.errors.append(e)
             await ctx.channel.send("\N{NO ENTRY} An error happened. This has been logged and reported.",
                                    delete_after=10)
             if isinstance(e, commands.errors.CommandInvokeError):
