@@ -16,6 +16,7 @@ import wikipedia
 import xkcd
 from bs4 import BeautifulSoup as BSoup
 from discord.ext import commands
+from pyfiglet import figlet_format
 
 from bot.main import Bot
 
@@ -89,6 +90,11 @@ class Fun:
         async with self.bot.session.get(url) as get:
             img = io.BytesIO(await get.read())
         await ctx.send(file=discord.File(img, filename=url))
+
+    @commands.command()
+    async def bigtext(self, ctx, *, text):
+        """Create enlarged text."""
+        await ctx.send("```fix\n" + figlet_format(text, font="big") + "```")
 
     @commands.command(aliases=["facts"])
     async def randomfacts(self, ctx):
