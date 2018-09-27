@@ -1,37 +1,36 @@
 # Created by .ignore support plugin (hsz.mobi)
 ### JetBrains template
-# Covers JetBrains IDEs: IntelliJ, RubyMine, PhpStorm, AppCode, PyCharm, CLion, Android Studio and WebStorm
+# Covers JetBrains IDEs: IntelliJ, RubyMine, PhpStorm, AppCode, PyCharm, CLion, Android Studio and Webstorm
 # Reference: https://intellij-support.jetbrains.com/hc/en-us/articles/206544839
 
-# User-specific stuff
-.idea/**/tasks.xml
-.idea/**/dictionaries
-.idea/**/shelf
+# User-specific stuff:
+.idea/
+.idea/tasks.xml
+.idea/dictionaries
+.idea/jsLibraryMappings.xml
 
-# Sensitive or high-churn files
-.idea/**/dataSources/
-.idea/**/dataSources.ids
-.idea/**/dataSources.local.xml
-.idea/**/sqlDataSources.xml
-.idea/**/dynamic.xml
-.idea/**/uiDesigner.xml
+# Sensitive or high-churn files:
+.idea/dataSources.ids
+.idea/dataSources.xml
+.idea/dataSources.local.xml
+.idea/sqlDataSources.xml
+.idea/dynamic.xml
+.idea/uiDesigner.xml
 
-# Gradle
-.idea/**/gradle.xml
-.idea/**/libraries
+# Gradle:
+.idea/gradle.xml
+.idea/libraries
 
-# CMake
-cmake-build-debug/
-cmake-build-release/
+# Mongo Explorer plugin:
+.idea/mongoSettings.xml
 
-# Mongo Explorer plugin
-.idea/**/mongoSettings.xml
-
-# File-based project format
+## File-based project format:
 *.iws
 
+## Plugin-specific files:
+
 # IntelliJ
-out/
+/out/
 
 # mpeltonen/sbt-idea plugin
 .idea_modules/
@@ -39,17 +38,11 @@ out/
 # JIRA plugin
 atlassian-ide-plugin.xml
 
-# Cursive Clojure plugin
-.idea/replstate.xml
-
 # Crashlytics plugin (for Android Studio and IntelliJ)
 com_crashlytics_export_strings.xml
 crashlytics.properties
 crashlytics-build.properties
 fabric.properties
-
-# Editor-based Rest Client
-.idea/httpRequests
 ### Python template
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -61,6 +54,7 @@ __pycache__/
 
 # Distribution / packaging
 .Python
+env/
 build/
 develop-eggs/
 dist/
@@ -72,9 +66,9 @@ lib64/
 parts/
 sdist/
 var/
-wheels/
+*.egg-info/
 .installed.cfg
-MANIFEST
+*.egg
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
@@ -94,9 +88,8 @@ htmlcov/
 .cache
 nosetests.xml
 coverage.xml
-*.cover
+*,cover
 .hypothesis/
-.pytest_cache/
 
 # Translations
 *.mo
@@ -105,7 +98,6 @@ coverage.xml
 # Django stuff:
 *.log
 local_settings.py
-db.sqlite3
 
 # Flask stuff:
 instance/
@@ -120,7 +112,7 @@ docs/_build/
 # PyBuilder
 target/
 
-# Jupyter Notebook
+# IPython Notebook
 .ipynb_checkpoints
 
 # pyenv
@@ -129,32 +121,18 @@ target/
 # celery beat schedule file
 celerybeat-schedule
 
-# SageMath parsed files
-*.sage.py
-
-# Environments
+# dotenv
 .env
-.venv
-env/
+
+# virtualenv
 venv/
 ENV/
-env.bak/
-venv.bak/
 
 # Spyder project settings
 .spyderproject
-.spyproject
 
 # Rope project settings
 .ropeproject
 
-# mkdocs documentation
-/site
-
-# mypy
-.mypy_cache/
-
-.idea/
-/dev_config.yaml
-/config.yaml
-[_]*.py
+/*.yaml
+!/*.example.yaml
