@@ -35,6 +35,8 @@ class Images:
         url = f"http://www.oregontrailtombstone.com/tombstone.php?p={encrypted}"
 
         page = self.bot.browser_page
+        if page is None:
+            await self.bot.create_browser()
         await page.goto(url)
         tombstone = (await page.JJ('div'))[1]  # Select second page div containing the tombstone image
         file = await tombstone.screenshot({"type": "png"})

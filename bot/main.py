@@ -87,7 +87,7 @@ class Bot(commands.AutoShardedBot):
         """Function called when closing the bot"""
         try:
             await self.browser_page.close() or self.logger.info("Browser page successfully closed!")
-        except errors.PageError:
+        except (errors.PageError, AttributeError):  # browser was never created; edge case
             pass
         await self.browser.close() or self.logger.info("Browser successfully closed!")
         await super().close()
