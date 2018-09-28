@@ -1,5 +1,5 @@
-"""Main bot file."""
 # coding=utf-8
+"""Main bot file."""
 
 import os
 import sys
