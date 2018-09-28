@@ -22,9 +22,9 @@ class Bot(commands.AutoShardedBot):
     def __init__(self, *args, **kwargs):
         self.config = kwargs.pop('config')
         self.start_time = time.time()
+        super().__init__(*args, **kwargs)
         self.pm_help = None
         self.case_insensitive = True
-        super().__init__(*args, **kwargs)
         self.app_info = None
         shard = f"| Shard {self.shard_id}" if self.shard_id else ""
         self.activity = discord.Game(name=f"{self.command_prefix}help {shard}")
