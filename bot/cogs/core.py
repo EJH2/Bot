@@ -114,10 +114,12 @@ class Core:
 
     async def on_command_completion(self, ctx):
         """Event ran every time a command completes successfully"""
-        self.bot.commands_used[ctx.command.name] += 1
-        if not ctx.guild:
-            ctx.guild = "PMs"
-        self.bot.commands_used_in[str(ctx.guild)] += 1
+        # Ignore the bot owner because why should you inflate your own stats
+        if not ctx.author == self.bot.app_info.owner:
+            self.bot.commands_used[ctx.command.name] += 1
+            if not ctx.guild:
+                ctx.guild = "PMs"
+            self.bot.commands_used_in[str(ctx.guild)] += 1
 
 
 def setup(bot: Bot):
