@@ -79,7 +79,7 @@ class Bot(commands.AutoShardedBot):
     async def create_browser(self):
         """Task to create browser for scraping purposes."""
         await self.wait_until_ready()
-        self.browser = await launch(headless=True)
+        self.browser = await launch(args=["--no-sandbox"], headless=True)
         self.browser_page = await self.browser.newPage()
 
     # noinspection PyProtectedMember
