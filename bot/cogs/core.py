@@ -63,16 +63,16 @@ class Core:
                                    delete_after=10)
         elif isinstance(e, checks.MissingPermission):
             await ctx.channel.send("\N{NO ENTRY} Sorry, but that command requires you to have one of these permissions"
-                                   f": {', '.join(e.missing)}!", delete_after=10)
+                                   f": {', '.join([f'`{i}`' for i in e.missing])}", delete_after=10)
         elif isinstance(e, checks.BotMissingPermission):
             await ctx.channel.send("\N{NO ENTRY} Sorry, but that command requires the bot to have one of these "
-                                   f"permissions: {', '.join(e.missing)}!", delete_after=10)
+                                   f"permissions: {', '.join([f'`{i}`' for i in e.missing])}", delete_after=10)
         elif isinstance(e, checks.MissingRole):
             await ctx.channel.send("\N{NO ENTRY} Sorry, but that command requires you to have this role: "
-                                   f"{e.missing}!", delete_after=10)
+                                   f"`{e.missing}`", delete_after=10)
         elif isinstance(e, checks.BotMissingRole):
             await ctx.channel.send("\N{NO ENTRY} Sorry, but that command requires the bot to have this role: "
-                                   f"{e.missing}!", delete_after=10)
+                                   f"`{e.missing}`", delete_after=10)
         elif isinstance(e, commands.errors.CheckFailure):
             await ctx.channel.send("\N{CROSS MARK} Check failed. You probably don't have "
                                    "permission to do this.", delete_after=10)
