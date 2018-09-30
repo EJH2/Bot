@@ -65,7 +65,7 @@ async def check_role(ctx, role):
         return True
 
     resolved = ctx.author.roles
-    result = role.name.lower() in (r.name.lower() for r in resolved)
+    result = role.lower() in (r.name.lower() for r in resolved)
     if result is False:
         raise MissingRole(missing=role)
 
@@ -76,7 +76,7 @@ async def bot_check_role(ctx, role):
         return True
 
     resolved = ctx.author.roles
-    result = role.name.lower() in (r.name.lower() for r in resolved)
+    result = role.lower() in (r.name.lower() for r in resolved)
     if result is False:
         raise BotMissingRole(missing=role)
 
