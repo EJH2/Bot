@@ -213,7 +213,7 @@ class Owner:
         else:
             await ctx.send(f'Unloaded {_module}')
 
-    @commands.command()
+    @commands.group(invoke_without_command=True)
     async def reload(self, ctx, *, module):
         """Reloads a module."""
         _module = f'bot.cogs.{module}'
@@ -224,6 +224,22 @@ class Owner:
             await ctx.send(f'```py\n{traceback.format_exc()}\n```')
         else:
             await ctx.send(f'Reloaded {_module}')
+
+    @reload.command(name='all')
+    async def reload_all(self, ctx):
+        """Reload all extensions."""
+        ext = len(self.bot.extensions)
+        counter = 0
+        for extension in self.bot.extensions:
+            try:
+                self.bot.unload_extension(extension)
+                self.bot.load_extension(extension)
+                counter += 1
+            except Exception as e:
+                await ctx.send(f'Could not reload `{extension}` -> `{e}`')
+            await asyncio.sleep(1)
+
+        await ctx.send(f'Reloaded {counter}/{ext} extensions.')
 
     @commands.command(aliases=['dm'])
     async def reply(self, ctx, user: discord.User, *, reason: str):
