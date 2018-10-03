@@ -259,6 +259,16 @@ class Fun:
         await ctx.send(f"{ctx.message.author} asked `{question}`, and the magic eight ball replied "
                        f"`{random.choice(responses)}`!")
 
+    @commands.command(aliases=["choice"])
+    async def choose(self, ctx, *options: commands.clean_content):
+        """
+        Chooses from a list of options.
+        """
+        if len(options) < 2:
+            return await ctx.send("I don't have enough options to choose from!")
+
+        await ctx.send(random.choice(options))
+
     @commands.command()
     async def copypasta(self, ctx, query: int = None):
         """Gives the user a random copypasta.
@@ -275,7 +285,7 @@ class Fun:
         await ctx.send(line)
 
     @commands.command()
-    async def roti(self, ctx, *, number: int = None):
+    async def roti(self, ctx, number: int = None):
         """Bestows the user with the Rules of the Internet.
 
         If no number is provided, then a random rule will be retrieved."""

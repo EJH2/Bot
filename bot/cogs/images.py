@@ -200,32 +200,6 @@ class Images:
         file = await utils.get_file(self.bot, url)
         await ctx.send(file=discord.File(fp=io.BytesIO(file), filename="robot.png"))
 
-    @commands.command()
-    async def color(self, ctx, *, color: str):
-        """Returns a picture and a name of the requested color!
-
-        Colors can be either hexadecimal or rgb."""
-        regex = re.compile("#?([\d\w]{6}|[\d\w]{3})$|\(?(\d{1,3}), ?(\d{1,3}), ?(\d{1,3})\)?")
-        match = regex.match(color)
-        attrs = {"format": "json"}
-        if match:
-            # Hex vs. RGB values
-            if match.group(1):
-                attrs["hex"] = match.group()
-            else:
-                attrs["rgb"] = match.group()
-        else:
-            return await ctx.send("Sorry, but that is not a valid rgb or hex color.")
-        color_api = "http://thecolorapi.com/id?"
-        async with self.bot.session.get(color_api, params=attrs) as get:
-            resp = await get.json()
-        hex_code = str(resp["hex"]["clean"])
-        contrast = str(resp["contrast"]["value"]).strip("#")
-        name = str(resp["name"]["value"])
-        image = f"http://placehold.it/300x300.png/{hex_code}/{contrast}&text={name}"
-        pic = await utils.get_file(self.bot, image)
-        await ctx.send(file=discord.File(fp=io.BytesIO(pic), filename="color.png"))
-
     @commands.command(aliases=["meow"])
     async def cat(self, ctx):
         """A random cat!"""
