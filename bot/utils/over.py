@@ -4,6 +4,7 @@ import contextlib
 import inspect
 import io
 import itertools
+import re
 
 import discord
 from discord.ext.commands import HelpFormatter as HelpF, Paginator, Command
@@ -104,6 +105,76 @@ class HelpFormatter(HelpF):
         ending_note = self.get_ending_note()
         self._paginator.add_line(ending_note)
         return self._paginator.pages
+
+
+_mentions_transforms = {
+    '@everyone': '@\u200beveryone',
+    '@here': '@\u200bhere'
+}
+
+_mention_pattern = re.compile('|'.join(_mentions_transforms.keys()))
+
+
+def _is_submodule(parent, child):
+    return parent == child or child.startswith(parent + ".")
+
+
+async def _default_help_command(ctx, *commands: str):
+    """Shows this message."""
+    bot = ctx.bot
+    destination = ctx.message.author if bot.pm_help else ctx.message.channel
+
+    def repl(obj):
+        return _mentions_transforms.get(obj.group(0), '')
+
+    # help by itself just lists our own commands.
+    if len(commands) == 0:
+        pages = await bot.formatter.format_help_for(ctx, bot)
+    elif len(commands) == 1:
+        # try to see if it is a cog name
+        name = _mention_pattern.sub(repl, commands[0])
+        command = None
+        if name in bot.cogs:
+            command = bot.cogs[name]
+        else:
+            command = bot.all_commands.get(name)
+            if command is None:
+                await destination.send(bot.command_not_found.format(name))
+                return
+
+        pages = await bot.formatter.format_help_for(ctx, command)
+    else:
+        name = _mention_pattern.sub(repl, commands[0])
+        command = bot.all_commands.get(name)
+        if command is None:
+            await destination.send(bot.command_not_found.format(name))
+            return
+
+        for key in commands[1:]:
+            try:
+                key = _mention_pattern.sub(repl, key)
+                command = command.all_commands.get(key)
+                if command is None:
+                    await destination.send(bot.command_not_found.format(key))
+                    return
+            except AttributeError:
+                await destination.send(bot.command_has_no_subcommands.format(command, key))
+                return
+
+        pages = await bot.formatter.format_help_for(ctx, command)
+
+    if bot.pm_help is None:
+        characters = sum(map(len, pages))
+        # modify destination based on length of pages.
+        if characters > 1000:
+            destination = ctx.message.author
+
+    for page in pages:
+        try:
+            await destination.send(page)
+        except discord.Forbidden:
+            destination = ctx.message.channel
+            await destination.send(page)
 
 
 old_send = discord.abc.Messageable.send

@@ -10,7 +10,7 @@ from discord.ext import commands
 from pyppeteer import launch, errors
 
 from bot.utils.logging import setup_logger
-from bot.utils.over import send
+from bot.utils.over import send, _default_help_command
 
 
 discord.abc.Messageable.send = send
@@ -23,6 +23,9 @@ class Bot(commands.AutoShardedBot):
         self.config = kwargs.pop('config')
         self.start_time = time.time()
         super().__init__(*args, **kwargs)
+        # pay no mind to this ugliness.
+        self.remove_command('help')
+        self.command(**self.help_attrs)(_default_help_command)
         self.pm_help = None
         self.case_insensitive = True
         self.app_info = None
