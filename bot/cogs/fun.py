@@ -163,9 +163,11 @@ class Fun:
         key = self.bot.config["extras"].get("darksky", None)
         if not key:
             return
-        g = geocoder.google(location)
+        g = geocoder.google(location, key=self.bot.config["extras"]["geogoogle"])
         if not g.latlng:
-            return await ctx.send("Sorry, I couldn't find that place!")
+            g = geocoder.locationiq(location, key=self.bot.config["extras"]["locationiq"])
+            if not g.latlng:
+                return await ctx.send("Sorry, I couldn't find that place!")
         lat, lng = g.latlng
         loc = g.address
         args = functools.partial(darksky.forecast, key, lat, lng, units="auto")
