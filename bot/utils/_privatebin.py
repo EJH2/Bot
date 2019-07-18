@@ -9,66 +9,17 @@ using code from <https://github.com/khazhyk/dango.py/blob/master/dango/zerobin.p
 © 2017 khazhyk
 modified by https://github.com/bmintz
 © 2018 bmintz
+modified by https://github.com/EJH2
+© 2019 EJH2
 """
 
 import asyncio
-import base64
-import hashlib
 import json
-import os
 import sys
-import zlib
 
 import aiohttp
-from sjcl import SJCL
 
-
-def _encrypt(text: str, password: str = None):
-    """
-    Supplies encrypted text for the payload.
-    """
-    key = base64.urlsafe_b64encode(os.urandom(32))
-
-    if password:
-        digest = hashlib.sha256(password.encode()).hexdigest()
-        passphrase = key + digest.encode()
-    else:
-        passphrase = key
-
-    # Encrypting text
-    encrypted_data = SJCL().encrypt(_compress(text.encode()), passphrase, mode='gcm')
-    return encrypted_data, key
-
-
-def _decrypt(encrypted_data: dict, key: bytes, password: str = None):
-    """
-    Supplies decrypted text from the payload.
-    """
-    if password:
-        digest = hashlib.sha256(password.encode()).hexdigest()
-        passphrase = key + digest.encode()
-    else:
-        passphrase = key
-
-    data = _decompress(SJCL().decrypt(encrypted_data, passphrase).decode())
-    return data
-
-
-def _compress(s: bytes):
-    """
-    Compresses bytes for the payload.
-    """
-    co = zlib.compressobj(wbits=-zlib.MAX_WBITS)
-    b = co.compress(s) + co.flush()
-
-    return base64.b64encode(''.join(map(chr, b)).encode())
-
-
-def _decompress(s: str):
-    """
-    Decompresses bytes returned from the payload.
-    """
-    return zlib.decompress(bytearray(map(ord, base64.b64decode(s.encode()).decode('utf-8'))), -zlib.MAX_WBITS).decode()
+from bot.utils.sjcl_helper import encrypt, decrypt
 
 
 def _make_payload(text: str, expires: str, formatter: str, password: str):
@@ -83,7 +34,7 @@ def _make_payload(text: str, expires: str, formatter: str, password: str):
         opendiscussion='0',
     )
 
-    cipher, key = _encrypt(text, password)
+    cipher, key = encrypt(text, password)
     for k in ['salt', 'iv', 'ct']:
         cipher[k] = cipher[k].decode()
 
@@ -151,7 +102,7 @@ async def get(url: str, password: str = None):
                 resp_json = await _get.json()
                 if resp_json['status'] == 0:
                     data = json.loads(resp_json['data'])
-                    result = _decrypt(data, passphrase, password)
+                    result = decrypt(data, passphrase, password)
                 elif resp_json['status'] == 1:  # rate limited
                     await asyncio.sleep(10)
 

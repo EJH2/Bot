@@ -8,7 +8,6 @@ import re
 
 import discord
 from discord.ext.commands import HelpFormatter as HelpF, Paginator, Command
-from bot.utils import polr, privatebin
 
 from bot.utils.args import ArgParseConverter as ArgPC
 
@@ -187,11 +186,9 @@ async def send(self, content=None, **kwargs):
     if content is not None and len(str(content)) > 2000:
         if content.startswith("```py"):
             content = "\n".join(content.split("\n")[1:-1])
-        paste = await privatebin.upload(content, expires="15min", server=self.bot.priv)
-        if self.bot.polr:
-            paste = await polr.shorten(paste, **self.bot.polr)
+        paste = await self.bot.pb.create(content, sunset=15*60)
         return await old_send(self, f"Hey, I couldn't handle all the text I was gonna send you, so I put it in a paste!"
-                                    f"\nThe link is **{paste}**, but it expires in 15 minutes, so get it quick!",
+                                    f"\nThe link is **{paste.url}**, but it expires in 15 minutes, so get it quick!",
                               **kwargs)
     else:
         return await old_send(self, content, **kwargs)

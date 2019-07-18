@@ -9,6 +9,8 @@ import discord
 from discord.ext import commands
 from pyppeteer import launch, errors
 
+from bot.utils.db import create_engine
+from bot.utils.pb import PB
 from bot.utils.logging import setup_logger
 from bot.utils.over import send, _default_help_command
 
@@ -33,10 +35,10 @@ class Bot(commands.AutoShardedBot):
         self.activity = discord.Game(name=f"{self.command_prefix}help {shard}")
 
         self.session = aiohttp.ClientSession(loop=self.loop, headers={"User-Agent": self.http.user_agent})
+        self.db = None
         self.browser_page = None
         self.browser = self.loop.create_task(self.create_browser())
-        self.priv = self.config['extras'].get('privatebin', 'https://privatebin.net')
-        self.polr = self.config['extras'].get('polr', None)
+        self.pb = PB(self.config['extras'].get('pb', None))
 
         self.commands_used = Counter()
         self.commands_used_in = Counter()
@@ -53,6 +55,7 @@ class Bot(commands.AutoShardedBot):
         self.load_extension(f"bot.cogs.owner")
         if 'bare' in kwargs.pop('argv'):  # load the bot bare-bones to diagnose issues
             return
+        self.loop.run_until_complete(self.load_db())
         for module in _modules:
             try:
                 if module in ['core', 'errors']:
@@ -63,6 +66,18 @@ class Bot(commands.AutoShardedBot):
 
         # make sure to only print ready text once
         self._loaded = False
+
+    async def load_db(self):
+        """Loads database"""
+        creds = self.config.get('database', {})
+        if creds == {}:
+            return self.logger.warn('Could not connect to database, as no credentials could be found!')
+        for k in creds:
+            if creds[k] is None:
+                return self.logger.warn('Could not connect to database, as one (or more) credentials were left blank!')
+        db = await create_engine(**creds)
+        self.logger.info('Connection to database was successful!')
+        return db
 
     async def on_ready(self):
         """Function called when bot is ready or resumed"""
